@@ -437,7 +437,28 @@ function updateVenueInfo2(name, data) {
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
     }
-    loadVenues2();
+
+    // 未配置 Token/UUID，直接加载本地钓场列表
+    if (!token || !uuid) {
+        console.warn('未配置 Token 或 UUID');
+        loadVenues2();
+        return;
+    }
+
+    // 启动时检查 Token 有效性
+    checkTokenValidity().then(function(res) {
+        if (!res.valid) {
+            console.error('Token 无效:', res.reason);
+            // 弹窗提示用户
+            alert('Token 已过期，请到配置页面重新设置');
+            setTimeout(function() {
+                navigateTo('config.html');
+            }, 1500);
+            return;
+        }
+        // Token 有效，正常加载
+        loadVenues2();
+    });
 })();
 
 </script>
