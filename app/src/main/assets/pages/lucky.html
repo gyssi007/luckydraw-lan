@@ -35,7 +35,6 @@
             margin-bottom: 14px;
             width: 100%;
             box-sizing: border-box;
-            overflow: visible !important;
         }
         .switch-row .switch-label {
             font-size: 14px;
@@ -51,7 +50,6 @@
             color: #8899aa;
             display: block;
             margin-top: 2px;
-            white-space: normal;
         }
         .switch {
             position: relative !important;
@@ -60,14 +58,9 @@
             height: 28px !important;
             min-width: 50px !important;
             flex-shrink: 0 !important;
-            flex-grow: 0 !important;
-            vertical-align: middle;
-            visibility: visible !important;
-            opacity: 1 !important;
         }
         .switch input {
             -webkit-appearance: none !important;
-            -moz-appearance: none !important;
             appearance: none !important;
             position: absolute !important;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -84,10 +77,7 @@
             position: absolute !important;
             display: block !important;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: #dce4ec;
             transition: .3s;
             border-radius: 28px;
@@ -109,7 +99,6 @@
         .switch input:checked + .slider { background: #22c55e; }
         .switch input:checked + .slider::before { transform: translateX(22px); }
         .switch input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
-        .switch input:disabled { cursor: not-allowed; }
 
         .log-box {
             background: #0f172a;
@@ -119,7 +108,6 @@
             max-height: 220px;
             min-height: 80px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 11px;
             line-height: 1.7;
@@ -136,10 +124,8 @@
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
             z-index: 1000;
@@ -184,16 +170,13 @@
 
         .bottom-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: #ffffff;
             border-top: 1px solid #e8edf4;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            height: calc(64px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
+            height: 64px;
             z-index: 999;
             box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
         }
@@ -206,27 +189,23 @@
             gap: 2px;
             padding: 6px 0;
             cursor: pointer;
-            touch-action: manipulation;
             border: none;
             background: transparent;
             color: #94a3b8;
             font-size: 11px;
             font-weight: 500;
-            transition: color .2s;
             position: relative;
             outline: none !important;
             text-decoration: none;
         }
-        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; color: #94a3b8; transition: color .2s; }
-        .bottom-nav .tab .tab-label { color: #94a3b8; transition: color .2s; }
+        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; color: #94a3b8; }
+        .bottom-nav .tab .tab-label { color: #94a3b8; }
         .bottom-nav .tab.active .tab-icon { color: #0a2f44; }
         .bottom-nav .tab.active .tab-label { color: #0a2f44; font-weight: 600; }
         .bottom-nav .tab.active::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 30%;
-            right: 30%;
+            top: 0; left: 30%; right: 30%;
             height: 3px;
             background: #0a2f44;
             border-radius: 0 0 3px 3px;
@@ -241,21 +220,12 @@
         .status-box .status-value.stopped { color: #ef4444; }
         .status-box .status-value.locking { color: #f59e0b; }
 
-        .app-container {
-            max-width: 800px;
-            width: 100%;
-            padding: 12px;
-            padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
-            box-sizing: border-box;
-            overflow-x: hidden;
-        }
-        .page { display: block; animation: fadeIn .25s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .app-container { max-width: 800px; width: 100%; padding: 12px; padding-bottom: 80px; box-sizing: border-box; }
+        .page { display: block; }
         html, body { width: 100%; overflow-x: hidden; }
         body {
             background: #f0f4f8;
             min-height: 100vh;
-            min-height: 100dvh;
             padding: 0 0 70px 0;
             display: flex;
             justify-content: center;
@@ -264,25 +234,12 @@
             -webkit-tap-highlight-color: transparent !important;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
-        *:focus { outline: none !important; box-shadow: none !important; }
-        button, .btn, .tab, .btn-refresh-id, .btn-save, .btn-test, .btn-secondary, .close-btn {
-            outline: none !important;
-            border: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            box-shadow: none !important;
-        }
-        button:focus, .btn:focus, .tab:focus, .btn-refresh-id:focus, .btn-save:focus, .btn-test:focus, .btn-secondary:focus, .close-btn:focus {
-            outline: none !important;
-            box-shadow: none !important;
-            border-color: transparent !important;
-        }
 
         .lucky-container {
             background: #ffffff;
             border-radius: 16px;
             padding: 20px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            overflow: visible;
             width: 100%;
             box-sizing: border-box;
         }
@@ -300,12 +257,11 @@
             border-radius: 10px;
             font-size: 14px;
             background: #f8fafc;
-            outline: none;
             min-height: 44px;
             width: 100%;
             box-sizing: border-box;
         }
-        .form-group .input-row input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .form-group .input-row input:focus { border-color: #3b82f6; }
         .form-group .input-row .btn-refresh-id {
             background: #f59e0b;
             color: #fff;
@@ -317,11 +273,10 @@
             cursor: pointer;
             white-space: nowrap;
             min-height: 44px;
-            outline: none !important;
         }
         .form-group .input-row .btn-refresh-id:active { transform: scale(0.94); }
-        .form-group .input-row .btn-refresh-id:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .form-group .hint { color: #8899aa; font-size: 12px; margin-top: 4px; word-break: break-word; }
+        .form-group .input-row .btn-refresh-id:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-group .hint { color: #8899aa; font-size: 12px; margin-top: 4px; }
 
         .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 12px; }
         .btn {
@@ -333,20 +288,14 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all .2s;
             text-align: center;
-            touch-action: manipulation;
-            outline: none !important;
             min-height: 48px;
         }
         .btn:active { transform: scale(0.94); }
         .btn-success { background: #22c55e; color: #fff; }
-        .btn-success:active { background: #16a34a; }
         .btn-primary { background: #3b82f6; color: #fff; }
-        .btn-primary:active { background: #2563eb; }
         .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:active { background: #dc2626; }
-        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
 
         .lock-card { background: #f0f7ff; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #d0e4ff; }
         .lock-card .lock-title { font-size: 14px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
@@ -359,11 +308,7 @@
             border-radius: 10px;
             font-size: 14px;
             background: #fff;
-            cursor: pointer;
-            outline: none;
             min-height: 44px;
-            -webkit-appearance: none;
-            appearance: none;
         }
         .lock-row .seat-input {
             flex: 1;
@@ -373,10 +318,8 @@
             border-radius: 10px;
             font-size: 14px;
             background: #fff;
-            outline: none;
             min-height: 44px;
         }
-        .lock-row .seat-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
         .lock-row .btn-lock {
             background: #3b82f6;
             color: #fff;
@@ -386,14 +329,11 @@
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: all .2s;
-            outline: none !important;
             white-space: nowrap;
             min-height: 44px;
         }
         .lock-row .btn-lock:active { transform: scale(0.94); }
-        .lock-row .btn-lock:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-        .lock-row .btn-lock.loading { opacity: .7; cursor: wait; }
+        .lock-row .btn-lock:disabled { opacity: .5; cursor: not-allowed; }
         .lock-row .btn-stop-lock {
             background: #ef4444;
             color: #fff;
@@ -403,29 +343,16 @@
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
-            outline: none !important;
             white-space: nowrap;
             min-height: 44px;
             display: none;
         }
-        .lock-row .btn-stop-lock:active { transform: scale(0.94); }
-
         @media(max-width:400px) {
             .lock-row .venue-select { min-width: 80px; font-size: 13px; }
             .lock-row .seat-input { min-width: 60px; font-size: 13px; }
-            .switch-row { padding: 8px 12px; }
-            .switch-row .switch-label { font-size: 13px; }
-            .switch-row .switch-label .sub { font-size: 11px; }
-            .switch {
-                width: 44px !important;
-                height: 26px !important;
-                min-width: 44px !important;
-            }
+            .switch { width: 44px !important; height: 26px !important; min-width: 44px !important; }
             .switch .slider::before { height: 18px; width: 18px; left: 3px; bottom: 4px; }
             .switch input:checked + .slider::before { transform: translateX(18px); }
-        }
-        @media(min-width:600px) {
-            body { padding: 0 0 70px 0; }
         }
     </style>
 </head>
@@ -527,6 +454,23 @@
 
 <script src="../assets/common.js"></script>
 <script>
+// ============================================================
+// 从本地读取钓场列表
+// ============================================================
+function loadVenuesFromLocal() {
+    try {
+        if (window.AndroidBridge && window.AndroidBridge.loadVenues) {
+            var json = window.AndroidBridge.loadVenues();
+            if (json && json !== '[]') return JSON.parse(json);
+        }
+        var stored = loadData('venues_data', '');
+        if (stored) return JSON.parse(stored);
+    } catch(e) {
+        console.error('加载钓场失败:', e);
+    }
+    return null;
+}
+
 var luckyElements = {
     orderId: document.getElementById('orderId'),
     targetSeats: document.getElementById('targetSeats'),
@@ -557,9 +501,6 @@ var isAutoRunning = false;
 var isLocking = false;
 var lockVenues = [];
 
-// ============================================================
-// 配置
-// ============================================================
 function getLuckyConfig() {
     var targetStr = luckyElements.targetSeats.value.trim();
     var targetSeats = targetStr ? targetStr.split(/\s+/).map(Number).filter(function(n) { return !isNaN(n); }) : [];
@@ -602,9 +543,6 @@ function updateButtons(isRunning) {
     luckyElements.autoLockSwitch.disabled = isRunning;
 }
 
-// ============================================================
-// 确保有订单ID
-// ============================================================
 function ensureOrderId() {
     return new Promise(function(resolve) {
         if (luckyElements.orderId.value.trim()) {
@@ -623,9 +561,6 @@ function ensureOrderId() {
     });
 }
 
-// ============================================================
-// 🔄 刷新ID（本地直连官方 API）
-// ============================================================
 async function refreshOrderId() {
     var btn = luckyElements.btnRefreshId;
     var token = loadData('token', '');
@@ -680,16 +615,12 @@ async function refreshOrderId() {
     }
 }
 
-// ============================================================
-// 钓场列表（本地）
-// ============================================================
 function loadLockVenues() {
     var venues = loadVenuesFromLocal();
     if (venues && venues.length > 0) {
         lockVenues = venues;
         renderLockVenueSelect();
     } else {
-        // 兜底：从 assets 加载
         fetch('venues.json')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
@@ -713,9 +644,6 @@ function renderLockVenueSelect() {
     });
 }
 
-// ============================================================
-// 🔒 自动锁定（通过 Android 原生层轮询）
-// ============================================================
 function startLockLoop() {
     if (isLocking) {
         addLog('⚠️ 锁定已在运行中', 'warning');
@@ -745,7 +673,6 @@ function startLockLoop() {
     var btn = luckyElements.btnLock;
     btn.disabled = true;
     btn.textContent = '⏳ 锁定中...';
-    btn.classList.add('loading');
     luckyElements.btnStopLock.style.display = 'block';
     updateLuckyStatus('locking', null, null, null);
 
@@ -771,11 +698,8 @@ function stopLockLoop() {
     var btn = luckyElements.btnLock;
     btn.disabled = false;
     btn.textContent = '🔒 锁定';
-    btn.classList.remove('loading');
     luckyElements.btnStopLock.style.display = 'none';
-    if (luckyElements.statusDisplay.textContent !== '🎉 已命中！') {
-        addLog('🛑 自动锁定已停止', 'system');
-    }
+    addLog('🛑 自动锁定已停止', 'system');
     updateLuckyStatus('idle', null, null, null);
 }
 
@@ -783,9 +707,6 @@ async function lockSeat() {
     startLockLoop();
 }
 
-// ============================================================
-// 🎲 单次摇号（本地直连官方 API）
-// ============================================================
 async function requestOnce() {
     if (!(await ensureOrderId())) return;
 
@@ -812,9 +733,6 @@ async function requestOnce() {
     }
 }
 
-// ============================================================
-// 🔄 自动刷号（通过 Android 原生层轮询）
-// ============================================================
 async function startAuto() {
     if (!(await ensureOrderId())) return;
 
@@ -851,9 +769,6 @@ async function stopAuto() {
     addLog('✅ 已停止', 'success');
 }
 
-// ============================================================
-// 🔒 命中后自动锁定
-// ============================================================
 async function performAutoLock(orderId, hitSeat) {
     var venueName = luckyElements.lockVenueSelect.value;
     var token = loadData('token', '');
@@ -880,9 +795,6 @@ async function performAutoLock(orderId, hitSeat) {
     }
 }
 
-// ============================================================
-// 🔒 performLock（通过本地 seat_map.json 查找 seat_id）
-// ============================================================
 async function performLock(orderId, venueName, seatNumber, token, uuid) {
     try {
         var seatMap = loadSeatMapFromLocal();
@@ -912,9 +824,6 @@ async function performLock(orderId, venueName, seatNumber, token, uuid) {
     }
 }
 
-// ============================================================
-// 📊 处理摇号结果
-// ============================================================
 function handleRequestResult(result) {
     if (result.code !== '000') {
         var errorMsg = result.msg || result.error || result.message || '请求失败';
@@ -965,9 +874,6 @@ function handleRequestResult(result) {
     updateLuckyStatus('idle', attempt, seats, orderId);
 }
 
-// ============================================================
-// 弹窗
-// ============================================================
 function showHitModal(seat, seats) {
     luckyElements.hitNumber.textContent = seat;
     luckyElements.hitDetail.textContent = '完整号码: [' + seats.join(', ') + ']';
@@ -978,17 +884,12 @@ function closeHitModal() {
     luckyElements.hitModal.classList.remove('show');
 }
 
-// ============================================================
-// 📥 Android 原生层回调
-// ============================================================
-
-// 自动刷号进度回调
+// Android 原生层回调
 window._onProgress = function(attempt, seats) {
     updateLuckyStatus('running', attempt, seats, luckyElements.orderId.value);
     addLog('📊 号码: [' + seats.join(', ') + ']', 'system');
 };
 
-// 自动刷号命中回调
 window._onHit = function(seats) {
     var targetSeats = getLuckyConfig().targetSeats;
     var hitSeat = seats[0];
@@ -1001,7 +902,6 @@ window._onHit = function(seats) {
     addLog('🎯 命中目标号码: ' + hitSeat, 'hit');
     updateButtons(false);
 
-    // 检查自动锁定开关
     if (luckyElements.autoLockSwitch.checked) {
         addLog('🔒 命中后自动锁定: ' + hitSeat, 'system');
         performAutoLock(luckyElements.orderId.value, hitSeat);
@@ -1010,7 +910,6 @@ window._onHit = function(seats) {
     }
 };
 
-// 自动锁定成功回调
 window._onLocked = function(seatNumber, orderId) {
     addLog('🎉 座位 ' + seatNumber + ' 已成功锁定！订单: ' + orderId, 'hit');
     playHitSound();
@@ -1019,9 +918,6 @@ window._onLocked = function(seatNumber, orderId) {
     stopLockLoop();
 };
 
-// ============================================================
-// 事件绑定
-// ============================================================
 luckyElements.btnRefreshId.addEventListener('click', refreshOrderId);
 luckyElements.btnOnce.addEventListener('click', requestOnce);
 luckyElements.btnAuto.addEventListener('click', startAuto);
@@ -1044,20 +940,6 @@ luckyElements.hitStop.addEventListener('click', function() {
     addLog('⏹ 已停止', 'system');
 });
 
-window.addEventListener('beforeunload', function() {
-    if (isAutoRunning) {
-        if (window.AndroidBridge && window.AndroidBridge.stopAutoLoop) {
-            window.AndroidBridge.stopAutoLoop();
-        }
-    }
-    if (isLocking) {
-        stopLockLoop();
-    }
-});
-
-// ============================================================
-// 🚀 初始化
-// ============================================================
 (function initLuckyPage() {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
@@ -1075,7 +957,6 @@ window.addEventListener('beforeunload', function() {
     updateLuckyStatus('idle', 0, [], '');
     loadLockVenues();
 })();
-
 </script>
 </body>
 </html>
