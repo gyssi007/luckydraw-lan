@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>配置 - 渔榜助手</title>
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <style>
+        /* ✅ 确保页面可以滚动 */
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding: 0 0 100px 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+        }
+        .app-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 12px;
+            padding-bottom: 100px;
+        }
+        .page {
+            display: block;
+            animation: fadeIn .25s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ✅ 下拉菜单样式 - 可滚动 */
+        .venue-dropdown-wrapper {
+            margin-top: 12px;
+            border: 1px solid #e8edf4;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+        .venue-dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+            transition: background .15s;
+            background: #ffffff;
+        }
+        .venue-dropdown-header:active {
+            background: #f1f5f9;
+        }
+        .venue-dropdown-header .title {
+            font-weight: 600;
+            color: #0a2f44;
+            font-size: 14px;
+        }
+        .venue-dropdown-header .arrow {
+            color: #94a3b8;
+            font-size: 14px;
+            transition: transform .25s ease;
+        }
+        .venue-dropdown-header .arrow.open {
+            transform: rotate(180deg);
+        }
+        /* ✅ FIX: max-height 不再写死 50vh，改由 JS 根据实际内容高度动态设置，
+           这样展开/收起动画才会平滑，而不是"瞬间展开、最后一下猛收起" */
+        .venue-dropdown-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .35s ease, padding .35s ease;
+            padding: 0 16px;
+            background: #ffffff;
+        }
+        .venue-dropdown-body.open {
+            padding: 12px 16px 16px 16px;
+        }
+        .venue-dropdown-body .venue-mgr-add {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .venue-dropdown-body .venue-mgr-add input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 13px;
+            background: #f8fafc;
+            outline: none;
+            min-height: 44px;
+        }
+        .venue-dropdown-body .venue-mgr-add input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .venue-dropdown-body .venue-mgr-add .btn-add {
+            align-self: flex-end;
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none !important;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+        .venue-dropdown-body .venue-mgr-add .btn-add:active {
+            transform: scale(0.94);
+        }
+        /* ✅ FIX: 内层列表保留自己的滚动条（超过 40vh 时内部滚动），
+           外层容器不再叠加 overflow-y:auto，避免双层滚动条互相打架 */
+        .venue-dropdown-body .venue-mgr-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+        .venue-dropdown-body .venue-mgr-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background .15s;
+            border: 1px solid transparent;
+        }
+        .venue-dropdown-body .venue-mgr-item:active {
+            background: #e8edf4;
+        }
+        .venue-dropdown-body .venue-mgr-item .info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+        .venue-dropdown-body .venue-mgr-item .info .name {
+            font-weight: 600;
+            color: #0a2f44;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .venue-dropdown-body .venue-mgr-item .info .order-id {
+            color: #8899aa;
+            font-size: 11px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .venue-dropdown-body .venue-mgr-item .btn-del {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+            outline: none !important;
+            min-height: 36px;
+        }
+        .venue-dropdown-body .venue-mgr-item .btn-del:active {
+            transform: scale(0.92);
+        }
+        .venue-dropdown-body .venue-mgr-empty {
+            text-align: center;
+            padding: 20px;
+            color: #8899aa;
+            font-size: 13px;
+        }
+        .venue-dropdown-body .venue-mgr-loading {
+            text-align: center;
+            padding: 12px;
+            color: #8899aa;
+            font-size: 13px;
+        }
+        .venue-mgr-section .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0a2f44;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .venue-mgr-section .section-title .count-badge {
+            background: #e8edf4;
+            color: #334455;
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        /* ✅ 配置表单样式 */
+        .config-container {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .config-container .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0a2f44;
+            margin-bottom: 4px;
+        }
+        .config-container .page-subtitle {
+            color: #8899aa;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .config-container .field {
+            margin-bottom: 16px;
+        }
+        .config-container .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334455;
+            margin-bottom: 4px;
+        }
+        .config-container .field .input-row {
+            display: flex;
+            gap: 6px;
+            align-items: stretch;
+        }
+        .config-container .field .input-row textarea,
+        .config-container .field .input-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: monospace;
+            background: #f8fafc;
+            min-height: 42px;
+            resize: vertical;
+            outline: none;
+        }
+        .config-container .field .input-row textarea:focus,
+        .config-container .field .input-row input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .config-container .field .hint {
+            font-size: 11px;
+            color: #8899aa;
+            margin-top: 4px;
+        }
+        .config-container .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .config-container .actions button {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 70px;
+            touch-action: manipulation;
+            outline: none !important;
+            min-height: 44px;
+        }
+        .config-container .actions button:active {
+            transform: scale(0.96);
+        }
+        .config-container .actions .btn-save {
+            background: #3b82f6;
+            color: #fff;
+        }
+        .config-container .actions .btn-save:active {
+            background: #2563eb;
+        }
+        .config-container .actions .btn-test {
+            background: #22c55e;
+            color: #fff;
+        }
+        .config-container .actions .btn-test:active {
+            background: #16a34a;
+        }
+        .config-container .status-msg {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        .config-container .status-msg.success {
+            display: block;
+            background: #e6f7ed;
+            color: #1a7a44;
+        }
+        .config-container .status-msg.error {
+            display: block;
+            background: #fde8e8;
+            color: #b33a3a;
+        }
+        .config-container .status-msg.info {
+            display: block;
+            background: #e3edf7;
+            color: #1a5f7a;
+        }
+
+        /* ✅ 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e8edf4;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 64px;
+            z-index: 999;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+        }
+        .bottom-nav .tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 500;
+            transition: color .2s;
+            position: relative;
+            outline: none !important;
+            text-decoration: none;
+        }
+        .bottom-nav .tab .tab-icon {
+            font-size: 20px;
+            line-height: 1.2;
+            color: #94a3b8;
+            transition: color .2s;
+        }
+        .bottom-nav .tab .tab-label {
+            color: #94a3b8;
+            transition: color .2s;
+        }
+        .bottom-nav .tab.active .tab-icon {
+            color: #0a2f44;
+        }
+        .bottom-nav .tab.active .tab-label {
+            color: #0a2f44;
+            font-weight: 600;
+        }
+        .bottom-nav .tab.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 30%;
+            right: 30%;
+            height: 3px;
+            background: #0a2f44;
+            border-radius: 0 0 3px 3px;
+        }
+        .bottom-nav .tab:active {
+            transform: scale(0.92);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent !important;
+            outline: none !important;
+        }
+        *:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        button, .btn, .tab, .btn-refresh, .btn-save, .btn-test, .btn-secondary, .close-btn {
+            outline: none !important;
+            border: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            box-shadow: none !important;
+        }
+        button:focus, .btn:focus, .tab:focus, .btn-refresh:focus, .btn-save:focus, .btn-test:focus, .btn-secondary:focus, .close-btn:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            border-color: transparent !important;
+        }
+        @media(max-width:400px) {
+            .config-container { padding: 18px 14px; }
+        }
+        @media(min-width:600px) {
+            body { padding: 0 0 100px 0; }
+        }
+
+        /* ✅ 号码池刷新按钮区域 */
+        .pool-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0 6px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e8edf4;
+            align-items: center;
+        }
+        .pool-actions .btn-refresh-pool {
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 44px;
+            flex: 1;
+            transition: all .2s;
+            outline: none !important;
+        }
+        .pool-actions .btn-refresh-pool:active {
+            transform: scale(0.94);
+            background: #d97706;
+        }
+        .pool-actions .btn-refresh-pool:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .pool-actions .btn-refresh-pool .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .pool-actions .pool-hint {
+            color: #8899aa;
+            font-size: 11px;
+            flex: 1;
+            min-width: 120px;
+        }
+        .pool-status {
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        .pool-status.success {
+            display: block;
+            background: #e6f7ed;
+            color: #1a7a44;
+        }
+        .pool-status.error {
+            display: block;
+            background: #fde8e8;
+            color: #b33a3a;
+        }
+        .pool-status.info {
+            display: block;
+            background: #e3edf7;
+            color: #1a5f7a;
+        }
+        .pool-status .detail {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="page active" id="pageConfig">
+        <div class="config-container">
+            <div class="page-title">⚙️ 代理配置</div>
+            <div class="page-subtitle">配置 Token 和 UUID（已加密存储）</div>
+
+            <div class="field">
+                <label>Token</label>
+                <div class="input-row">
+                    <textarea id="tokenInput" placeholder="Bearer eyJ0eXAiOiJqd3QifQ..."></textarea>
+                </div>
+                <div class="hint">复制 Authorization 头的完整值</div>
+            </div>
+
+            <div class="field">
+                <label>UUID</label>
+                <div class="input-row">
+                    <input id="uuidInput" placeholder="1776084841949" />
+                </div>
+                <div class="hint">复制 uuid 头的值</div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-save" onclick="saveConfig()">💾 保存配置</button>
+                <button class="btn-test" onclick="testConfig()">🔍 测试</button>
+            </div>
+
+            <div id="configStatus" class="status-msg"></div>
+
+            <!-- ✅ 号码池刷新（独立区域） -->
+            <div class="pool-actions">
+                <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">
+                    🔄 刷新号码池
+                </button>
+                <span class="pool-hint">从钓场列表更新座位映射表</span>
+            </div>
+            <div id="poolStatus" class="pool-status"></div>
+
+            <!-- 钓场管理 - 下拉菜单 -->
+            <div class="venue-mgr-section">
+                <div class="section-title">
+                    <span>钓场管理</span>
+                    <span class="count-badge" id="venueCount">0 个</span>
+                </div>
+                <div class="venue-dropdown-wrapper">
+                    <div class="venue-dropdown-header" id="venueDropdownToggle">
+                        <span class="title">📋 管理钓场</span>
+                        <span class="arrow" id="dropdownArrow">▼</span>
+                    </div>
+                    <div class="venue-dropdown-body" id="venueDropdownBody">
+                        <div class="venue-mgr-add">
+                            <input id="venueNameInput" placeholder="钓场名称" />
+                            <input id="venueOrderIdInput" placeholder="订单 ID" />
+                            <button class="btn-add" onclick="addVenue()">➕ 添加</button>
+                        </div>
+                        <div class="venue-mgr-list" id="venueMgrList">
+                            <div class="venue-mgr-loading">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a class="tab" href="/app/pages/lucky.html">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">幸运号码</span>
+    </a>
+    <a class="tab" href="/app/pages/detective.html">
+        <span class="tab-icon">🕵🏻</span>
+        <span class="tab-label">钓场侦探</span>
+    </a>
+    <a class="tab active" href="/app/pages/config.html">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-label">配置</span>
+    </a>
+</div>
+
+<script src="../assets/common.js"></script>
+<script>
+// ============================================================
+// 📋 下拉菜单切换
+// ✅ FIX: 改用 JS 读取 scrollHeight 来驱动 max-height 过渡，
+//    而不是写死 max-height: 50vh，这样无论内容多高，展开/收起
+//    动画都是平滑的，不会出现"展开瞬间完成、收起最后一下猛收"的问题。
+//    展开动画结束后把 max-height 设为 'none'，这样中途增删钓场，
+//    列表高度变化时会自动跟着长高/缩短，不需要额外处理。
+// ============================================================
+var dropdownToggle = document.getElementById('venueDropdownToggle');
+var dropdownBody = document.getElementById('venueDropdownBody');
+var dropdownArrow = document.getElementById('dropdownArrow');
+var isDropdownOpen = false;
+
+function openDropdown() {
+    // 从真实内容高度开始过渡，而不是一个固定的 50vh
+    dropdownBody.style.maxHeight = dropdownBody.scrollHeight + 'px';
+    dropdownBody.classList.add('open');
+    dropdownArrow.classList.add('open');
+    isDropdownOpen = true;
+}
+
+function closeDropdown() {
+    // 先把 max-height 显式设为当前真实高度（如果之前是 'none'，
+    // 直接跳到 0 是没有过渡效果的，必须先有个具体数值起点）
+    dropdownBody.style.maxHeight = dropdownBody.scrollHeight + 'px';
+    // 强制重排，确保上面这行样式生效后再收起，否则浏览器可能会合并这两次样式变更
+    void dropdownBody.offsetHeight;
+    dropdownBody.style.maxHeight = '0px';
+    dropdownBody.classList.remove('open');
+    dropdownArrow.classList.remove('open');
+    isDropdownOpen = false;
+}
+
+dropdownToggle.addEventListener('click', function() {
+    if (isDropdownOpen) {
+        closeDropdown();
+    } else {
+        openDropdown();
+    }
+});
+
+// 展开动画结束后，取消高度限制，让内容变化时（增删钓场）自动适配高度
+dropdownBody.addEventListener('transitionend', function(e) {
+    if (e.propertyName === 'max-height' && isDropdownOpen) {
+        dropdownBody.style.maxHeight = 'none';
+    }
+});
+
+// ============================================================
+// ⚙️ 保存配置
+// ============================================================
+async function saveConfig() {
+    var token = document.getElementById('tokenInput').value.trim();
+    var uuid = document.getElementById('uuidInput').value.trim();
+    if (!token || !uuid) {
+        setStatusMsg('⚠️ Token 和 UUID 不能为空', 'error');
+        return;
+    }
+    setStatusMsg('⏳ 保存中...', 'info');
+    try {
+        saveData('token', token);
+        saveData('uuid', uuid);
+
+        var luckyResp = await fetch(API_BASE + '/lucky/update-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, uuid: uuid })
+        });
+        var detectiveResp = await fetch(API_BASE + '/detective/update-config', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ token: token, uuid: uuid })
+        });
+        var luckyResult = await luckyResp.json();
+        var detectiveResult = await detectiveResp.json();
+        if (luckyResult.success && detectiveResult.success) {
+            setStatusMsg('✅ 配置已同步更新！', 'success');
+            addLog('✅ 配置已保存 (Token/UUID)', 'success');
+        } else {
+            var msg = '';
+            if (!luckyResult.success) msg += '幸运号码更新失败；';
+            if (!detectiveResult.success) msg += '钓场侦探更新失败；';
+            setStatusMsg('❌ ' + msg, 'error');
+            addLog('❌ 配置保存失败: ' + msg, 'error');
+        }
+    } catch(e) {
+        setStatusMsg('❌ 连接失败: ' + e.message, 'error');
+        addLog('❌ 配置保存异常: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 🔍 测试配置
+// ============================================================
+async function testConfig() {
+    var token = document.getElementById('tokenInput').value.trim();
+    var uuid = document.getElementById('uuidInput').value.trim();
+    if (!token || !uuid) {
+        setStatusMsg('⚠️ 请先填写 Token 和 UUID', 'error');
+        return;
+    }
+    setStatusMsg('⏳ 测试中...', 'info');
+    addLog('🔍 开始测试 Token/UUID 有效性...', 'system');
+
+    saveData('token', token);
+    saveData('uuid', uuid);
+
+    try {
+        var resp = await fetch(API_BASE + '/seat/list?order_id=950905777382072320', {
+            headers: {
+                'Authorization': token,
+                'uuid': uuid,
+                'Content-Type': 'application/json'
+            }
+        });
+        var result = await resp.json();
+
+        if (result.success && result.data && result.data.code === '000') {
+            setStatusMsg('✅ 测试成功！Token 和 UUID 有效', 'success');
+            addLog('✅ Token/UUID 测试通过', 'success');
+        } else {
+            var errMsg = result.error || result.data?.msg || result.msg || 'Token 无效或已过期';
+            setStatusMsg('❌ 测试失败: ' + errMsg, 'error');
+            addLog('❌ 测试失败: ' + errMsg, 'error');
+        }
+    } catch(e) {
+        setStatusMsg('❌ 测试失败: ' + e.message, 'error');
+        addLog('❌ 测试异常: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 📋 钓场管理
+// ============================================================
+function getDetectiveHeaders() {
+    return { 'x-session-token': sessionToken };
+}
+
+// ✅ FIX: 列表内容变化后（加载完成/增/删），如果下拉菜单是展开状态，
+//    需要重新计算一次高度，避免出现内容被截断或跳动的情况。
+function refreshDropdownHeightIfOpen() {
+    if (!isDropdownOpen) return;
+    // 若之前已经是 'none'（自动高度），内容变化会自动生效，无需处理；
+    // 这里统一重新赋值一次，确保数值型 max-height 的过渡场景也能覆盖到。
+    dropdownBody.style.maxHeight = dropdownBody.scrollHeight + 'px';
+    // 下一帧再放开限制，恢复自动高度，方便后续继续变化
+    requestAnimationFrame(function() {
+        if (isDropdownOpen) {
+            dropdownBody.style.maxHeight = 'none';
+        }
+    });
+}
+
+async function loadVenueList() {
+    var listEl = document.getElementById('venueMgrList');
+    listEl.innerHTML = '<div class="venue-mgr-loading">加载中...</div>';
+    refreshDropdownHeightIfOpen();
+    try {
+        var resp = await fetch(API_BASE + '/venues', { headers: getDetectiveHeaders() });
+        var result = await resp.json();
+        if (result.success) {
+            renderVenueList(result.data || []);
+        } else {
+            listEl.innerHTML = '<div class="venue-mgr-empty">加载失败</div>';
+        }
+    } catch(e) {
+        listEl.innerHTML = '<div class="venue-mgr-empty">加载失败: ' + e.message + '</div>';
+    }
+    refreshDropdownHeightIfOpen();
+}
+
+function renderVenueList(venues) {
+    var listEl = document.getElementById('venueMgrList');
+    var countEl = document.getElementById('venueCount');
+    countEl.textContent = venues.length + ' 个';
+    if (!venues || venues.length === 0) {
+        listEl.innerHTML = '<div class="venue-mgr-empty">暂无钓场，点击展开后添加</div>';
+        refreshDropdownHeightIfOpen();
+        return;
+    }
+    var html = '';
+    venues.forEach(function(v) {
+        html += '<div class="venue-mgr-item">' +
+            '<div class="info">' +
+                '<span class="name">' + escapeHtml(v.name) + '</span>' +
+                '<span class="order-id">ID: ' + escapeHtml(v.order_id) + '</span>' +
+            '</div>' +
+            '<button class="btn-del" onclick="deleteVenue(' + v.id + ')">删除</button>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+    refreshDropdownHeightIfOpen();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>"']/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        if (m === "'") return '&#39;';
+        return m;
+    });
+}
+
+async function addVenue() {
+    var nameInput = document.getElementById('venueNameInput');
+    var orderIdInput = document.getElementById('venueOrderIdInput');
+    var name = nameInput.value.trim();
+    var order_id = orderIdInput.value.trim();
+    if (!name || !order_id) {
+        alert('请填写钓场名称和订单 ID');
+        return;
+    }
+    try {
+        var resp = await fetch(API_BASE + '/venues/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, order_id: order_id })
+        });
+        var result = await resp.json();
+        if (result.success) {
+            nameInput.value = '';
+            orderIdInput.value = '';
+            loadVenueList();
+            if (typeof loadVenues === 'function') {
+                loadVenues();
+            }
+            addLog('✅ 钓场已添加: ' + name, 'success');
+        } else {
+            alert('添加失败: ' + (result.error || '未知错误'));
+        }
+    } catch(e) {
+        alert('添加失败: ' + e.message);
+    }
+}
+
+async function deleteVenue(id) {
+    if (!confirm('确定要删除这个钓场吗？')) return;
+    try {
+        var resp = await fetch(API_BASE + '/venues/delete/' + id, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        var result = await resp.json();
+        if (result.success) {
+            loadVenueList();
+            if (typeof loadVenues === 'function') {
+                loadVenues();
+            }
+            addLog('🗑️ 钓场已删除', 'system');
+        } else {
+            alert('删除失败: ' + (result.error || '未知错误'));
+        }
+    } catch(e) {
+        alert('删除失败: ' + e.message);
+    }
+}
+
+// ============================================================
+// 🔄 刷新号码池
+// ============================================================
+async function refreshSeatMap() {
+    var btn = document.getElementById('btnRefreshPool');
+    var statusEl = document.getElementById('poolStatus');
+    
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    
+    if (!token || !uuid) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '⚠️ 请先配置 Token 和 UUID';
+        statusEl.style.display = 'block';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> 刷新中...';
+    statusEl.className = 'pool-status info';
+    statusEl.textContent = '⏳ 正在刷新号码池，请稍候...';
+    statusEl.style.display = 'block';
+    
+    try {
+        var resp = await fetch(API_BASE + '/api/refresh-seat-map', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ token: token, uuid: uuid })
+        });
+        var result = await resp.json();
+        
+        if (result.success) {
+            var detailHtml = '';
+            if (result.data && result.data.totalSeats !== undefined) {
+                detailHtml = '<div class="detail">✅ 共 ' + result.data.totalSeats + ' 个钓位，' + result.data.totalVenues + ' 个钓场已更新</div>';
+                if (result.data.failedVenues && result.data.failedVenues.length > 0) {
+                    detailHtml += '<div class="detail" style="color:#e68a2e;">⚠️ 跳过: ' + result.data.failedVenues.join('、') + '</div>';
+                }
+            }
+            statusEl.className = 'pool-status success';
+            statusEl.innerHTML = '✅ ' + result.msg + detailHtml;
+            addLog('✅ 号码池刷新成功: ' + (result.data?.totalSeats || 0) + ' 个钓位', 'success');
+        } else {
+            statusEl.className = 'pool-status error';
+            statusEl.textContent = '❌ 刷新失败: ' + (result.error || '未知错误');
+            addLog('❌ 号码池刷新失败: ' + (result.error || '未知错误'), 'error');
+        }
+    } catch(e) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ 连接失败: ' + e.message;
+        addLog('❌ 号码池刷新异常: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 刷新号码池';
+    }
+}
+
+// ============================================================
+// 🚀 初始化
+// ============================================================
+(function initConfigPage() {
+    var savedToken = loadData('token', '');
+    var savedUuid = loadData('uuid', '');
+
+    document.getElementById('tokenInput').value = savedToken;
+    document.getElementById('uuidInput').value = savedUuid;
+
+    if (savedToken && savedUuid) {
+        setStatusMsg('✅ 已加载本机保存的 Token / UUID', 'success');
+    } else {
+        setStatusMsg('📌 请填写 Token 和 UUID，然后保存配置', 'info');
+    }
+
+    loadVenueList();
+})();
+
+</script>
+</body>
+</html>

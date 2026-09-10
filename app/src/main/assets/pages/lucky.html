@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+    <title>幸运号码 - 渔榜助手</title>
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <style>
+        /* ============================================================
+           以下为移动端显示加固样式。
+           说明：为了避免被外部 app.css 中可能存在的全局重置规则
+           （例如对 input[type=checkbox] 做 display:none 之类处理）
+           在移动端断点下覆盖，这里对开关相关的关键属性统一加了
+           !important 进行防御，且这些改动只影响显示层，
+           不涉及任何 JS 逻辑与交互行为。
+           ============================================================ */
+
+        .lock-row .btn-stop-lock {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none !important;
+            white-space: nowrap;
+            min-height: 44px;
+            display: none;
+        }
+        .lock-row .btn-stop-lock:active { transform: scale(0.94); }
+
+        /* ===== 开关样式（移动端加固版） ===== */
+        .switch-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e8edf4;
+            margin-bottom: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: visible !important;
+        }
+        .switch-row .switch-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334455;
+            flex: 1 1 auto;
+            min-width: 0;
+            word-break: break-word;
+        }
+        .switch-row .switch-label .sub {
+            font-weight: 400;
+            font-size: 12px;
+            color: #8899aa;
+            display: block;
+            margin-top: 2px;
+            white-space: normal;
+        }
+
+        /* 开关本体：显式声明尺寸并防止被外部样式覆盖/裁切 */
+        .switch {
+            position: relative !important;
+            display: inline-block !important;
+            width: 50px !important;
+            height: 28px !important;
+            min-width: 50px !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            vertical-align: middle;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .switch input {
+            /* 关闭原生复选框外观，避免与自定义滑块渲染冲突（常见于 iOS Safari / 部分安卓 WebView） */
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            position: absolute !important;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            display: block !important;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .switch .slider {
+            position: absolute !important;
+            display: block !important;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #dce4ec;
+            transition: .3s;
+            border-radius: 28px;
+            pointer-events: none; /* 点击穿透到 input，保证移动端点击命中率 */
+            z-index: 1;
+        }
+        .switch .slider::before {
+            content: "";
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .switch input:checked + .slider {
+            background: #22c55e;
+        }
+        .switch input:checked + .slider::before {
+            transform: translateX(22px);
+        }
+        .switch input:disabled + .slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .switch input:disabled {
+            cursor: not-allowed;
+        }
+
+        /* ===== 日志 ===== */
+        .log-box {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 220px;
+            min-height: 80px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            line-height: 1.7;
+            margin-top: 10px;
+        }
+        .log-box .log-entry { padding: 3px 0; border-bottom: 1px solid #1e293b; word-break: break-all; }
+        .log-box .log-entry .time { color: #64748b; margin-right: 8px; }
+        .log-box .log-hit { color: #4ade80; font-weight: 700; }
+        .log-box .log-error { color: #f87171; }
+        .log-box .log-success { color: #34d399; }
+        .log-box .log-system { color: #60a5fa; }
+        .log-box .log-warning { color: #fbbf24; }
+
+        /* ===== 弹窗 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px 24px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalIn .25s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal h2 { font-size: 26px; color: #22c55e; margin-bottom: 6px; }
+        .modal .hit-number { font-size: 48px; font-weight: 700; color: #22c55e; margin: 8px 0; }
+        .modal .detail { color: #64748b; font-size: 14px; margin-bottom: 18px; }
+        .modal .btn-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .modal .btn-group .btn {
+            flex: none;
+            padding: 10px 20px;
+            min-width: 80px;
+            border: none;
+            outline: none !important;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal .btn-group .btn-success { background: #22c55e; color: #fff; }
+        .modal .btn-group .btn-outline { background: transparent; color: #3b82f6; border: 1px solid #3b82f6; }
+        .modal .btn-group .btn-danger { background: #ef4444; color: #fff; }
+        .modal .btn-group .btn:active { transform: scale(0.94); }
+
+        /* ===== 底部导航 ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e8edf4;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: calc(64px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            z-index: 999;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+        }
+        .bottom-nav .tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 500;
+            transition: color .2s;
+            position: relative;
+            outline: none !important;
+            text-decoration: none;
+        }
+        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; color: #94a3b8; transition: color .2s; }
+        .bottom-nav .tab .tab-label { color: #94a3b8; transition: color .2s; }
+        .bottom-nav .tab.active .tab-icon { color: #0a2f44; }
+        .bottom-nav .tab.active .tab-label { color: #0a2f44; font-weight: 600; }
+        .bottom-nav .tab.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 30%;
+            right: 30%;
+            height: 3px;
+            background: #0a2f44;
+            border-radius: 0 0 3px 3px;
+        }
+        .bottom-nav .tab:active { transform: scale(0.92); }
+
+        /* ===== 状态 ===== */
+        .status-box .status-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; gap: 8px; }
+        .status-box .status-label { color: #64748b; flex-shrink: 0; }
+        .status-box .status-value { font-weight: 600; color: #0a2f44; text-align: right; word-break: break-all; }
+        .status-box .status-value.hit { color: #22c55e; }
+        .status-box .status-value.running { color: #3b82f6; }
+        .status-box .status-value.stopped { color: #ef4444; }
+        .status-box .status-value.locking { color: #f59e0b; }
+
+        /* ===== 容器 ===== */
+        .app-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 12px;
+            padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        .page { display: block; animation: fadeIn .25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 0 0 70px 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+        *:focus { outline: none !important; box-shadow: none !important; }
+        button, .btn, .tab, .btn-refresh-id, .btn-save, .btn-test, .btn-secondary, .close-btn {
+            outline: none !important;
+            border: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            box-shadow: none !important;
+        }
+        button:focus, .btn:focus, .tab:focus, .btn-refresh-id:focus, .btn-save:focus, .btn-test:focus, .btn-secondary:focus, .close-btn:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            border-color: transparent !important;
+        }
+
+        /* ===== 幸运号码容器 ===== */
+        .lucky-container {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: visible;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .lucky-container .page-title { font-size: 20px; font-weight: 700; color: #0a2f44; margin-bottom: 4px; }
+        .lucky-container .page-subtitle { color: #8899aa; font-size: 13px; margin-bottom: 18px; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 4px; }
+        .form-group .input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .form-group .input-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #f8fafc;
+            outline: none;
+            min-height: 44px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-group .input-row input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .form-group .input-row .btn-refresh-id {
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            min-height: 44px;
+            outline: none !important;
+        }
+        .form-group .input-row .btn-refresh-id:active { transform: scale(0.94); }
+        .form-group .input-row .btn-refresh-id:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .form-group .hint { color: #8899aa; font-size: 12px; margin-top: 4px; word-break: break-word; }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 12px; }
+        .btn {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+            touch-action: manipulation;
+            outline: none !important;
+            min-height: 48px;
+        }
+        .btn:active { transform: scale(0.94); }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-success:active { background: #16a34a; }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-primary:active { background: #2563eb; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:active { background: #dc2626; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        .lock-card { background: #f0f7ff; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #d0e4ff; }
+        .lock-card .lock-title { font-size: 14px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
+        .lock-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .lock-row .venue-select {
+            flex: 2;
+            min-width: 120px;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            min-height: 44px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .lock-row .seat-input {
+            flex: 1;
+            min-width: 70px;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fff;
+            outline: none;
+            min-height: 44px;
+        }
+        .lock-row .seat-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .lock-row .btn-lock {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all .2s;
+            outline: none !important;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+        .lock-row .btn-lock:active { transform: scale(0.94); }
+        .lock-row .btn-lock:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .lock-row .btn-lock.loading { opacity: .7; cursor: wait; }
+        .lock-row .btn-stop-lock {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none !important;
+            white-space: nowrap;
+            min-height: 44px;
+            display: none;
+        }
+        .lock-row .btn-stop-lock:active { transform: scale(0.94); }
+
+        /* ===== 响应式 ===== */
+        @media(max-width:400px) {
+            .lock-row .venue-select { min-width: 80px; font-size: 13px; }
+            .lock-row .seat-input { min-width: 60px; font-size: 13px; }
+            .switch-row { padding: 8px 12px; }
+            .switch-row .switch-label { font-size: 13px; }
+            .switch-row .switch-label .sub { font-size: 11px; }
+            .switch {
+                width: 44px !important;
+                height: 26px !important;
+                min-width: 44px !important;
+            }
+            .switch .slider::before { height: 18px; width: 18px; left: 3px; bottom: 4px; }
+            .switch input:checked + .slider::before { transform: translateX(18px); }
+        }
+        @media(min-width:600px) {
+            body { padding: 0 0 70px 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="page active" id="pageLucky">
+        <div class="lucky-container">
+            <div class="page-title">祝您爆护！</div>
+            <div class="page-subtitle">全自动摇号 · 单次摇号 · 一发入魂</div>
+
+            <!-- 订单ID -->
+            <div class="form-group">
+                <label>📋 订单 ID</label>
+                <div class="input-row">
+                    <input id="orderId" placeholder="自动获取或手动输入" />
+                    <button class="btn-refresh-id" id="btnRefreshId">🔄 刷新ID</button>
+                </div>
+                <div class="hint" id="orderIdHint">点击「刷新ID」自动获取最新待摇号订单</div>
+            </div>
+
+            <!-- 目标号码 -->
+            <div class="form-group">
+                <label>目标号码（空格分隔）</label>
+                <div class="input-row">
+                    <input id="targetSeats" placeholder="例如: 8 18 28" />
+                </div>
+                <div class="hint">留空则不进行匹配，仅显示号码</div>
+            </div>
+
+            <!-- ✅ 命中后自动锁定开关 -->
+            <div class="switch-row">
+                <span class="switch-label">
+                    🎯 命中后自动锁定
+                    <span class="sub">开启后命中即自动锁定，无需弹窗确认</span>
+                </span>
+                <label class="switch">
+                    <input type="checkbox" id="autoLockSwitch" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="btn-group">
+                <button class="btn btn-success" id="btnAuto">自动刷号</button>
+                <button class="btn btn-primary" id="btnOnce">单次摇号</button>
+                <button class="btn btn-danger" id="btnStop" disabled>⏹ 停止</button>
+            </div>
+
+            <!-- 锁定 -->
+            <div class="lock-card">
+                <div class="lock-title">一发入魂</div>
+                <div class="lock-row">
+                    <select class="venue-select" id="lockVenueSelect">
+                        <option value="">选择钓场</option>
+                    </select>
+                    <input class="seat-input" id="lockSeatNumber" placeholder="钓位号（空格分隔）" inputmode="numeric" />
+                    <button class="btn-lock" id="btnLock">🔒 锁定</button>
+                    <button class="btn-stop-lock" id="btnStopLock">⏹ 停止</button>
+                </div>
+                
+            </div>
+
+            <!-- 状态 -->
+            <div class="status-box">
+                <div class="status-row"><span class="status-label">状态</span><span class="status-value" id="statusDisplay">⏸ 空闲</span></div>
+                <div class="status-row"><span class="status-label">尝试次数</span><span class="status-value" id="attemptDisplay">0</span></div>
+                <div class="status-row"><span class="status-label">当前号码</span><span class="status-value" id="seatsDisplay">-</span></div>
+                <div class="status-row"><span class="status-label">目标号码</span><span class="status-value" id="targetDisplay">未设置</span></div>
+                <div class="status-row"><span class="status-label">当前订单ID</span><span class="status-value" id="orderIdDisplay" style="font-size:12px;color:#64748b;">-</span></div>
+            </div>
+
+            <!-- 日志 -->
+            <div class="log-box" id="logBox">
+                <div class="log-entry log-system"><span class="time">[系统]</span>📌 系统就绪，等待操作...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 命中弹窗 -->
+<div class="modal-overlay" id="hitModal">
+    <div class="modal">
+        <h2>🎉 命中目标！</h2>
+        <div class="hit-number" id="hitNumber">88</div>
+        <div class="detail" id="hitDetail">完整号码: [53, 88]</div>
+        <div class="btn-group">
+            <button class="btn btn-success" id="hitConfirm">✅ 去锁定</button>
+            <button class="btn btn-outline" id="hitContinue">🔄 继续刷</button>
+            <button class="btn btn-danger" id="hitStop">⏹ 停止</button>
+        </div>
+    </div>
+</div>
+
+<!-- 底部导航 -->
+<div class="bottom-nav">
+    <a class="tab active" href="/app/pages/lucky.html">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">幸运号码</span>
+    </a>
+    <a class="tab" href="/app/pages/detective.html">
+        <span class="tab-icon">🕵🏻</span>
+        <span class="tab-label">钓场侦探</span>
+    </a>
+    <a class="tab" href="/app/pages/config.html">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-label">配置</span>
+    </a>
+</div>
+
+<script src="../assets/common.js"></script>
+<script>
+var luckyElements = {
+    orderId: document.getElementById('orderId'),
+    targetSeats: document.getElementById('targetSeats'),
+    btnAuto: document.getElementById('btnAuto'),
+    btnOnce: document.getElementById('btnOnce'),
+    btnStop: document.getElementById('btnStop'),
+    btnLock: document.getElementById('btnLock'),
+    btnStopLock: document.getElementById('btnStopLock'),
+    btnRefreshId: document.getElementById('btnRefreshId'),
+    lockVenueSelect: document.getElementById('lockVenueSelect'),
+    lockSeatNumber: document.getElementById('lockSeatNumber'),
+    autoLockSwitch: document.getElementById('autoLockSwitch'),
+    statusDisplay: document.getElementById('statusDisplay'),
+    attemptDisplay: document.getElementById('attemptDisplay'),
+    seatsDisplay: document.getElementById('seatsDisplay'),
+    targetDisplay: document.getElementById('targetDisplay'),
+    orderIdDisplay: document.getElementById('orderIdDisplay'),
+    orderIdHint: document.getElementById('orderIdHint'),
+    hitModal: document.getElementById('hitModal'),
+    hitNumber: document.getElementById('hitNumber'),
+    hitDetail: document.getElementById('hitDetail'),
+    hitConfirm: document.getElementById('hitConfirm'),
+    hitContinue: document.getElementById('hitContinue'),
+    hitStop: document.getElementById('hitStop')
+};
+
+var isAutoRunning = false;
+var statusCheckInterval = null;
+var pollErrorCount = 0;
+var MAX_POLL_ERRORS = 5;
+var lockVenues = [];
+var isLocking = false;
+var lockLoopInterval = null;
+
+// ============================================================
+// 配置
+// ============================================================
+function getLuckyConfig() {
+    var targetStr = luckyElements.targetSeats.value.trim();
+    var targetSeats = targetStr ? targetStr.split(/\s+/).map(Number).filter(function(n) { return !isNaN(n); }) : [];
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    return {
+        orderId: luckyElements.orderId.value.trim(),
+        token: token,
+        uuid: uuid,
+        targetSeats: targetSeats
+    };
+}
+
+function updateLuckyStatus(status, attempt, seats, orderId) {
+    var statusMap = {
+        idle: '⏸ 空闲', running: '🔄 刷号中...', hit: '🎉 已命中！',
+        stopped: '⏹ 已停止', error: '❌ 出错', locking: '🔒 锁定中...'
+    };
+    luckyElements.statusDisplay.textContent = statusMap[status] || status;
+    luckyElements.statusDisplay.className = 'status-value ' + (status === 'hit' ? 'hit' : status === 'running' ? 'running' : status === 'stopped' ? 'stopped' : status === 'locking' ? 'locking' : '');
+    if (attempt !== undefined && attempt !== null) luckyElements.attemptDisplay.textContent = attempt;
+    if (seats !== undefined && seats !== null) {
+        luckyElements.seatsDisplay.textContent = seats.length ? '[' + seats.join(', ') + ']' : '-';
+    } else {
+        luckyElements.seatsDisplay.textContent = '-';
+    }
+    var target = getLuckyConfig().targetSeats;
+    luckyElements.targetDisplay.textContent = target.length ? '[' + target.join(', ') + ']' : '未设置';
+    if (orderId) {
+        luckyElements.orderIdDisplay.textContent = orderId;
+        luckyElements.orderId.value = orderId;
+    }
+}
+
+function updateButtons(isRunning) {
+    isAutoRunning = isRunning;
+    luckyElements.btnAuto.disabled = isRunning;
+    luckyElements.btnOnce.disabled = isRunning;
+    luckyElements.btnStop.disabled = !isRunning;
+    // 刷号运行时禁用开关
+    luckyElements.autoLockSwitch.disabled = isRunning;
+}
+
+function getLuckyHeaders() {
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    return {
+        'Authorization': token,
+        'uuid': uuid,
+        'Content-Type': 'application/json'
+    };
+}
+
+// ============================================================
+// 确保有订单ID
+// ============================================================
+function ensureOrderId() {
+    return new Promise(function(resolve) {
+        if (luckyElements.orderId.value.trim()) {
+            resolve(true);
+            return;
+        }
+        addLog('🔄 订单ID为空，自动获取最新订单...', 'system');
+        refreshOrderId().then(function() {
+            if (luckyElements.orderId.value.trim()) {
+                resolve(true);
+            } else {
+                addLog('❌ 没有可用的待摇号订单，请先下单支付', 'error');
+                resolve(false);
+            }
+        });
+    });
+}
+
+// ============================================================
+// 🔄 刷新ID
+// ============================================================
+async function refreshOrderId() {
+    var btn = luckyElements.btnRefreshId;
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+
+    if (!token || !uuid) {
+        addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    addLog('🔄 正在获取最新待摇号订单...', 'system');
+
+    try {
+        var resp = await fetch(API_BASE + '/api/available-orders?token=' + encodeURIComponent(token) + '&uuid=' + encodeURIComponent(uuid), {
+            headers: getLuckyHeaders()
+        });
+
+        if (resp.status === 401) {
+            addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
+            btn.disabled = false;
+            btn.textContent = '🔄 刷新ID';
+            return;
+        }
+
+        var result = await resp.json();
+        if (result.success === true && result.data && result.data.length > 0) {
+            var order = result.data[0];
+            var orderId = order.order_id;
+            luckyElements.orderId.value = orderId;
+            luckyElements.orderIdDisplay.textContent = orderId;
+            luckyElements.orderIdHint.textContent = '✅ 已获取订单: ' + orderId + ' (创建于 ' + order.create_time + ')';
+            luckyElements.orderIdHint.style.color = '#22c55e';
+            addLog('✅ 刷新成功，获取到订单: ' + orderId, 'success');
+            updateLuckyStatus('idle', null, null, orderId);
+        } else {
+            var errorMsg = result.msg || result.error || '没有可用的待摇号订单';
+            luckyElements.orderIdHint.textContent = '⚠️ ' + errorMsg;
+            luckyElements.orderIdHint.style.color = '#ef4444';
+            addLog('⚠️ ' + errorMsg, 'warning');
+        }
+    } catch(e) {
+        addLog('❌ 刷新ID失败: ' + e.message, 'error');
+        luckyElements.orderIdHint.textContent = '❌ 刷新失败: ' + e.message;
+        luckyElements.orderIdHint.style.color = '#ef4444';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 刷新ID';
+    }
+}
+
+// ============================================================
+// 钓场列表
+// ============================================================
+function loadLockVenues() {
+    fetch(API_BASE + '/venues', { headers: getLuckyHeaders() })
+        .then(function(resp) { return resp.json(); })
+        .then(function(result) {
+            if (result.success) {
+                lockVenues = result.data || [];
+                renderLockVenueSelect();
+            }
+        })
+        .catch(function(e) {
+            console.error('加载钓场列表失败:', e);
+        });
+}
+
+function renderLockVenueSelect() {
+    var select = luckyElements.lockVenueSelect;
+    select.innerHTML = '<option value="">选择钓场</option>';
+    lockVenues.forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = v.name;
+        select.appendChild(opt);
+    });
+}
+
+// ============================================================
+// 🔒 自动锁定
+// ============================================================
+function startLockLoop() {
+    if (isLocking) {
+        addLog('⚠️ 锁定已在运行中', 'warning');
+        return;
+    }
+
+    var venueName = luckyElements.lockVenueSelect.value;
+    var seatInput = luckyElements.lockSeatNumber.value.trim();
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+
+    if (!venueName) { addLog('❌ 请选择钓场', 'error'); return; }
+    if (!seatInput) { addLog('❌ 请输入座位号', 'error'); return; }
+    if (!token || !uuid) { addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error'); return; }
+
+    var seatNumbers = seatInput.split(/\s+/).map(Number).filter(function(n) { return !isNaN(n) && n > 0; });
+    if (seatNumbers.length === 0) {
+        addLog('❌ 请输入有效的座位号', 'error');
+        return;
+    }
+
+    isLocking = true;
+    var btn = luckyElements.btnLock;
+    btn.disabled = true;
+    btn.textContent = '⏳ 锁定中...';
+    btn.classList.add('loading');
+    luckyElements.btnStopLock.style.display = 'block';
+    updateLuckyStatus('locking', null, null, null);
+
+    if (seatNumbers.length === 1) {
+        addLog('🔒 开始自动锁定: ' + venueName + ' → 座位 ' + seatNumbers[0] + ' (等待订单出现...)', 'system');
+    } else {
+        addLog('🔒 开始自动锁定: ' + venueName + ' → 备选列表 [' + seatNumbers.join(', ') + '] (等待订单出现...)', 'system');
+    }
+
+    var attemptCount = 0;
+    var lastLogTime = 0;
+    var triedSeats = [];
+
+    lockLoopInterval = setInterval(async function() {
+        if (!isLocking) {
+            clearInterval(lockLoopInterval);
+            lockLoopInterval = null;
+            return;
+        }
+
+        attemptCount++;
+        var now = Date.now();
+
+        try {
+            var resp = await fetch(API_BASE + '/api/available-orders?token=' + encodeURIComponent(token) + '&uuid=' + encodeURIComponent(uuid), {
+                headers: getLuckyHeaders()
+            });
+
+            if (resp.status === 401) {
+                addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
+                stopLockLoop();
+                return;
+            }
+
+            var result = await resp.json();
+
+            if (result.success === true && result.data && result.data.length > 0) {
+                var order = result.data[0];
+                var orderId = order.order_id;
+                addLog('✅ 捕获到有效订单: ' + orderId, 'success');
+
+                var locked = false;
+                for (var i = 0; i < seatNumbers.length; i++) {
+                    if (!isLocking) break;
+                    
+                    var seatNumber = seatNumbers[i];
+                    if (triedSeats.indexOf(seatNumber) !== -1) {
+                        continue;
+                    }
+                    triedSeats.push(seatNumber);
+
+                    addLog('🎯 尝试锁定: ' + venueName + ' → 座位 ' + seatNumber + ' (' + (i+1) + '/' + seatNumbers.length + ')', 'system');
+
+                    var lockResult = await performLock(orderId, venueName, seatNumber, token, uuid);
+
+                    if (lockResult.success) {
+                        addLog('🎉 ' + lockResult.message, 'hit');
+                        playHitSound();
+                        updateLuckyStatus('idle', null, [seatNumber], orderId);
+                        stopLockLoop();
+                        return;
+                    } else {
+                        addLog('⚠️ 座位 ' + seatNumber + ' 锁定失败: ' + lockResult.error + '，尝试下一个备选', 'warning');
+                    }
+                }
+
+                triedSeats = [];
+                addLog('⏳ 所有备选座位均已尝试，继续等待下一个订单...', 'system');
+            } else {
+                if (now - lastLogTime > 5000) {
+                    addLog('⏳ 等待订单出现... (已等待 ' + Math.round(attemptCount * 1.5) + ' 秒)', 'system');
+                    lastLogTime = now;
+                }
+            }
+        } catch(e) {
+            addLog('❌ 锁定循环异常: ' + e.message, 'error');
+        }
+    }, 1500);
+}
+
+// ============================================================
+// 🔒 performLock
+// ============================================================
+async function performLock(orderId, venueName, seatNumber, token, uuid) {
+    try {
+        var resp = await fetch(API_BASE + '/api/lock', {
+            method: 'POST',
+            headers: getLuckyHeaders(),
+            body: JSON.stringify({
+                orderId: orderId,
+                token: token,
+                uuid: uuid,
+                venueName: venueName,
+                seatNumber: seatNumber
+            })
+        });
+
+        if (resp.status === 401) {
+            return { success: false, error: 'Token已过期，请到"配置"页面重新设置' };
+        }
+
+        var result = await resp.json();
+
+        var isSuccess = (result.success === true) || (result.code === '000');
+        
+        if (isSuccess) {
+            var msg = result.data?.message || result.msg || '锁定成功！';
+            return { success: true, message: msg };
+        } else {
+            var errorMsg = result.error || result.msg || result.message || '锁定失败';
+            return { success: false, error: errorMsg };
+        }
+    } catch(e) {
+        return { success: false, error: '网络异常: ' + e.message };
+    }
+}
+
+function stopLockLoop() {
+    isLocking = false;
+    if (lockLoopInterval) {
+        clearInterval(lockLoopInterval);
+        lockLoopInterval = null;
+    }
+    var btn = luckyElements.btnLock;
+    btn.disabled = false;
+    btn.textContent = '🔒 锁定';
+    btn.classList.remove('loading');
+    luckyElements.btnStopLock.style.display = 'none';
+    if (luckyElements.statusDisplay.textContent !== '🎉 已命中！') {
+        addLog('🛑 自动锁定已停止', 'system');
+    }
+    updateLuckyStatus('idle', null, null, null);
+}
+
+async function lockSeat() {
+    startLockLoop();
+}
+
+// ============================================================
+// 🎲 单次摇号
+// ============================================================
+async function requestOnce() {
+    if (!(await ensureOrderId())) return;
+
+    var config = getLuckyConfig();
+    if (!config.token || !config.uuid) {
+        addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error');
+        return;
+    }
+
+    addLog('🎲 单次摇号: order_id=' + config.orderId, 'system');
+
+    try {
+        var resp = await fetch(API_BASE + '/api/request-once', {
+            method: 'POST', headers: getLuckyHeaders(), body: JSON.stringify(config)
+        });
+        if (resp.status === 401) {
+            addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
+            return;
+        }
+        var result = await resp.json();
+        if (result.code === '000') {
+            handleRequestResult(result);
+        } else {
+            var errorMsg = result.msg || result.error || result.message || '请求失败';
+            addLog('❌ ' + errorMsg, 'error');
+        }
+    } catch(e) {
+        addLog('❌ 网络异常: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 🔄 自动刷号
+// ============================================================
+async function startAuto() {
+    if (!(await ensureOrderId())) return;
+
+    var config = getLuckyConfig();
+    if (!config.token || !config.uuid) {
+        addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error');
+        return;
+    }
+
+    addLog('🚀 启动自动刷号: order_id=' + config.orderId, 'system');
+
+    try {
+        var resp = await fetch(API_BASE + '/api/start-auto', {
+            method: 'POST', headers: getLuckyHeaders(), body: JSON.stringify(config)
+        });
+
+        var result = await resp.json();
+
+        if (result.success === true) {
+            updateButtons(true);
+            updateLuckyStatus('running', 0, [], config.orderId);
+            pollErrorCount = 0;
+            addLog('✅ ' + (result.msg || '自动刷号已启动'), 'success');
+            startPolling();
+        } else {
+            var errorMsg = result.error || result.msg || result.message || '启动失败';
+            addLog('❌ ' + errorMsg, 'error');
+            updateButtons(false);
+            updateLuckyStatus('stopped', null, null, null);
+        }
+    } catch(e) {
+        addLog('❌ 网络异常: ' + e.message, 'error');
+        updateButtons(false);
+        updateLuckyStatus('stopped', null, null, null);
+    }
+}
+
+async function stopAuto() {
+    addLog('⏹ 请求停止...', 'system');
+    try {
+        await fetch(API_BASE + '/api/stop', { method: 'POST', headers: getLuckyHeaders() });
+        updateButtons(false);
+        updateLuckyStatus('stopped', null, null, null);
+        stopPolling();
+        addLog('✅ 已停止', 'success');
+    } catch(e) {
+        addLog('❌ 停止失败: ' + e.message, 'error');
+    }
+}
+
+function stopPolling() {
+    if (statusCheckInterval) { clearInterval(statusCheckInterval); statusCheckInterval = null; }
+    pollErrorCount = 0;
+}
+
+// ============================================================
+// 📊 状态轮询
+// ============================================================
+function startPolling() {
+    stopPolling();
+    statusCheckInterval = setInterval(function() {
+        fetch(API_BASE + '/api/status', { headers: getLuckyHeaders() })
+            .then(function(resp) {
+                if (resp.status === 401) {
+                    addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
+                    updateButtons(false); updateLuckyStatus('stopped', null, null, null);
+                    stopPolling();
+                    return;
+                }
+                return resp.json();
+            })
+            .then(function(result) {
+                if (!result) return;
+                if (result.success !== true) {
+                    pollErrorCount++;
+                    if (pollErrorCount >= MAX_POLL_ERRORS) {
+                        var errMsg = result.msg || result.error || '获取状态失败';
+                        addLog('❌ ' + errMsg + '，已自动停止', 'error');
+                        updateButtons(false); updateLuckyStatus('stopped', null, null, null);
+                        stopPolling();
+                    }
+                    return;
+                }
+                pollErrorCount = 0;
+                var s = result.state;
+                updateLuckyStatus(s.isHitting ? 'hit' : s.isRunning ? 'running' : 'idle', s.attemptCount, s.lastSeats, s.orderId || luckyElements.orderId.value);
+
+                if (s.isHitting && s.lastSeats && s.lastSeats.length) {
+                    var targetSeats = getLuckyConfig().targetSeats;
+                    var hitSeat = null;
+                    for (var i = 0; i < s.lastSeats.length; i++) {
+                        if (targetSeats.indexOf(s.lastSeats[i]) !== -1) {
+                            hitSeat = s.lastSeats[i];
+                            break;
+                        }
+                    }
+                    if (hitSeat) {
+                        // ✅ 检查自动锁定开关
+                        var autoLockEnabled = luckyElements.autoLockSwitch.checked;
+                        
+                        if (autoLockEnabled) {
+                            // 🚀 自动锁定模式
+                            addLog('🔒 命中目标 ' + hitSeat + '，自动锁定中...', 'system');
+                            performAutoLock(s.orderId || luckyElements.orderId.value, hitSeat);
+                        } else {
+                            // 📋 弹窗模式
+                            playHitSound();
+                            showHitModal(hitSeat, s.lastSeats);
+                            addLog('🎯 命中目标号码: ' + hitSeat, 'hit');
+                        }
+                        
+                        stopPolling();
+                        updateButtons(false);
+                    }
+                }
+                if (!s.isRunning && !s.isHitting) {
+                    updateButtons(false);
+                    stopPolling();
+                }
+            })
+            .catch(function(error) {
+                pollErrorCount++;
+                if (pollErrorCount >= MAX_POLL_ERRORS) {
+                    addLog('❌ 网络异常多次，已自动停止: ' + error.message, 'error');
+                    updateButtons(false); updateLuckyStatus('stopped', null, null, null);
+                    stopPolling();
+                }
+            });
+    }, 1200);
+}
+
+// ============================================================
+// 🔒 命中后自动锁定
+// ============================================================
+async function performAutoLock(orderId, hitSeat) {
+    var venueName = luckyElements.lockVenueSelect.value;
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    
+    if (!venueName) {
+        addLog('❌ 自动锁定失败：未选择钓场', 'error');
+        return;
+    }
+    
+    addLog('🔒 自动锁定: ' + venueName + ' → 座位 ' + hitSeat, 'system');
+    
+    try {
+        var result = await performLock(orderId, venueName, hitSeat, token, uuid);
+        if (result.success) {
+            addLog('🎉 ' + result.message, 'hit');
+            // 震动提醒
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+            updateLuckyStatus('idle', null, [hitSeat], orderId);
+        } else {
+            addLog('❌ 自动锁定失败: ' + result.error, 'error');
+        }
+    } catch(e) {
+        addLog('❌ 自动锁定异常: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 📊 处理摇号结果
+// ============================================================
+function handleRequestResult(result) {
+    if (result.code !== '000') {
+        var errorMsg = result.msg || result.error || result.message || '请求失败';
+        addLog('❌ ' + errorMsg, 'error');
+        return;
+    }
+
+    var data = result.data;
+    if (!data) {
+        addLog('❌ 响应数据为空', 'error');
+        return;
+    }
+
+    var seats = [];
+    if (Array.isArray(data)) {
+        seats = data.map(function(item) { return item.seat_number; }).filter(function(s) { return s !== undefined; });
+    } else if (data.seats && Array.isArray(data.seats)) {
+        seats = data.seats;
+    } else if (data.seat_number !== undefined) {
+        seats = [data.seat_number];
+    }
+
+    var targetSeats = getLuckyConfig().targetSeats;
+    var hit = false;
+    var hitSeat = null;
+    if (targetSeats.length > 0 && seats.length > 0) {
+        for (var i = 0; i < seats.length; i++) {
+            if (targetSeats.indexOf(seats[i]) !== -1) {
+                hit = true;
+                hitSeat = seats[i];
+                break;
+            }
+        }
+    }
+
+    var msg = '📊 号码: [' + seats.join(', ') + ']';
+    if (hit) {
+        msg += ' 🎉 命中！';
+        addLog(msg, 'hit');
+        playHitSound();
+        showHitModal(hitSeat, seats);
+    } else {
+        addLog(msg, 'system');
+    }
+
+    var attempt = data.attempt !== undefined ? data.attempt : null;
+    var orderId = data.orderId || luckyElements.orderId.value;
+    updateLuckyStatus('idle', attempt, seats, orderId);
+}
+
+// ============================================================
+// 弹窗
+// ============================================================
+function showHitModal(seat, seats) {
+    luckyElements.hitNumber.textContent = seat;
+    luckyElements.hitDetail.textContent = '完整号码: [' + seats.join(', ') + ']';
+    luckyElements.hitModal.classList.add('show');
+}
+
+function closeHitModal() {
+    luckyElements.hitModal.classList.remove('show');
+}
+
+// ============================================================
+// 事件绑定
+// ============================================================
+luckyElements.btnRefreshId.addEventListener('click', refreshOrderId);
+luckyElements.btnOnce.addEventListener('click', requestOnce);
+luckyElements.btnAuto.addEventListener('click', startAuto);
+luckyElements.btnStop.addEventListener('click', stopAuto);
+luckyElements.btnLock.addEventListener('click', lockSeat);
+luckyElements.btnStopLock.addEventListener('click', stopLockLoop);
+
+luckyElements.hitConfirm.addEventListener('click', function() {
+    closeHitModal();
+    addLog('✅ 用户确认锁定', 'success');
+});
+luckyElements.hitContinue.addEventListener('click', function() {
+    closeHitModal();
+    addLog('🔄 继续刷号', 'system');
+    updateLuckyStatus('idle', null, null, null);
+});
+luckyElements.hitStop.addEventListener('click', function() {
+    closeHitModal();
+    stopAuto();
+    addLog('⏹ 已停止', 'system');
+});
+
+window.addEventListener('beforeunload', function() {
+    if (isAutoRunning) {
+        navigator.sendBeacon(API_BASE + '/api/stop');
+    }
+    if (isLocking) {
+        stopLockLoop();
+    }
+});
+
+// ============================================================
+// 🚀 初始化
+// ============================================================
+(function initLuckyPage() {
+    // ✅ 先检测 Token 是否有效
+    if (typeof checkTokenValidity === 'function') {
+        checkTokenValidity().then(function(isValid) {
+            if (!isValid) {
+                setTimeout(function() {
+                    navigateTo('/app/pages/config.html');
+                }, 1500);
+                return;
+            }
+            initPage();
+        });
+    } else {
+        initPage();
+    }
+
+    function initPage() {
+        if (loadData('token', '') && loadData('uuid', '')) {
+            addLog('✅ 系统就绪，已加载配置', 'success');
+            addLog('📌 点击「刷新ID」获取最新订单', 'system');
+        } else {
+            addLog('📌 请先到"配置"页面设置 Token 和 UUID', 'warning');
+        }
+
+        updateLuckyStatus('idle', 0, [], '');
+        loadLockVenues();
+    }
+})();
+
+</script>
+</body>
+</html>
