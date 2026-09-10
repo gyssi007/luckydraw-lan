@@ -1,10 +1,10 @@
 // ============================================================
 // ⚙️ 全局配置
 // ============================================================
-var API_BASE = '';  // 不再需要服务器地址
+var API_BASE = '';
 
 // ============================================================
-// 💾 本地存储（通过 Android 加密存储）
+// 💾 本地存储
 // ============================================================
 function saveData(key, value) {
     if (window.AndroidBridge && window.AndroidBridge.saveSecure) {
@@ -24,13 +24,29 @@ function loadData(key, defaultValue) {
 }
 
 // ============================================================
-// 🔗 官方 API 调用（通过 Android 原生层）
+// 🔗 API 调用（带完整调试信息）
 // ============================================================
 var _apiCallbackId = 0;
 var _apiCallbacks = {};
 
 function callApi(path, method, body) {
     return new Promise(function(resolve, reject) {
+        // 检查 AndroidBridge 是否存在
+        if (!window.AndroidBridge) {
+            var err1 = 'AndroidBridge 未注入！';
+            showDebugAlert(err1);
+            addLog('❌ ' + err1, 'error');
+            reject(new Error(err1));
+            return;
+        }
+        if (!window.AndroidBridge.apiRequest) {
+            var err2 = 'AndroidBridge.apiRequest 方法不存在！';
+            showDebugAlert(err2);
+            addLog('❌ ' + err2, 'error');
+            reject(new Error(err2));
+            return;
+        }
+
         var id = ++_apiCallbackId;
         _apiCallbacks[id] = resolve;
         window._apiCallback = function(cid, data) {
@@ -43,12 +59,27 @@ function callApi(path, method, body) {
                 delete _apiCallbacks[cid];
             }
         };
-        if (window.AndroidBridge && window.AndroidBridge.apiRequest) {
+
+        addLog('📤 请求: ' + path, 'system');
+
+        try {
             window.AndroidBridge.apiRequest(path, method || 'GET', body ? JSON.stringify(body) : '', id);
-        } else {
-            reject(new Error('AndroidBridge not available'));
+        } catch(e) {
+            var err3 = '调用 apiRequest 异常: ' + e.message;
+            showDebugAlert(err3);
+            addLog('❌ ' + err3, 'error');
+            reject(e);
         }
     });
+}
+
+// 显示调试弹窗（避免直接 alert 阻塞，延迟执行）
+function showDebugAlert(msg) {
+    try {
+        setTimeout(function() {
+            alert('[调试信息] ' + msg);
+        }, 100);
+    } catch(e) {}
 }
 
 // ============================================================
@@ -133,7 +164,7 @@ async function checkTokenValidity() {
         addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
         return false;
     } catch(e) {
-        return true;  // 网络错误不阻断
+        return true;
     }
 }
 
