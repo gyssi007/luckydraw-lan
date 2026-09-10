@@ -24,29 +24,13 @@ function loadData(key, defaultValue) {
 }
 
 // ============================================================
-// 🔗 API 调用（带完整调试信息）
+// 🔗 官方 API 调用（通过 Android 原生层）
 // ============================================================
 var _apiCallbackId = 0;
 var _apiCallbacks = {};
 
 function callApi(path, method, body) {
     return new Promise(function(resolve, reject) {
-        // 检查 AndroidBridge 是否存在
-        if (!window.AndroidBridge) {
-            var err1 = 'AndroidBridge 未注入！';
-            showDebugAlert(err1);
-            addLog('❌ ' + err1, 'error');
-            reject(new Error(err1));
-            return;
-        }
-        if (!window.AndroidBridge.apiRequest) {
-            var err2 = 'AndroidBridge.apiRequest 方法不存在！';
-            showDebugAlert(err2);
-            addLog('❌ ' + err2, 'error');
-            reject(new Error(err2));
-            return;
-        }
-
         var id = ++_apiCallbackId;
         _apiCallbacks[id] = resolve;
         window._apiCallback = function(cid, data) {
@@ -59,27 +43,12 @@ function callApi(path, method, body) {
                 delete _apiCallbacks[cid];
             }
         };
-
-        addLog('📤 请求: ' + path, 'system');
-
-        try {
+        if (window.AndroidBridge && window.AndroidBridge.apiRequest) {
             window.AndroidBridge.apiRequest(path, method || 'GET', body ? JSON.stringify(body) : '', id);
-        } catch(e) {
-            var err3 = '调用 apiRequest 异常: ' + e.message;
-            showDebugAlert(err3);
-            addLog('❌ ' + err3, 'error');
-            reject(e);
+        } else {
+            reject(new Error('AndroidBridge not available'));
         }
     });
-}
-
-// 显示调试弹窗（避免直接 alert 阻塞，延迟执行）
-function showDebugAlert(msg) {
-    try {
-        setTimeout(function() {
-            alert('[调试信息] ' + msg);
-        }, 100);
-    } catch(e) {}
 }
 
 // ============================================================
@@ -146,30 +115,32 @@ function setStatusMsg(msg, type) {
 }
 
 // ============================================================
-// 🔐 Token 有效性检测
+// 📋 钓场列表（本地）
 // ============================================================
-async function checkTokenValidity() {
-    var token = loadData('token', '');
-    var uuid = loadData('uuid', '');
-    if (!token || !uuid) {
-        addLog('⚠️ 未检测到 Token 或 UUID，请先配置', 'warning');
-        return false;
-    }
-    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
-        window.AndroidBridge.setAuth(token, uuid);
-    }
+function loadVenuesFromLocal() {
     try {
-        var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=20', 'GET');
-        if (result.code === '000') return true;
-        addLog('❌ Token 已过期，请到"配置"页面重新设置', 'error');
-        return false;
+        if (window.AndroidBridge && window.AndroidBridge.loadVenues) {
+            var json = window.AndroidBridge.loadVenues();
+            if (json && json !== '[]') return JSON.parse(json);
+        }
+        var stored = loadData('venues_data', '');
+        if (stored) return JSON.parse(stored);
     } catch(e) {
-        return true;
+        console.error('加载钓场失败:', e);
     }
+    return null;
+}
+
+function saveVenuesToLocal(venues) {
+    var json = JSON.stringify(venues);
+    if (window.AndroidBridge && window.AndroidBridge.saveVenues) {
+        window.AndroidBridge.saveVenues(json);
+    }
+    saveData('venues_data', json);
 }
 
 // ============================================================
-// 座位映射表
+// 📋 座位映射表（本地）
 // ============================================================
 function loadSeatMapFromLocal() {
     try {
@@ -194,5 +165,35 @@ function saveSeatMapToLocal(seatMap) {
         }
     } catch(e) {
         console.error('保存 seat_map 失败:', e);
+    }
+}
+
+// ============================================================
+// 🔐 Token 有效性检测
+// ============================================================
+async function checkTokenValidity() {
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    
+    if (!token || !uuid) {
+        return { valid: false, reason: '未配置 Token 或 UUID' };
+    }
+    
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token, uuid);
+    }
+    
+    try {
+        var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=1', 'GET');
+        if (result.code === '000') {
+            return { valid: true };
+        } else if (result.code === '401') {
+            return { valid: false, reason: 'Token 已过期，请重新设置' };
+        } else {
+            return { valid: false, reason: result.msg || 'Token 无效' };
+        }
+    } catch(e) {
+        // 网络异常不阻断，但告知用户
+        return { valid: true, networkError: true };
     }
 }
