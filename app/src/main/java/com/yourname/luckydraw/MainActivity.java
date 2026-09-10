@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         // 注册 JS 接口
         webView.addJavascriptInterface(new JSInterface(), "AndroidBridge");
 
-        // 加载本地页面（保持 pages/ 目录结构）
+        // 加载本地页面
         webView.loadUrl("file:///android_asset/pages/lucky.html");
     }
 
@@ -145,12 +145,13 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void vibrate(int duration) {
             runOnUiThread(() -> {
-                android.os.Vibrator v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
-                if (v != null) v.vibrate(duration);
+                try {
+                    android.os.Vibrator v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
+                    if (v != null) v.vibrate(duration);
+                } catch (Exception ignored) {}
             });
         }
 
-        // 通用 API 请求
         @JavascriptInterface
         public void apiRequest(String url, String method, String body, int callbackId) {
             new Thread(() -> {
@@ -158,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
                     String fullUrl = API_HOST + url;
                     Request.Builder builder = new Request.Builder().url(fullUrl);
 
-                    // 添加请求头
                     if (token != null && !token.isEmpty()) {
                         builder.addHeader("Authorization", token.startsWith("Bearer ") ? token : "Bearer " + token);
                     }
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
                     builder.addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; MI 8) AppleWebKit/537.36");
                     builder.addHeader("Accept", "application/json");
 
-                    if ("POST".equalsIgnoreCase(method) && body != null) {
+                    if ("POST".equalsIgnoreCase(method) && body != null && !body.isEmpty()) {
                         RequestBody requestBody = RequestBody.create(
                                 MediaType.parse("application/json"), body);
                         builder.post(requestBody);
@@ -186,100 +186,39 @@ public class MainActivity extends AppCompatActivity {
                     handler.post(() -> webView.evaluateJavascript(js, null));
 
                 } catch (Exception e) {
-                    final String js = "window._apiCallback(" + callbackId + ", '{\"error\":\"" + escapeJson(e.getMessage()) + "\"}')";
+                    final String errorJson = "{\"error\":\"" + escapeJson(e.getMessage()) + "\"}";
+                    final String js = "window._apiCallback(" + callbackId + ", " + escapeJson(errorJson) + ")";
                     handler.post(() -> webView.evaluateJavascript(js, null));
                 }
             }).start();
         }
 
-        // 保存 Token/UUID
         @JavascriptInterface
         public void setAuth(String t, String u) {
             token = t;
             uuid = u;
         }
 
-        // 读取本地 seat_map.json
         @JavascriptInterface
         public String loadSeatMap() {
-            try {
-                File file = new File(getFilesDir(), "seat_map.json");
-                if (!file.exists()) {
-                    // 从 assets/pages/ 复制
-                    InputStream is = getAssets().open("pages/seat_map.json");
-                    FileOutputStream fos = new FileOutputStream(file);
-                    byte[] buffer = new byte[1024];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-                    is.close();
-                    fos.close();
-                }
-                FileInputStream fis = new FileInputStream(file);
-                byte[] data = new byte[(int) file.length()];
-                fis.read(data);
-                fis.close();
-                return new String(data, "UTF-8");
-            } catch (Exception e) {
-                return "{}";
-            }
+            return readLocalJson("seat_map.json", "{}");
         }
 
-        // 保存 seat_map.json
         @JavascriptInterface
         public void saveSeatMap(String json) {
-            try {
-                File file = new File(getFilesDir(), "seat_map.json");
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write(json.getBytes("UTF-8"));
-                fos.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            writeLocalJson("seat_map.json", json);
         }
 
-        // 读取本地 venues.json
         @JavascriptInterface
         public String loadVenues() {
-            try {
-                File file = new File(getFilesDir(), "venues.json");
-                if (!file.exists()) {
-                    // 从 assets/pages/ 复制
-                    InputStream is = getAssets().open("pages/venues.json");
-                    FileOutputStream fos = new FileOutputStream(file);
-                    byte[] buffer = new byte[1024];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-                    is.close();
-                    fos.close();
-                }
-                FileInputStream fis = new FileInputStream(file);
-                byte[] data = new byte[(int) file.length()];
-                fis.read(data);
-                fis.close();
-                return new String(data, "UTF-8");
-            } catch (Exception e) {
-                return "[]";
-            }
+            return readLocalJson("venues.json", "[]");
         }
 
-        // 保存 venues.json
         @JavascriptInterface
         public void saveVenues(String json) {
-            try {
-                File file = new File(getFilesDir(), "venues.json");
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write(json.getBytes("UTF-8"));
-                fos.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            writeLocalJson("venues.json", json);
         }
 
-        // 启动自动刷号
         @JavascriptInterface
         public void startAutoLoop(String oid, String t, String u, String seatsJson) {
             orderId = oid;
@@ -292,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
             startAutoLoopInternal();
         }
 
-        // 停止自动刷号
         @JavascriptInterface
         public void stopAutoLoop() {
             isRunning = false;
@@ -301,7 +239,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 启动自动锁定
         @JavascriptInterface
         public void startLockLoop(String t, String u, String venue, String seatsJson) {
             token = t;
@@ -312,7 +249,6 @@ public class MainActivity extends AppCompatActivity {
             startLockLoopInternal();
         }
 
-        // 停止自动锁定
         @JavascriptInterface
         public void stopLockLoop() {
             isLocking = false;
@@ -321,7 +257,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 获取状态
         @JavascriptInterface
         public String getStatus() {
             try {
@@ -343,6 +278,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
+    // 本地文件读写
+    // ============================================================
+    private String readLocalJson(String filename, String defaultVal) {
+        try {
+            File file = new File(getFilesDir(), filename);
+            if (!file.exists()) {
+                InputStream is = getAssets().open("pages/" + filename);
+                FileOutputStream fos = new FileOutputStream(file);
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                is.close();
+                fos.close();
+            }
+            FileInputStream fis = new FileInputStream(file);
+            byte[] data = new byte[(int) file.length()];
+            fis.read(data);
+            fis.close();
+            return new String(data, "UTF-8");
+        } catch (Exception e) {
+            return defaultVal;
+        }
+    }
+
+    private void writeLocalJson(String filename, String json) {
+        try {
+            File file = new File(getFilesDir(), filename);
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(json.getBytes("UTF-8"));
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String loadSeatMap() {
+        return readLocalJson("seat_map.json", "{}");
+    }
+
+    // ============================================================
     // 自动刷号轮询
     // ============================================================
     private void startAutoLoopInternal() {
@@ -352,7 +329,6 @@ public class MainActivity extends AppCompatActivity {
                 if (!isRunning) return;
                 new Thread(() -> {
                     try {
-                        // 调用官方 selectSeat 接口
                         String result = callSelectSeat(orderId, token, uuid);
                         JSONObject json = new JSONObject(result);
                         if ("000".equals(json.optString("code"))) {
@@ -367,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
                             lastSeats = seats;
                             attemptCount++;
                             final boolean hit = checkHit(seats, targetSeats);
+                            final int finalAttempt = attemptCount;
                             if (hit) {
                                 isHitting = true;
                                 isRunning = false;
@@ -376,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
                                 return;
                             }
                             handler.post(() -> {
-                                webView.evaluateJavascript("window._onProgress(" + attemptCount + ", " + toJsonArray(seats) + ")", null);
+                                webView.evaluateJavascript("window._onProgress(" + finalAttempt + ", " + toJsonArray(seats) + ")", null);
                             });
                         }
                     } catch (Exception e) {
@@ -401,45 +378,46 @@ public class MainActivity extends AppCompatActivity {
                 if (!isLocking) return;
                 new Thread(() -> {
                     try {
-                        // 查询订单列表
                         String ordersJson = callGetOrders(token, uuid);
                         JSONObject json = new JSONObject(ordersJson);
                         if ("000".equals(json.optString("code"))) {
-                            JSONArray list = json.optJSONObject("data").optJSONArray("list");
-                            // 筛选 status=30 且 seat_id="0"
-                            JSONObject targetOrder = null;
-                            for (int i = 0; i < list.length(); i++) {
-                                JSONObject o = list.getJSONObject(i);
-                                if (o.optInt("status") == 30
-                                        && o.optJSONObject("order_ticket_item") != null
-                                        && "0".equals(o.optJSONObject("order_ticket_item").optString("seat_id"))) {
-                                    targetOrder = o;
-                                    break;
-                                }
-                            }
-                            if (targetOrder != null) {
-                                String orderId = targetOrder.optString("order_id");
-                                currentOrderId = orderId;
-                                // 读取本地 seat_map.json
-                                String seatMapJson = loadSeatMap();
-                                JSONObject seatMap = new JSONObject(seatMapJson);
-                                JSONObject venueData = seatMap.optJSONObject(lockTargetVenue);
-                                if (venueData != null) {
-                                    for (int seatNum : lockTargetSeats) {
-                                        if (!isLocking) break;
-                                        String seatId = venueData.optString(String.valueOf(seatNum));
-                                        if (seatId == null || seatId.isEmpty()) continue;
-                                        // 调用 confirmSeat
-                                        String confirmResult = callConfirmSeat(orderId, seatId, token, uuid);
-                                        JSONObject confirmJson = new JSONObject(confirmResult);
-                                        if ("000".equals(confirmJson.optString("code"))) {
-                                            isLocking = false;
-                                            final int finalSeat = seatNum;
-                                            final String finalOrderId = orderId;
-                                            handler.post(() -> {
-                                                webView.evaluateJavascript("window._onLocked(" + finalSeat + ", '" + finalOrderId + "')", null);
-                                            });
-                                            return;
+                            JSONObject dataObj = json.optJSONObject("data");
+                            if (dataObj != null) {
+                                JSONArray list = dataObj.optJSONArray("list");
+                                if (list != null) {
+                                    JSONObject targetOrder = null;
+                                    for (int i = 0; i < list.length(); i++) {
+                                        JSONObject o = list.getJSONObject(i);
+                                        if (o.optInt("status") == 30
+                                                && o.optJSONObject("order_ticket_item") != null
+                                                && "0".equals(o.optJSONObject("order_ticket_item").optString("seat_id"))) {
+                                            targetOrder = o;
+                                            break;
+                                        }
+                                    }
+                                    if (targetOrder != null) {
+                                        String oid = targetOrder.optString("order_id");
+                                        currentOrderId = oid;
+                                        String seatMapJson = loadSeatMap();
+                                        JSONObject seatMap = new JSONObject(seatMapJson);
+                                        JSONObject venueData = seatMap.optJSONObject(lockTargetVenue);
+                                        if (venueData != null) {
+                                            for (int seatNum : lockTargetSeats) {
+                                                if (!isLocking) break;
+                                                String seatId = venueData.optString(String.valueOf(seatNum));
+                                                if (seatId == null || seatId.isEmpty()) continue;
+                                                String confirmResult = callConfirmSeat(oid, seatId, token, uuid);
+                                                JSONObject confirmJson = new JSONObject(confirmResult);
+                                                if ("000".equals(confirmJson.optString("code"))) {
+                                                    isLocking = false;
+                                                    final int finalSeat = seatNum;
+                                                    final String finalOrderId = oid;
+                                                    handler.post(() -> {
+                                                        webView.evaluateJavascript("window._onLocked(" + finalSeat + ", '" + finalOrderId + "')", null);
+                                                    });
+                                                    return;
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -455,6 +433,23 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         handler.post(lockLoopRunnable);
+    }
+
+    // ============================================================
+    // 停止轮询（供 onDestroy 调用）
+    // ============================================================
+    private void stopAutoLoop() {
+        isRunning = false;
+        if (autoLoopRunnable != null) {
+            handler.removeCallbacks(autoLoopRunnable);
+        }
+    }
+
+    private void stopLockLoop() {
+        isLocking = false;
+        if (lockLoopRunnable != null) {
+            handler.removeCallbacks(lockLoopRunnable);
+        }
     }
 
     // ============================================================
