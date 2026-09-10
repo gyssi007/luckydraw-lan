@@ -27,13 +27,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -122,8 +118,8 @@ public class MainActivity extends AppCompatActivity {
         // 注册 JS 接口
         webView.addJavascriptInterface(new JSInterface(), "AndroidBridge");
 
-        // 加载本地页面
-        webView.loadUrl("file:///android_asset/lucky.html");
+        // 加载本地页面（保持 pages/ 目录结构）
+        webView.loadUrl("file:///android_asset/pages/lucky.html");
     }
 
     // ============================================================
@@ -209,8 +205,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 File file = new File(getFilesDir(), "seat_map.json");
                 if (!file.exists()) {
-                    // 从 assets 复制
-                    InputStream is = getAssets().open("seat_map.json");
+                    // 从 assets/pages/ 复制
+                    InputStream is = getAssets().open("pages/seat_map.json");
                     FileOutputStream fos = new FileOutputStream(file);
                     byte[] buffer = new byte[1024];
                     int len;
@@ -235,6 +231,46 @@ public class MainActivity extends AppCompatActivity {
         public void saveSeatMap(String json) {
             try {
                 File file = new File(getFilesDir(), "seat_map.json");
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(json.getBytes("UTF-8"));
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 读取本地 venues.json
+        @JavascriptInterface
+        public String loadVenues() {
+            try {
+                File file = new File(getFilesDir(), "venues.json");
+                if (!file.exists()) {
+                    // 从 assets/pages/ 复制
+                    InputStream is = getAssets().open("pages/venues.json");
+                    FileOutputStream fos = new FileOutputStream(file);
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = is.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                    is.close();
+                    fos.close();
+                }
+                FileInputStream fis = new FileInputStream(file);
+                byte[] data = new byte[(int) file.length()];
+                fis.read(data);
+                fis.close();
+                return new String(data, "UTF-8");
+            } catch (Exception e) {
+                return "[]";
+            }
+        }
+
+        // 保存 venues.json
+        @JavascriptInterface
+        public void saveVenues(String json) {
+            try {
+                File file = new File(getFilesDir(), "venues.json");
                 FileOutputStream fos = new FileOutputStream(file);
                 fos.write(json.getBytes("UTF-8"));
                 fos.close();
@@ -390,6 +426,7 @@ public class MainActivity extends AppCompatActivity {
                                 JSONObject venueData = seatMap.optJSONObject(lockTargetVenue);
                                 if (venueData != null) {
                                     for (int seatNum : lockTargetSeats) {
+                                        if (!isLocking) break;
                                         String seatId = venueData.optString(String.valueOf(seatNum));
                                         if (seatId == null || seatId.isEmpty()) continue;
                                         // 调用 confirmSeat
