@@ -21,390 +21,82 @@
             padding: 12px;
             padding-bottom: 100px;
         }
-        .page {
-            display: block;
-            animation: fadeIn .25s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .page { display: block; animation: fadeIn .25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        .venue-dropdown-wrapper {
-            margin-top: 12px;
-            border: 1px solid #e8edf4;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #f8fafc;
-        }
-        .venue-dropdown-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            cursor: pointer;
-            user-select: none;
-            transition: background .15s;
-            background: #ffffff;
-        }
+        .venue-dropdown-wrapper { margin-top: 12px; border: 1px solid #e8edf4; border-radius: 10px; overflow: hidden; background: #f8fafc; }
+        .venue-dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; user-select: none; transition: background .15s; background: #ffffff; }
         .venue-dropdown-header:active { background: #f1f5f9; }
-        .venue-dropdown-header .title {
-            font-weight: 600;
-            color: #0a2f44;
-            font-size: 14px;
-        }
-        .venue-dropdown-header .arrow {
-            color: #94a3b8;
-            font-size: 14px;
-            transition: transform .25s ease;
-        }
+        .venue-dropdown-header .title { font-weight: 600; color: #0a2f44; font-size: 14px; }
+        .venue-dropdown-header .arrow { color: #94a3b8; font-size: 14px; transition: transform .25s ease; }
         .venue-dropdown-header .arrow.open { transform: rotate(180deg); }
-        .venue-dropdown-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height .35s ease, padding .35s ease;
-            padding: 0 16px;
-            background: #ffffff;
-        }
+        .venue-dropdown-body { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease; padding: 0 16px; background: #ffffff; }
         .venue-dropdown-body.open { padding: 12px 16px 16px 16px; }
-        .venue-dropdown-body .venue-mgr-add {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-        .venue-dropdown-body .venue-mgr-add input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #dce4ec;
-            border-radius: 10px;
-            font-size: 13px;
-            background: #f8fafc;
-            outline: none;
-            min-height: 44px;
-        }
-        .venue-dropdown-body .venue-mgr-add input:focus {
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .venue-dropdown-body .venue-mgr-add .btn-add {
-            align-self: flex-end;
-            background: #22c55e;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 8px 20px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            outline: none !important;
-            white-space: nowrap;
-            min-height: 44px;
-        }
+        .venue-dropdown-body .venue-mgr-add { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .venue-dropdown-body .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 10px; font-size: 13px; background: #f8fafc; outline: none; min-height: 44px; }
+        .venue-dropdown-body .venue-mgr-add input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .venue-dropdown-body .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 10px; padding: 8px 20px; font-weight: 600; font-size: 13px; cursor: pointer; outline: none !important; white-space: nowrap; min-height: 44px; }
         .venue-dropdown-body .venue-mgr-add .btn-add:active { transform: scale(0.94); }
-        .venue-dropdown-body .venue-mgr-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 40vh;
-            overflow-y: auto;
-        }
-        .venue-dropdown-body .venue-mgr-item {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 12px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background .15s;
-            border: 1px solid transparent;
-        }
+        .venue-dropdown-body .venue-mgr-list { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
+        .venue-dropdown-body .venue-mgr-item { background: #f8fafc; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; transition: background .15s; border: 1px solid transparent; }
         .venue-dropdown-body .venue-mgr-item:active { background: #e8edf4; }
-        .venue-dropdown-body .venue-mgr-item .info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex: 1;
-            min-width: 0;
-        }
-        .venue-dropdown-body .venue-mgr-item .info .name {
-            font-weight: 600;
-            color: #0a2f44;
-            font-size: 14px;
-            word-break: break-all;
-        }
-        .venue-dropdown-body .venue-mgr-item .info .order-id {
-            color: #8899aa;
-            font-size: 11px;
-            font-family: monospace;
-            word-break: break-all;
-        }
-        .venue-dropdown-body .venue-mgr-item .btn-del {
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            flex-shrink: 0;
-            outline: none !important;
-            min-height: 36px;
-        }
+        .venue-dropdown-body .venue-mgr-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+        .venue-dropdown-body .venue-mgr-item .info .name { font-weight: 600; color: #0a2f44; font-size: 14px; word-break: break-all; }
+        .venue-dropdown-body .venue-mgr-item .info .order-id { color: #8899aa; font-size: 11px; font-family: monospace; word-break: break-all; }
+        .venue-dropdown-body .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; outline: none !important; min-height: 36px; }
         .venue-dropdown-body .venue-mgr-item .btn-del:active { transform: scale(0.92); }
-        .venue-dropdown-body .venue-mgr-empty {
-            text-align: center;
-            padding: 20px;
-            color: #8899aa;
-            font-size: 13px;
-        }
-        .venue-dropdown-body .venue-mgr-loading {
-            text-align: center;
-            padding: 12px;
-            color: #8899aa;
-            font-size: 13px;
-        }
-        .venue-mgr-section .section-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #0a2f44;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .venue-mgr-section .section-title .count-badge {
-            background: #e8edf4;
-            color: #334455;
-            font-size: 12px;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
+        .venue-dropdown-body .venue-mgr-empty { text-align: center; padding: 20px; color: #8899aa; font-size: 13px; }
+        .venue-dropdown-body .venue-mgr-loading { text-align: center; padding: 12px; color: #8899aa; font-size: 13px; }
+        .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #0a2f44; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .venue-mgr-section .section-title .count-badge { background: #e8edf4; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; font-weight: 500; }
 
-        .config-container {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-        .config-container .page-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #0a2f44;
-            margin-bottom: 4px;
-        }
-        .config-container .page-subtitle {
-            color: #8899aa;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
+        .config-container { background: #fff; border-radius: 16px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .config-container .page-title { font-size: 20px; font-weight: 700; color: #0a2f44; margin-bottom: 4px; }
+        .config-container .page-subtitle { color: #8899aa; font-size: 13px; margin-bottom: 20px; }
         .config-container .field { margin-bottom: 16px; }
-        .config-container .field label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #334455;
-            margin-bottom: 4px;
-        }
-        .config-container .field .input-row {
-            display: flex;
-            gap: 6px;
-            align-items: stretch;
-        }
+        .config-container .field label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 4px; }
+        .config-container .field .input-row { display: flex; gap: 6px; align-items: stretch; }
         .config-container .field .input-row textarea,
-        .config-container .field .input-row input {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1px solid #dce4ec;
-            border-radius: 10px;
-            font-size: 13px;
-            font-family: monospace;
-            background: #f8fafc;
-            min-height: 42px;
-            resize: vertical;
-            outline: none;
-        }
+        .config-container .field .input-row input { flex: 1; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 10px; font-size: 13px; font-family: monospace; background: #f8fafc; min-height: 42px; resize: vertical; outline: none; }
         .config-container .field .input-row textarea:focus,
-        .config-container .field .input-row input:focus {
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .config-container .field .hint {
-            font-size: 11px;
-            color: #8899aa;
-            margin-top: 4px;
-        }
-        .config-container .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 6px;
-        }
-        .config-container .actions button {
-            padding: 10px 16px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            flex: 1;
-            min-width: 70px;
-            touch-action: manipulation;
-            outline: none !important;
-            min-height: 44px;
-        }
+        .config-container .field .input-row input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .config-container .field .hint { font-size: 11px; color: #8899aa; margin-top: 4px; }
+        .config-container .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .config-container .actions button { padding: 10px 16px; border-radius: 10px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; flex: 1; min-width: 70px; touch-action: manipulation; outline: none !important; min-height: 44px; }
         .config-container .actions button:active { transform: scale(0.96); }
         .config-container .actions .btn-save { background: #3b82f6; color: #fff; }
-        .config-container .actions .btn-save:active { background: #2563eb; }
         .config-container .actions .btn-test { background: #22c55e; color: #fff; }
-        .config-container .actions .btn-test:active { background: #16a34a; }
-        .config-container .status-msg {
-            margin-top: 14px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
+        .config-container .status-msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
         .config-container .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .config-container .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
         .config-container .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #ffffff;
-            border-top: 1px solid #e8edf4;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            height: 64px;
-            z-index: 999;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-        }
-        .bottom-nav .tab {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            padding: 6px 0;
-            cursor: pointer;
-            touch-action: manipulation;
-            border: none;
-            background: transparent;
-            color: #94a3b8;
-            font-size: 11px;
-            font-weight: 500;
-            transition: color .2s;
-            position: relative;
-            outline: none !important;
-            text-decoration: none;
-        }
-        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; color: #94a3b8; transition: color .2s; }
-        .bottom-nav .tab .tab-label { color: #94a3b8; transition: color .2s; }
-        .bottom-nav .tab.active .tab-icon { color: #0a2f44; }
-        .bottom-nav .tab.active .tab-label { color: #0a2f44; font-weight: 600; }
-        .bottom-nav .tab.active::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 30%;
-            right: 30%;
-            height: 3px;
-            background: #0a2f44;
-            border-radius: 0 0 3px 3px;
-        }
-        .bottom-nav .tab:active { transform: scale(0.92); }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent !important;
-            outline: none !important;
-        }
-        *:focus { outline: none !important; box-shadow: none !important; }
-        button, .btn, .tab, .btn-save, .btn-test {
-            outline: none !important;
-            border: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            box-shadow: none !important;
-        }
-        button:focus, .btn:focus, .tab:focus, .btn-save:focus, .btn-test:focus {
-            outline: none !important;
-            box-shadow: none !important;
-            border-color: transparent !important;
-        }
-        @media(max-width:400px) {
-            .config-container { padding: 18px 14px; }
-        }
-        @media(min-width:600px) {
-            body { padding: 0 0 100px 0; }
-        }
-
-        .pool-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 16px 0 6px;
-            padding: 12px 14px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #e8edf4;
-            align-items: center;
-        }
-        .pool-actions .btn-refresh-pool {
-            background: #f59e0b;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 18px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            min-height: 44px;
-            flex: 1;
-            transition: all .2s;
-            outline: none !important;
-        }
+        .pool-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 6px; padding: 12px 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e8edf4; align-items: center; }
+        .pool-actions .btn-refresh-pool { background: #f59e0b; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; transition: all .2s; outline: none !important; }
         .pool-actions .btn-refresh-pool:active { transform: scale(0.94); background: #d97706; }
         .pool-actions .btn-refresh-pool:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .pool-actions .btn-refresh-pool .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin .8s linear infinite;
-            vertical-align: middle;
-            margin-right: 6px;
-        }
+        .pool-actions .btn-refresh-pool .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin-right: 6px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .pool-actions .pool-hint {
-            color: #8899aa;
-            font-size: 11px;
-            flex: 1;
-            min-width: 120px;
-        }
-        .pool-status {
-            margin-top: 8px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
+        .pool-actions .pool-hint { color: #8899aa; font-size: 11px; flex: 1; min-width: 120px; }
+        .pool-status { margin-top: 8px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
         .pool-status.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .pool-status.error { display: block; background: #fde8e8; color: #b33a3a; }
         .pool-status.info { display: block; background: #e3edf7; color: #1a5f7a; }
         .pool-status .detail { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e8edf4; display: flex; justify-content: space-around; align-items: center; height: 64px; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.06); }
+        .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; cursor: pointer; touch-action: manipulation; border: none; background: transparent; color: #94a3b8; font-size: 11px; font-weight: 500; transition: color .2s; position: relative; outline: none !important; text-decoration: none; }
+        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; color: #94a3b8; transition: color .2s; }
+        .bottom-nav .tab .tab-label { color: #94a3b8; transition: color .2s; }
+        .bottom-nav .tab.active .tab-icon { color: #0a2f44; }
+        .bottom-nav .tab.active .tab-label { color: #0a2f44; font-weight: 600; }
+        .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #0a2f44; border-radius: 0 0 3px 3px; }
+        .bottom-nav .tab:active { transform: scale(0.92); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+        *:focus { outline: none !important; box-shadow: none !important; }
+        button, .btn, .tab { outline: none !important; border: none !important; -webkit-tap-highlight-color: transparent !important; box-shadow: none !important; }
+        @media(max-width:400px) { .config-container { padding: 18px 14px; } }
     </style>
 </head>
 <body>
@@ -545,13 +237,15 @@ function saveConfig() {
     saveData('uuid', uuid);
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
+        setStatusMsg('✅ 配置已保存，并已注入原生层！', 'success');
+    } else {
+        setStatusMsg('⚠️ 已保存到本地，但 AndroidBridge 不可用（重启App生效）', 'info');
     }
-    setStatusMsg('✅ 配置已保存到本机！', 'success');
     addLog('✅ 配置已保存 (Token/UUID)', 'success');
 }
 
 // ============================================================
-// 🔍 测试配置
+// 🔍 测试配置（带完整调试）
 // ============================================================
 async function testConfig() {
     var token = document.getElementById('tokenInput').value.trim();
@@ -560,6 +254,14 @@ async function testConfig() {
         setStatusMsg('⚠️ 请先填写 Token 和 UUID', 'error');
         return;
     }
+
+    // ✅ 调试信息 1：AndroidBridge 是否存在
+    if (!window.AndroidBridge) {
+        setStatusMsg('❌ AndroidBridge 未注入！请检查 MainActivity 的 addJavascriptInterface', 'error');
+        alert('AndroidBridge 未注入！\n\n说明 MainActivity.java 里的这行没有生效：\nwebView.addJavascriptInterface(new JSInterface(), "AndroidBridge");');
+        return;
+    }
+
     setStatusMsg('⏳ 测试中...', 'info');
 
     saveData('token', token);
@@ -579,13 +281,14 @@ async function testConfig() {
             addLog('❌ 测试失败: ' + errMsg, 'error');
         }
     } catch(e) {
-        setStatusMsg('❌ 测试失败: ' + e.message, 'error');
+        setStatusMsg('❌ 测试异常: ' + e.message, 'error');
         addLog('❌ 测试异常: ' + e.message, 'error');
+        alert('测试异常：' + e.message);
     }
 }
 
 // ============================================================
-// 📋 钓场管理（本地存储）
+// 📋 钓场管理
 // ============================================================
 function loadVenuesFromLocal() {
     try {
@@ -690,7 +393,7 @@ function deleteVenue(id) {
 }
 
 // ============================================================
-// 🔄 刷新号码池（本地生成 seat_map.json）
+// 🔄 刷新号码池
 // ============================================================
 async function refreshSeatMap() {
     var btn = document.getElementById('btnRefreshPool');
@@ -705,7 +408,15 @@ async function refreshSeatMap() {
         return;
     }
 
-    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+    if (!window.AndroidBridge) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ AndroidBridge 未注入！';
+        statusEl.style.display = 'block';
+        alert('AndroidBridge 未注入！');
+        return;
+    }
+
+    if (window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
     }
 
@@ -749,7 +460,6 @@ async function refreshSeatMap() {
             await new Promise(function(r) { setTimeout(r, 500); });
         }
 
-        // 保存到本地
         saveSeatMapToLocal(seatMap);
 
         var detailHtml = '<div class="detail">✅ 共 ' + totalSeats + ' 个钓位，' + totalVenues + ' 个钓场已更新</div>';
