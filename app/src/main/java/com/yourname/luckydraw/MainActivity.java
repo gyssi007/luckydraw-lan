@@ -91,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -182,12 +184,14 @@ public class MainActivity extends AppCompatActivity {
                     Response response = httpClient.newCall(request).execute();
                     String result = response.body().string();
 
-                    final String js = "window._apiCallback(" + callbackId + ", " + escapeJson(result) + ")";
+                    // 使用 JSONObject.quote() 安全转义任意字符（包含中文、emoji、换行等）
+                    final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(result) + ")";
                     handler.post(() -> webView.evaluateJavascript(js, null));
 
                 } catch (Exception e) {
-                    final String errorJson = "{\"error\":\"" + escapeJson(e.getMessage()) + "\"}";
-                    final String js = "window._apiCallback(" + callbackId + ", " + escapeJson(errorJson) + ")";
+                    String errMsg = e.getMessage() == null ? "unknown" : e.getMessage().replace("\"", "'");
+                    final String errorJson = "{\"error\":\"" + errMsg + "\"}";
+                    final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(errorJson) + ")";
                     handler.post(() -> webView.evaluateJavascript(js, null));
                 }
             }).start();
@@ -540,14 +544,6 @@ public class MainActivity extends AppCompatActivity {
         JSONArray arr = new JSONArray();
         for (int i : list) arr.put(i);
         return arr.toString();
-    }
-
-    private String escapeJson(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
     }
 
     private SharedPreferences getSecurePrefs() {
