@@ -139,15 +139,15 @@
 </div>
 
 <div class="bottom-nav">
-    <a class="tab" href="/app/pages/lucky.html">
+    <a class="tab" href="lucky.html">
         <span class="tab-icon">🎯</span>
         <span class="tab-label">幸运号码</span>
     </a>
-    <a class="tab active" href="/app/pages/detective.html">
+    <a class="tab active" href="detective.html">
         <span class="tab-icon">🕵🏻</span>
         <span class="tab-label">钓场侦探</span>
     </a>
-    <a class="tab" href="/app/pages/config.html">
+    <a class="tab" href="config.html">
         <span class="tab-icon">⚙️</span>
         <span class="tab-label">配置</span>
     </a>
@@ -179,16 +179,20 @@ var venueStatus = document.getElementById('venueStatus');
 var updateTime = document.getElementById('updateTime');
 
 // ============================================================
-// 🔐 构建带认证的请求头
+// 📋 从本地读取钓场列表
 // ============================================================
-function buildAuthHeaders() {
-    var token = loadData('token', '');
-    var uuid = loadData('uuid', '');
-    return {
-        'Authorization': token,
-        'uuid': uuid,
-        'Content-Type': 'application/json'
-    };
+function loadVenuesFromLocal() {
+    try {
+        if (window.AndroidBridge && window.AndroidBridge.loadVenues) {
+            var json = window.AndroidBridge.loadVenues();
+            if (json && json !== '[]') return JSON.parse(json);
+        }
+        var stored = loadData('venues_data', '');
+        if (stored) return JSON.parse(stored);
+    } catch(e) {
+        console.error('加载钓场失败:', e);
+    }
+    return null;
 }
 
 function openVenueSelector() {
@@ -218,7 +222,6 @@ function renderVenueList2() {
 
 function selectVenue2(orderId) {
     SELECTED_VENUE_ID = orderId;
-    // ✅ 保存用户选择的钓场到缓存
     saveData('detective_selected_venue', orderId);
     var venue = null;
     for (var i = 0; i < VENUES.length; i++) {
@@ -239,144 +242,137 @@ venueOverlay.addEventListener('click', function(e) {
 });
 
 // ============================================================
-// 📋 加载钓场列表
+// 📋 加载钓场列表（本地）
 // ============================================================
-function loadVenues2() {
-    try {
-        var headers = buildAuthHeaders();
-        fetch(API_BASE + '/venues', { headers: headers })
-            .then(function(resp) { return resp.json(); })
-            .then(function(result) {
-                if (result.success) {
-                    VENUES = result.data || [];
-                    if (VENUES.length > 0) {
-                        // ✅ 优先从缓存读取用户上次选择的钓场
-                        var savedVenueId = loadData('detective_selected_venue', '');
-                        var found = false;
-                        if (savedVenueId) {
-                            for (var i = 0; i < VENUES.length; i++) {
-                                if (VENUES[i].order_id === savedVenueId) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        SELECTED_VENUE_ID = found ? savedVenueId : VENUES[0].order_id;
-                        // 更新显示名称
-                        var selectedVenue = null;
-                        for (var j = 0; j < VENUES.length; j++) {
-                            if (VENUES[j].order_id === SELECTED_VENUE_ID) {
-                                selectedVenue = VENUES[j];
-                                break;
-                            }
-                        }
-                        selectedVenueDisplay.textContent = selectedVenue ? selectedVenue.name : VENUES[0].name;
-                        selectedVenueDisplay.className = 'selected-name';
-                        fetchVenueData();
-                    }
-                    return;
+async function loadVenues2() {
+    var venues = loadVenuesFromLocal();
+
+    // 如果本地没有，从 assets/pages/venues.json 加载
+    if (venues === null) {
+        try {
+            var resp = await fetch('venues.json');
+            venues = await resp.json();
+            var json = JSON.stringify(venues);
+            if (window.AndroidBridge && window.AndroidBridge.saveVenues) {
+                window.AndroidBridge.saveVenues(json);
+            }
+            saveData('venues_data', json);
+        } catch(e) {
+            venues = [];
+        }
+    }
+
+    VENUES = venues;
+
+    if (VENUES.length > 0) {
+        // 优先从缓存读取用户上次选择的钓场
+        var savedVenueId = loadData('detective_selected_venue', '');
+        var found = false;
+        if (savedVenueId) {
+            for (var i = 0; i < VENUES.length; i++) {
+                if (VENUES[i].order_id === savedVenueId) {
+                    found = true;
+                    break;
                 }
-                console.error('加载钓场列表失败');
-            })
-            .catch(function(e) {
-                console.error('加载钓场列表失败:', e);
-            });
-    } catch(e) {
-        console.error('加载钓场列表失败:', e);
+            }
+        }
+        SELECTED_VENUE_ID = found ? savedVenueId : VENUES[0].order_id;
+
+        var selectedVenue = null;
+        for (var j = 0; j < VENUES.length; j++) {
+            if (VENUES[j].order_id === SELECTED_VENUE_ID) {
+                selectedVenue = VENUES[j];
+                break;
+            }
+        }
+        selectedVenueDisplay.textContent = selectedVenue ? selectedVenue.name : VENUES[0].name;
+        selectedVenueDisplay.className = 'selected-name';
+        fetchVenueData();
+    } else {
+        selectedVenueDisplay.textContent = '请先到配置页添加钓场';
     }
 }
 
 // ============================================================
-// 🎣 获取钓位数据
+// 🎣 获取钓位数据（本地直连官方 API）
 // ============================================================
-function fetchVenueData() {
+async function fetchVenueData() {
     var refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.disabled = true;
     refreshBtn.textContent = '⏳';
 
-    var headers = buildAuthHeaders();
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token, uuid);
+    }
 
-    fetch(API_BASE + '/venues', { headers: headers })
-        .then(function(resp) { return resp.json(); })
-        .then(function(venuesResult) {
-            if (venuesResult.success) {
-                VENUES = venuesResult.data || [];
-                renderVenueList2();
-                if (VENUES.length > 0) {
-                    var stillExists = false;
-                    for (var i = 0; i < VENUES.length; i++) {
-                        if (VENUES[i].order_id === SELECTED_VENUE_ID) {
-                            stillExists = true;
-                            break;
-                        }
-                    }
-                    if (!stillExists) {
-                        SELECTED_VENUE_ID = VENUES[0].order_id;
-                        saveData('detective_selected_venue', SELECTED_VENUE_ID);
-                        selectedVenueDisplay.textContent = VENUES[0].name;
-                        selectedVenueDisplay.className = 'selected-name';
-                    }
-                }
+    // 重新加载本地钓场列表（防止配置页添加后不更新）
+    var venues = loadVenuesFromLocal();
+    if (venues && venues.length > 0) {
+        VENUES = venues;
+        renderVenueList2();
+        // 如果当前选中的钓场已被删除，切换到第一个
+        var stillExists = false;
+        for (var i = 0; i < VENUES.length; i++) {
+            if (VENUES[i].order_id === SELECTED_VENUE_ID) {
+                stillExists = true;
+                break;
             }
+        }
+        if (!stillExists && VENUES.length > 0) {
+            SELECTED_VENUE_ID = VENUES[0].order_id;
+            saveData('detective_selected_venue', SELECTED_VENUE_ID);
+            selectedVenueDisplay.textContent = VENUES[0].name;
+            selectedVenueDisplay.className = 'selected-name';
+        }
+    }
 
-            var orderId = SELECTED_VENUE_ID;
-            if (!orderId) {
-                seatGrid.innerHTML = '<div class="empty-state"><div class="icon"></div><p>请选择钓场查看实时状态</p></div>';
-                resetDetectiveStats();
-                venueName.textContent = '未选择';
-                venueStatus.textContent = '-';
-                updateTime.textContent = '等待选择...';
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '🔄 刷新';
-                return;
+    var orderId = SELECTED_VENUE_ID;
+    if (!orderId) {
+        seatGrid.innerHTML = '<div class="empty-state"><div class="icon"></div><p>请选择钓场查看实时状态</p></div>';
+        resetDetectiveStats();
+        venueName.textContent = '未选择';
+        venueStatus.textContent = '-';
+        updateTime.textContent = '等待选择...';
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '🔄 刷新';
+        return;
+    }
+
+    seatGrid.innerHTML = '<div class="loading-mask"><div class="spinner"></div>加载中...</div>';
+
+    try {
+        var result = await callApi('/v2/userApi/ticketSeat/querySeatList?order_id=' + orderId, 'GET');
+
+        if (result.code !== '000') {
+            throw new Error(result.msg || '接口返回错误');
+        }
+
+        var seatList = result.data && result.data.seat_list ? result.data.seat_list : [];
+        var venue = null;
+        for (var i = 0; i < VENUES.length; i++) {
+            if (VENUES[i].order_id === orderId) {
+                venue = VENUES[i];
+                break;
             }
-
-            seatGrid.innerHTML = '<div class="loading-mask"><div class="spinner"></div>加载中...</div>';
-
-            // ✅ 使用带认证的 headers
-            fetch(API_BASE + '/seat/list?order_id=' + orderId, { headers: headers })
-                .then(function(resp) { return resp.json(); })
-                .then(function(result) {
-                    if (!result.success) {
-                        if (result.error && result.error.includes('401')) {
-                            seatGrid.innerHTML = '<div class="error-state"><div class="icon">🔑</div><div class="title">认证失败 (401)</div><div class="desc">请到"配置"页面更新 Token</div></div>';
-                            refreshBtn.disabled = false;
-                            refreshBtn.textContent = '🔄 刷新';
-                            return;
-                        }
-                        throw new Error(result.error || '请求失败');
-                    }
-                    var data = result.data;
-                    if (data.code !== '000') {
-                        throw new Error(data.msg || '接口返回错误');
-                    }
-                    var seatList = data.data && data.data.seat_list ? data.data.seat_list : [];
-                    var venue = null;
-                    for (var i = 0; i < VENUES.length; i++) {
-                        if (VENUES[i].order_id === orderId) {
-                            venue = VENUES[i];
-                            break;
-                        }
-                    }
-                    renderSeats2(seatList);
-                    updateDetectiveStats2(seatList);
-                    updateVenueInfo2(venue ? venue.name : '未知钓场', data);
-                    refreshBtn.disabled = false;
-                    refreshBtn.textContent = '🔄 刷新';
-                })
-                .catch(function(error) {
-                    console.error('加载失败:', error);
-                    seatGrid.innerHTML = '<div class="error-state"><div class="icon">⚠️</div><div class="title">加载失败</div><div class="desc">' + error.message + '</div></div>';
-                    resetDetectiveStats();
-                    refreshBtn.disabled = false;
-                    refreshBtn.textContent = '🔄 刷新';
-                });
-        })
-        .catch(function(error) {
-            console.error('刷新钓场列表失败:', error);
-            refreshBtn.disabled = false;
-            refreshBtn.textContent = '🔄 刷新';
-        });
+        }
+        renderSeats2(seatList);
+        updateDetectiveStats2(seatList);
+        updateVenueInfo2(venue ? venue.name : '未知钓场', result);
+    } catch(error) {
+        console.error('加载失败:', error);
+        var errMsg = error.message || '请求失败';
+        if (errMsg.indexOf('401') !== -1 || errMsg.indexOf('Token') !== -1) {
+            seatGrid.innerHTML = '<div class="error-state"><div class="icon">🔑</div><div class="title">认证失败</div><div class="desc">请到"配置"页面更新 Token</div></div>';
+        } else {
+            seatGrid.innerHTML = '<div class="error-state"><div class="icon">⚠️</div><div class="title">加载失败</div><div class="desc">' + errMsg + '</div></div>';
+        }
+        resetDetectiveStats();
+    } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '🔄 刷新';
+    }
 }
 
 function renderSeats2(seatList) {
@@ -436,6 +432,11 @@ function updateVenueInfo2(name, data) {
 // 🚀 初始化
 // ============================================================
 (function initDetectivePage() {
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token, uuid);
+    }
     loadVenues2();
 })();
 
