@@ -169,7 +169,7 @@ function saveConfig() {
     saveData('uuid', uuid);
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
-        setStatusMsg('✅ 配置已保存，并已注入原生层！', 'success');
+        setStatusMsg('✅ 配置已保存，请点击测试！', 'success');
     } else {
         setStatusMsg('⚠️ 已保存到本地，但 AndroidBridge 不可用', 'info');
     }
