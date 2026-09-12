@@ -17,19 +17,36 @@
         .venue-selector-trigger .selected-placeholder{color:#0a2f44;font-weight:600;font-size:15px}
         .venue-selector-trigger .arrow{color:#94a3b8;font-size:14px}
         .venue-selector-trigger:active{background:#f1f5f9}
-        .venue-selector-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:2000;justify-content:center;align-items:center;padding:20px}
+        .venue-selector-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(8,15,25,0.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:2000;justify-content:center;align-items:flex-end;padding:0}
         .venue-selector-overlay.show{display:flex}
-        .venue-selector-modal{background:#fff;border-radius:20px;padding:20px;max-width:500px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalIn .25s ease}
-        .venue-selector-modal .modal-title{font-size:17px;font-weight:700;color:#0a2f44;padding-bottom:12px;border-bottom:1px solid #e8edf4;display:flex;justify-content:space-between;align-items:center}
-        .venue-selector-modal .modal-title .close-btn{cursor:pointer;font-size:22px;color:#8899aa;background:none;border:none;padding:0 4px;outline:none!important}
-        .venue-selector-modal .venue-list{overflow-y:auto;flex:1;padding-top:12px}
-        .venue-selector-modal .venue-item{padding:12px 16px;border-radius:10px;cursor:pointer;transition:background .15s;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;outline:none!important}
-        .venue-selector-modal .venue-item:active{background:#e8edf4}
-        .venue-selector-modal .venue-item .name{font-weight:500;color:#0a2f44;font-size:14px}
+        .venue-selector-modal{background:#fff;border-radius:26px 26px 0 0;padding:8px 20px calc(18px + env(safe-area-inset-bottom,0px));max-width:560px;width:100%;max-height:78vh;display:flex;flex-direction:column;box-shadow:0 -14px 40px rgba(0,0,0,0.25);transform:translateY(100%);animation:none;transition:transform .32s cubic-bezier(.32,.72,0,1);touch-action:none}
+        .venue-selector-overlay.show .venue-selector-modal{transform:translateY(0)}
+        .venue-selector-modal .sheet-handle{width:38px;height:5px;border-radius:3px;background:#e2e8f0;margin:6px auto 14px;flex-shrink:0}
+        .venue-selector-modal .modal-title{font-size:16px;font-weight:700;color:#0a2f44;padding-bottom:14px;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+        .venue-selector-modal .modal-title .close-btn{cursor:pointer;font-size:18px;color:#94a3b8;background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;outline:none!important}
+        .venue-selector-modal .venue-list{overflow-y:auto;flex:1;padding-top:10px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+        .venue-selector-modal .venue-item{padding:14px 16px;border-radius:14px;cursor:pointer;transition:background .15s,transform .1s;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;outline:none!important}
+        .venue-selector-modal .venue-item:active{background:#eef2f6;transform:scale(.98)}
+        .venue-selector-modal .venue-item .name{font-weight:500;color:#0a2f44;font-size:14.5px}
         .venue-selector-modal .venue-item .check{color:#22c55e;font-size:18px;display:none}
         .venue-selector-modal .venue-item.active .check{display:block}
-        .venue-selector-modal .venue-item.active{background:#f0f7ff}
-        .venue-selector-modal .venue-empty{padding:20px;text-align:center;color:#8899aa}
+        .venue-selector-modal .venue-item.active{background:#eef6ff}
+        .venue-selector-modal .venue-empty{padding:30px 20px;text-align:center;color:#94a3b8;font-size:13px}
+
+        /* ===== 原生 App 风格弹窗（替代系统 alert） ===== */
+        .app-dialog-mask{position:fixed;inset:0;background:rgba(8,15,25,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:30px;opacity:0;transition:opacity .2s ease}
+        .app-dialog-mask.show{opacity:1}
+        .app-dialog-card{background:#fff;border-radius:26px;width:100%;max-width:340px;padding:30px 24px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.35);transform:translateY(24px) scale(.92);opacity:0;transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s ease}
+        .app-dialog-mask.show .app-dialog-card{transform:translateY(0) scale(1);opacity:1}
+        .app-dialog-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+        .app-dialog-title{font-size:17px;font-weight:700;color:#0a2f44;margin-bottom:8px}
+        .app-dialog-msg{font-size:13.5px;color:#67798c;line-height:1.65;margin-bottom:22px;white-space:pre-line;word-break:break-word}
+        .app-dialog-btns{display:flex;gap:10px}
+        .app-dialog-btn{flex:1;border:none;border-radius:14px;padding:13px 10px;font-size:14.5px;font-weight:700;cursor:pointer;min-height:46px;transition:transform .12s}
+        .app-dialog-btn:active{transform:scale(.94)}
+        .app-dialog-btn.primary{background:#3b82f6;color:#fff}
+        .app-dialog-btn.danger{background:#ef4444;color:#fff}
+        .app-dialog-btn.secondary{background:#eef2f6;color:#334455}
         .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
         .stat-card{background:#fff;border-radius:14px;padding:14px 12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
         .stat-card .number{font-size:26px;font-weight:700;line-height:1.2}
@@ -97,7 +114,8 @@
             </div>
 
             <div class="venue-selector-overlay" id="venueOverlay">
-                <div class="venue-selector-modal">
+                <div class="venue-selector-modal" id="venueSheet">
+                    <div class="sheet-handle" id="sheetHandle"></div>
                     <div class="modal-title">
                         <span>选择钓场</span>
                         <button class="close-btn" onclick="closeVenueSelector()">✕</button>
@@ -155,6 +173,52 @@
 
 <script src="../assets/common.js"></script>
 <script>
+// ============================================================
+// 📱 原生 App 风格弹窗（appAlert 替代系统 alert）
+// ============================================================
+function appDialog(opts) {
+    return new Promise(function(resolve) {
+        var mask = document.createElement('div');
+        mask.className = 'app-dialog-mask';
+        var btnsHtml = '';
+        opts.buttons.forEach(function(b, i) {
+            btnsHtml += '<button class="app-dialog-btn ' + (b.type || 'secondary') + '" data-i="' + i + '">' + b.text + '</button>';
+        });
+        mask.innerHTML =
+            '<div class="app-dialog-card">' +
+                '<div class="app-dialog-icon" style="background:' + (opts.iconBg || '#e3edf7') + '">' + (opts.icon || '💬') + '</div>' +
+                '<div class="app-dialog-title">' + opts.title + '</div>' +
+                '<div class="app-dialog-msg">' + opts.message + '</div>' +
+                '<div class="app-dialog-btns">' + btnsHtml + '</div>' +
+            '</div>';
+        document.body.appendChild(mask);
+        requestAnimationFrame(function() { mask.classList.add('show'); });
+
+        function close(val) {
+            mask.classList.remove('show');
+            setTimeout(function() { mask.remove(); }, 220);
+            resolve(val);
+        }
+        mask.querySelectorAll('.app-dialog-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.getAttribute('data-i'), 10);
+                close(opts.buttons[idx].value);
+            });
+        });
+    });
+}
+
+function appAlert(message, opts) {
+    opts = opts || {};
+    return appDialog({
+        icon: opts.icon || '💡',
+        iconBg: opts.iconBg || '#e3edf7',
+        title: opts.title || '提示',
+        message: message,
+        buttons: [{ text: opts.okText || '知道了', type: 'primary', value: true }]
+    });
+}
+
 var VENUES = [];
 var SELECTED_VENUE_ID = null;
 var STATUS_MAP = {
@@ -240,6 +304,41 @@ venueTrigger.addEventListener('click', openVenueSelector);
 venueOverlay.addEventListener('click', function(e) {
     if (e.target === this) closeVenueSelector();
 });
+
+// ============================================================
+// 👆 底部弹层下拉手势关闭（仅视觉/交互增强，不影响业务逻辑）
+// ============================================================
+(function enableSheetDragToClose() {
+    var sheet = document.getElementById('venueSheet');
+    var handle = document.getElementById('sheetHandle');
+    var startY = 0, currentY = 0, dragging = false;
+
+    function onStart(e) {
+        dragging = true;
+        startY = (e.touches ? e.touches[0].clientY : e.clientY);
+        sheet.style.transition = 'none';
+    }
+    function onMove(e) {
+        if (!dragging) return;
+        currentY = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+        if (currentY < 0) currentY = 0;
+        sheet.style.transform = 'translateY(' + currentY + 'px)';
+    }
+    function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+        if (currentY > 90) closeVenueSelector();
+        currentY = 0;
+    }
+    handle.addEventListener('touchstart', onStart, { passive: true });
+    handle.addEventListener('touchmove', onMove, { passive: true });
+    handle.addEventListener('touchend', onEnd);
+    handle.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+})();
 
 // ============================================================
 // 📋 加载钓场列表（本地）
@@ -450,7 +549,7 @@ function updateVenueInfo2(name, data) {
         if (!res.valid) {
             console.error('Token 无效:', res.reason);
             // 弹窗提示用户
-            alert('Token 已过期，请到配置页面重新设置');
+            appAlert('Token 已过期，请到配置页面重新设置', { icon: '🔑', iconBg: '#fde8e8', title: '登录已失效' });
             setTimeout(function() {
                 navigateTo('config.html');
             }, 1500);
