@@ -25,14 +25,18 @@
         .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
         .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
+
         .pool-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 6px; padding: 12px 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e8edf4; align-items: center; }
         .pool-actions .btn-refresh-pool { background: #f59e0b; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
         .pool-actions .btn-refresh-pool:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pool-actions .btn-auto-venues { background: #8b5cf6; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
+        .pool-actions .btn-auto-venues:disabled { opacity: 0.5; cursor: not-allowed; }
         .pool-actions .pool-hint { color: #8899aa; font-size: 11px; flex: 1; min-width: 120px; }
         .pool-status { margin-top: 8px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
         .pool-status.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .pool-status.error { display: block; background: #fde8e8; color: #b33a3a; }
         .pool-status.info { display: block; background: #e3edf7; color: #1a5f7a; }
+
         .venue-mgr-section { margin-top: 18px; border-top: 1px solid #e8edf4; padding-top: 16px; }
         .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #0a2f44; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-section .section-title .count-badge { background: #e8edf4; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
@@ -53,6 +57,7 @@
         .venue-mgr-item .info .order-id { color: #8899aa; font-size: 11px; font-family: monospace; }
         .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
         .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8899aa; font-size: 13px; }
+
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e8edf4; display: flex; justify-content: space-around; align-items: center; height: 64px; z-index: 999; }
         .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 500; text-decoration: none; position: relative; }
         .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; }
@@ -94,9 +99,10 @@
             <div id="configStatus" class="status-msg"></div>
 
             <div class="pool-actions">
+                <button class="btn-auto-venues" id="btnAutoVenues" onclick="autoGenerateVenues()">🎣 自动生成钓场库</button>
                 <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">🔄 刷新号码池</button>
-                <span class="pool-hint">从钓场列表更新座位映射表</span>
             </div>
+            <div class="pool-hint" style="margin-bottom:6px;">「自动生成钓场库」会从历史订单中提取钓场，覆盖现有钓场列表</div>
             <div id="poolStatus" class="pool-status"></div>
 
             <div class="venue-mgr-section">
@@ -285,6 +291,130 @@ function deleteVenue(id) {
     renderVenueList(venues);
 }
 
+// ============================================================
+// 🎣 自动生成钓场库（从历史订单提取）
+// ============================================================
+async function autoGenerateVenues() {
+    var btn = document.getElementById('btnAutoVenues');
+    var statusEl = document.getElementById('poolStatus');
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+
+    if (!token || !uuid) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '⚠️ 请先配置 Token 和 UUID';
+        return;
+    }
+    if (!window.AndroidBridge) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ AndroidBridge 未注入！';
+        return;
+    }
+    if (!confirm('将根据历史订单重新生成钓场库，覆盖现有钓场列表，确定继续？')) {
+        return;
+    }
+
+    if (window.AndroidBridge.setAuth) window.AndroidBridge.setAuth(token, uuid);
+    btn.disabled = true;
+    btn.textContent = '⏳ 分析中...';
+    statusEl.className = 'pool-status info';
+    statusEl.textContent = '⏳ 正在获取历史订单...';
+
+    try {
+        // 1. 先拿第一页，拿到总数
+        var firstPage = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=10', 'GET');
+        if (firstPage.code !== '000') {
+            throw new Error(firstPage.msg || '获取订单失败');
+        }
+
+        var totalCount = firstPage.data.count || 0;
+        var totalPages = Math.ceil(totalCount / 10);
+        if (totalPages === 0) totalPages = 1;
+
+        statusEl.textContent = '⏳ 共 ' + totalCount + ' 个订单，正在分析...';
+
+        var venueMap = {};  // { product_id: { name, order_id } }
+
+        // 2. 遍历所有页
+        for (var page = 1; page <= totalPages; page++) {
+            var pageResult;
+            if (page === 1) {
+                pageResult = firstPage;
+            } else {
+                pageResult = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=' + page + '&limit=10', 'GET');
+                if (pageResult.code !== '000') continue;
+            }
+
+            var orders = pageResult.data.list || [];
+            for (var i = 0; i < orders.length; i++) {
+                var order = orders[i];
+                var productId = order.product_id;
+                var orderId = order.order_id;
+                if (!productId) continue;
+                if (venueMap[productId]) continue;
+
+                // 提取钓场名称（优先用 merchant_model.mer_name）
+                var venueName = null;
+                if (order.merchant_model && order.merchant_model.mer_name) {
+                    venueName = order.merchant_model.mer_name;
+                } else if (order.order_ticket_item && order.order_ticket_item.product_info && order.order_ticket_item.product_info.title) {
+                    venueName = order.order_ticket_item.product_info.title;
+                }
+
+                if (venueName) {
+                    venueMap[productId] = {
+                        name: venueName,
+                        order_id: orderId
+                    };
+                }
+            }
+
+            statusEl.textContent = '⏳ 分析中... ' + page + '/' + totalPages;
+            await new Promise(function(r) { setTimeout(r, 200); });
+        }
+
+        // 3. 生成 venues.json
+        var venues = [];
+        var id = 1;
+        for (var pid in venueMap) {
+            venues.push({
+                id: id++,
+                name: venueMap[pid].name,
+                order_id: venueMap[pid].order_id,
+                enabled: true,
+                sort: id,
+                remark: ''
+            });
+        }
+
+        if (venues.length === 0) {
+            statusEl.className = 'pool-status error';
+            statusEl.textContent = '❌ 没有找到任何钓场信息';
+            return;
+        }
+
+        saveVenuesToLocal(venues);
+        statusEl.className = 'pool-status success';
+        statusEl.textContent = '✅ 已生成 ' + venues.length + ' 个钓场，正在刷新号码池...';
+
+        // 刷新页面显示
+        renderVenueList(venues);
+
+        // 4. 自动刷新号码池
+        await refreshSeatMap();
+
+    } catch(e) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ 生成失败: ' + e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🎣 自动生成钓场库';
+    }
+}
+
+// ============================================================
+// 🔄 刷新号码池
+// ============================================================
 async function refreshSeatMap() {
     var btn = document.getElementById('btnRefreshPool');
     var statusEl = document.getElementById('poolStatus');
