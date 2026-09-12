@@ -66,6 +66,21 @@
         .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #0a2f44; border-radius: 0 0 3px 3px; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
         button { outline: none !important; border: none !important; }
+
+        /* ===== 原生 App 风格弹窗（替代系统 alert / confirm） ===== */
+        .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
+        .app-dialog-mask.show { opacity: 1; }
+        .app-dialog-card { background: #fff; border-radius: 26px; width: 100%; max-width: 340px; padding: 30px 24px 20px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.35); transform: translateY(24px) scale(.92); opacity: 0; transition: transform .32s cubic-bezier(.34,1.56,.64,1), opacity .25s ease; }
+        .app-dialog-mask.show .app-dialog-card { transform: translateY(0) scale(1); opacity: 1; }
+        .app-dialog-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; }
+        .app-dialog-title { font-size: 17px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
+        .app-dialog-msg { font-size: 13.5px; color: #67798c; line-height: 1.65; margin-bottom: 22px; white-space: pre-line; word-break: break-word; }
+        .app-dialog-btns { display: flex; gap: 10px; }
+        .app-dialog-btn { flex: 1; border: none; border-radius: 14px; padding: 13px 10px; font-size: 14.5px; font-weight: 700; cursor: pointer; min-height: 46px; transition: transform .12s; }
+        .app-dialog-btn:active { transform: scale(.94); }
+        .app-dialog-btn.primary { background: #3b82f6; color: #fff; }
+        .app-dialog-btn.danger { background: #ef4444; color: #fff; }
+        .app-dialog-btn.secondary { background: #eef2f6; color: #334455; }
     </style>
 </head>
 <body>
@@ -139,6 +154,66 @@
 
 <script src="../assets/common.js"></script>
 <script>
+// ============================================================
+// 📱 原生 App 风格弹窗（appAlert / appConfirm 替代系统 alert/confirm）
+// ============================================================
+function appDialog(opts) {
+    return new Promise(function(resolve) {
+        var mask = document.createElement('div');
+        mask.className = 'app-dialog-mask';
+        var btnsHtml = '';
+        opts.buttons.forEach(function(b, i) {
+            btnsHtml += '<button class="app-dialog-btn ' + (b.type || 'secondary') + '" data-i="' + i + '">' + b.text + '</button>';
+        });
+        mask.innerHTML =
+            '<div class="app-dialog-card">' +
+                '<div class="app-dialog-icon" style="background:' + (opts.iconBg || '#e3edf7') + '">' + (opts.icon || '💬') + '</div>' +
+                '<div class="app-dialog-title">' + opts.title + '</div>' +
+                '<div class="app-dialog-msg">' + opts.message + '</div>' +
+                '<div class="app-dialog-btns">' + btnsHtml + '</div>' +
+            '</div>';
+        document.body.appendChild(mask);
+        requestAnimationFrame(function() { mask.classList.add('show'); });
+
+        function close(val) {
+            mask.classList.remove('show');
+            setTimeout(function() { mask.remove(); }, 220);
+            resolve(val);
+        }
+        mask.querySelectorAll('.app-dialog-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.getAttribute('data-i'), 10);
+                close(opts.buttons[idx].value);
+            });
+        });
+    });
+}
+
+function appAlert(message, opts) {
+    opts = opts || {};
+    return appDialog({
+        icon: opts.icon || '💡',
+        iconBg: opts.iconBg || '#e3edf7',
+        title: opts.title || '提示',
+        message: message,
+        buttons: [{ text: opts.okText || '知道了', type: 'primary', value: true }]
+    });
+}
+
+function appConfirm(message, opts) {
+    opts = opts || {};
+    return appDialog({
+        icon: opts.icon || '❓',
+        iconBg: opts.iconBg || '#f3e8ff',
+        title: opts.title || '请确认',
+        message: message,
+        buttons: [
+            { text: opts.cancelText || '取消', type: 'secondary', value: false },
+            { text: opts.okText || '确定', type: opts.danger ? 'danger' : 'primary', value: true }
+        ]
+    });
+}
+
 var dropdownToggle = document.getElementById('venueDropdownToggle');
 var dropdownBody = document.getElementById('venueDropdownBody');
 var dropdownArrow = document.getElementById('dropdownArrow');
@@ -267,14 +342,20 @@ function renderVenueList(venues) {
     listEl.innerHTML = html;
 }
 
-function addVenue() {
+async function addVenue() {
     var nameInput = document.getElementById('venueNameInput');
     var orderIdInput = document.getElementById('venueOrderIdInput');
     var name = nameInput.value.trim();
     var order_id = orderIdInput.value.trim();
-    if (!name || !order_id) { alert('请填写完整'); return; }
+    if (!name || !order_id) {
+        await appAlert('请填写完整的钓场名称和订单 ID', { icon: '✏️', iconBg: '#fef3c7' });
+        return;
+    }
     var venues = loadVenuesFromLocal() || [];
-    if (venues.some(function(v) { return v.order_id === order_id; })) { alert('已存在'); return; }
+    if (venues.some(function(v) { return v.order_id === order_id; })) {
+        await appAlert('该订单 ID 已存在，请勿重复添加', { icon: '⚠️', iconBg: '#fef3c7' });
+        return;
+    }
     var maxId = venues.reduce(function(max, v) { return Math.max(max, v.id || 0); }, 0);
     venues.push({ id: maxId + 1, name: name, order_id: order_id, enabled: true, sort: maxId + 1, remark: '' });
     saveVenuesToLocal(venues);
@@ -283,8 +364,9 @@ function addVenue() {
     renderVenueList(venues);
 }
 
-function deleteVenue(id) {
-    if (!confirm('确定删除？')) return;
+async function deleteVenue(id) {
+    var ok = await appConfirm('确定要删除该钓场吗？此操作不可撤销', { icon: '🗑️', iconBg: '#fde8e8', danger: true, okText: '删除' });
+    if (!ok) return;
     var venues = loadVenuesFromLocal() || [];
     venues = venues.filter(function(v) { return v.id !== id; });
     saveVenuesToLocal(venues);
@@ -310,7 +392,8 @@ async function autoGenerateVenues() {
         statusEl.textContent = '❌ AndroidBridge 未注入！';
         return;
     }
-    if (!confirm('将根据历史订单重新生成钓场库，覆盖现有钓场列表，确定继续？')) {
+    var confirmed = await appConfirm('将根据历史订单重新生成钓场库，覆盖现有钓场列表，确定继续？', { icon: '🎣', iconBg: '#ede9fe', okText: '继续' });
+    if (!confirmed) {
         return;
     }
 
