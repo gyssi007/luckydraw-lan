@@ -140,47 +140,101 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(6, 14, 22, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            padding: 24px;
+            opacity: 0;
+            transition: opacity .22s ease;
         }
-        .modal-overlay.show { display: flex; }
+        .modal-overlay.show { display: flex; opacity: 1; }
         .modal {
             background: #fff;
-            border-radius: 20px;
-            padding: 28px 24px;
-            max-width: 400px;
+            border-radius: 28px;
+            padding: 0 24px 24px;
+            max-width: 360px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: modalIn .25s ease;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.4);
+            transform: translateY(30px) scale(.9);
+            opacity: 0;
+            animation: none; /* 覆盖 app.css 里旧的 modalIn 关键帧动画，避免和下面的弹簧过渡打架 */
+            transition: transform .38s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
+            overflow: hidden;
         }
-        @keyframes modalIn {
-            from { opacity: 0; transform: translateY(20px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        .modal-overlay.show .modal { transform: translateY(0) scale(1); opacity: 1; }
+        .modal .modal-banner {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            margin: 0 -24px 0;
+            padding: 30px 24px 44px;
+            position: relative;
+            overflow: hidden;
         }
-        .modal h2 { font-size: 26px; color: #22c55e; margin-bottom: 6px; }
-        .modal .hit-number { font-size: 48px; font-weight: 700; color: #22c55e; margin: 8px 0; }
-        .modal .detail { color: #64748b; font-size: 14px; margin-bottom: 18px; }
-        .modal .btn-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .modal .modal-banner::before,
+        .modal .modal-banner::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.14);
+        }
+        .modal .modal-banner::before { width: 120px; height: 120px; top: -50px; left: -30px; }
+        .modal .modal-banner::after { width: 90px; height: 90px; bottom: -40px; right: -20px; }
+        .modal .badge-ring {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            position: relative;
+            animation: pulseRing 1.6s ease-out infinite;
+        }
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); }
+            70% { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+        .modal .badge-ring .emoji { font-size: 34px; }
+        .modal h2 { font-size: 18px; color: #fff; font-weight: 700; position: relative; }
+        .modal .hit-number-wrap { margin-top: -30px; position: relative; }
+        .modal .hit-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            height: 92px;
+            padding: 0 12px;
+            font-size: 40px;
+            font-weight: 800;
+            color: #16a34a;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 4px solid #f0fdf4;
+        }
+        .modal .detail { color: #64748b; font-size: 13.5px; margin: 14px 0 20px; }
+        .modal .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .modal .btn-group .btn-row { display: flex; gap: 10px; }
         .modal .btn-group .btn {
-            flex: none;
-            padding: 10px 20px;
-            min-width: 80px;
+            flex: 1;
+            padding: 13px 16px;
+            min-height: 48px;
             border: none;
             outline: none !important;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 14px;
+            font-size: 14.5px;
+            font-weight: 700;
             cursor: pointer;
         }
-        .modal .btn-group .btn-success { background: #22c55e; color: #fff; }
-        .modal .btn-group .btn-outline { background: transparent; color: #3b82f6; border: 1px solid #3b82f6; }
-        .modal .btn-group .btn-danger { background: #ef4444; color: #fff; }
-        .modal .btn-group .btn:active { transform: scale(0.94); }
+        .modal .btn-group .btn-success { background: linear-gradient(135deg,#22c55e,#16a34a); color: #fff; box-shadow: 0 6px 16px rgba(34,197,94,0.3); }
+        .modal .btn-group .btn-outline { background: #eef2f6; color: #334455; }
+        .modal .btn-group .btn-danger { background: #fdeaea; color: #ef4444; }
+        .modal .btn-group .btn:active { transform: scale(0.95); }
 
         .bottom-nav {
             position: fixed;
@@ -499,13 +553,20 @@
 
 <div class="modal-overlay" id="hitModal">
     <div class="modal">
-        <h2>🎉 命中目标！</h2>
-        <div class="hit-number" id="hitNumber">88</div>
+        <div class="modal-banner">
+            <div class="badge-ring"><span class="emoji">🎉</span></div>
+            <h2>命中目标号码！</h2>
+        </div>
+        <div class="hit-number-wrap">
+            <div class="hit-number" id="hitNumber">88</div>
+        </div>
         <div class="detail" id="hitDetail">完整号码: [53, 88]</div>
         <div class="btn-group">
             <button class="btn btn-success" id="hitConfirm">✅ 去锁定</button>
-            <button class="btn btn-outline" id="hitContinue">🔄 继续刷</button>
-            <button class="btn btn-danger" id="hitStop">⏹ 停止</button>
+            <div class="btn-row">
+                <button class="btn btn-outline" id="hitContinue">🔄 继续刷</button>
+                <button class="btn btn-danger" id="hitStop">⏹ 停止</button>
+            </div>
         </div>
     </div>
 </div>
