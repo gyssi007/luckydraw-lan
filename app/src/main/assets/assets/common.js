@@ -170,21 +170,36 @@ function saveSeatMapToLocal(seatMap) {
 
 // ============================================================
 // 🔐 Token 有效性检测
+// ------------------------------------------------------------
+// 修复说明：原生 apiRequest 在网络异常时不会让 Promise reject，
+// 而是 resolve 一个 {error: "..."} 形状的对象（没有 code 字段）。
+// 之前的逻辑只看 result.code，网络异常时 code 是 undefined，
+// 会被误判进 else 分支，当成 "Token 无效"，进而触发强制跳转到
+// 配置页——即便 Token 完全没问题，只是网络抖了一下。
+// 这里显式判断 result.error，把"网络异常"和"Token 真的失效"
+// 两种情况分开返回。
 // ============================================================
 async function checkTokenValidity() {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
-    
+
     if (!token || !uuid) {
         return { valid: false, reason: '未配置 Token 或 UUID' };
     }
-    
+
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
     }
-    
+
     try {
         var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=1', 'GET');
+
+        // 原生层网络/请求异常：result 形如 {error: "timeout"}，没有 code 字段。
+        // 这种情况不代表 Token 失效，不应该跳转到配置页。
+        if (result && result.error !== undefined && result.code === undefined) {
+            return { valid: true, networkError: true, reason: result.error };
+        }
+
         if (result.code === '000') {
             return { valid: true };
         } else if (result.code === '401') {
@@ -193,7 +208,8 @@ async function checkTokenValidity() {
             return { valid: false, reason: result.msg || 'Token 无效' };
         }
     } catch(e) {
-        // 网络异常不阻断，但告知用户
-        return { valid: true, networkError: true };
+        // 理论上 callApi 不会 reject（除非 AndroidBridge 本身不可用），
+        // 但保留这个分支作为兜底，同样按"网络异常"处理，不阻断使用。
+        return { valid: true, networkError: true, reason: e.message };
     }
 }
