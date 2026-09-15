@@ -321,6 +321,10 @@ public class MainActivity extends AppCompatActivity {
     private String loadSeatMap() {
         return readLocalJson("seat_map.json", "{}");
     }
+    // ✅ 新增：类级别的 saveSeatMap 方法（供 startLockLoopInternal 调用）
+    private void saveSeatMap(String json) {
+        writeLocalJson("seat_map.json", json);
+    }
 
     // ============================================================
     // 自动刷号轮询
