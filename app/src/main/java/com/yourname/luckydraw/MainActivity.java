@@ -184,7 +184,6 @@ public class MainActivity extends AppCompatActivity {
                     Response response = httpClient.newCall(request).execute();
                     String result = response.body().string();
 
-                    // 使用 JSONObject.quote() 安全转义任意字符（包含中文、emoji、换行等）
                     final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(result) + ")";
                     handler.post(() -> webView.evaluateJavascript(js, null));
 
@@ -247,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
         public void startLockLoop(String t, String u, String venue, String seatsJson) {
             token = t;
             uuid = u;
-            lockTargetVenue = venue;
+            lockTargetVenue = venue;  // 空字符串 = 全自动模式
             lockTargetSeats = parseSeats(seatsJson);
             isLocking = true;
             startLockLoopInternal();
@@ -373,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // 自动锁定轮询
+    // 自动锁定轮询（支持全自动识别钓场）
     // ============================================================
     private void startLockLoopInternal() {
         lockLoopRunnable = new Runnable() {
@@ -402,25 +401,87 @@ public class MainActivity extends AppCompatActivity {
                                     if (targetOrder != null) {
                                         String oid = targetOrder.optString("order_id");
                                         currentOrderId = oid;
+
+                                        // ✅ 判断是否全自动模式
+                                        boolean isAutoMode = (lockTargetVenue == null || lockTargetVenue.isEmpty());
+                                        String effectiveVenue = lockTargetVenue;
+
+                                        if (isAutoMode) {
+                                            // 从订单里提取钓场名称
+                                            effectiveVenue = extractVenueName(targetOrder);
+                                            if (effectiveVenue == null || effectiveVenue.isEmpty()) {
+                                                // 提取失败，等下一个订单
+                                                if (isLocking) handler.postDelayed(lockLoopRunnable, 1500);
+                                                return;
+                                            }
+                                            final String vName = effectiveVenue;
+                                            handler.post(() -> {
+                                                webView.evaluateJavascript("window._onVenueDetected('" + vName.replace("'", "\\'") + "')", null);
+                                            });
+                                        }
+
+                                        // 加载本地 seat_map
                                         String seatMapJson = loadSeatMap();
                                         JSONObject seatMap = new JSONObject(seatMapJson);
-                                        JSONObject venueData = seatMap.optJSONObject(lockTargetVenue);
-                                        if (venueData != null) {
-                                            for (int seatNum : lockTargetSeats) {
-                                                if (!isLocking) break;
-                                                String seatId = venueData.optString(String.valueOf(seatNum));
-                                                if (seatId == null || seatId.isEmpty()) continue;
-                                                String confirmResult = callConfirmSeat(oid, seatId, token, uuid);
-                                                JSONObject confirmJson = new JSONObject(confirmResult);
-                                                if ("000".equals(confirmJson.optString("code"))) {
-                                                    isLocking = false;
-                                                    final int finalSeat = seatNum;
-                                                    final String finalOrderId = oid;
-                                                    handler.post(() -> {
-                                                        webView.evaluateJavascript("window._onLocked(" + finalSeat + ", '" + finalOrderId + "')", null);
-                                                    });
-                                                    return;
+                                        JSONObject venueData = seatMap.optJSONObject(effectiveVenue);
+
+                                        // ✅ 如果本地没有这个钓场，自动生成
+                                        if (venueData == null) {
+                                            final String vName2 = effectiveVenue;
+                                            handler.post(() -> {
+                                                webView.evaluateJavascript("window._onVenueGenerating('" + vName2.replace("'", "\\'") + "')", null);
+                                            });
+
+                                            String seatListJson = callQuerySeatList(oid, token, uuid);
+                                            JSONObject seatListResult = new JSONObject(seatListJson);
+                                            if ("000".equals(seatListResult.optString("code"))) {
+                                                JSONObject seatData = seatListResult.optJSONObject("data");
+                                                if (seatData != null) {
+                                                    JSONArray seatList = seatData.optJSONArray("seat_list");
+                                                    if (seatList != null) {
+                                                        JSONObject newMap = new JSONObject();
+                                                        for (int i = 0; i < seatList.length(); i++) {
+                                                            JSONObject seat = seatList.getJSONObject(i);
+                                                            newMap.put(seat.optString("seat_number"), seat.optString("product_ticket_seat_id"));
+                                                        }
+                                                        seatMap.put(effectiveVenue, newMap);
+                                                        saveSeatMap(seatMap.toString());
+                                                        venueData = newMap;
+
+                                                        final String vName3 = effectiveVenue;
+                                                        final int seatCount = seatList.length();
+                                                        handler.post(() -> {
+                                                            webView.evaluateJavascript("window._onVenueGenerated('" + vName3.replace("'", "\\'") + "', " + seatCount + ")", null);
+                                                        });
+                                                    }
                                                 }
+                                            }
+                                        }
+
+                                        if (venueData == null) {
+                                            // 生成失败，等下一个订单
+                                            if (isLocking) handler.postDelayed(lockLoopRunnable, 1500);
+                                            return;
+                                        }
+
+                                        // ✅ 用 seat_id 锁定
+                                        for (int seatNum : lockTargetSeats) {
+                                            if (!isLocking) break;
+                                            String seatId = venueData.optString(String.valueOf(seatNum));
+                                            if (seatId == null || seatId.isEmpty()) continue;
+
+                                            String confirmResult = callConfirmSeat(oid, seatId, token, uuid);
+                                            JSONObject confirmJson = new JSONObject(confirmResult);
+                                            if ("000".equals(confirmJson.optString("code"))) {
+                                                isLocking = false;
+                                                final int finalSeat = seatNum;
+                                                final String finalOrderId = oid;
+                                                final String finalVenue = effectiveVenue;
+                                                handler.post(() -> {
+                                                    String js = "window._onLocked(" + finalSeat + ", '" + finalOrderId + "', '" + finalVenue.replace("'", "\\'") + "')";
+                                                    webView.evaluateJavascript(js, null);
+                                                });
+                                                return;
                                             }
                                         }
                                     }
@@ -437,6 +498,32 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         handler.post(lockLoopRunnable);
+    }
+
+    // 从订单里提取钓场名称
+    private String extractVenueName(JSONObject order) {
+        try {
+            // 优先用 merchant_model.mer_name
+            if (order.has("merchant_model")) {
+                JSONObject merchant = order.optJSONObject("merchant_model");
+                if (merchant != null) {
+                    String name = merchant.optString("mer_name");
+                    if (name != null && !name.isEmpty()) return name;
+                }
+            }
+            // 兜底：product_info.title
+            JSONObject ticketItem = order.optJSONObject("order_ticket_item");
+            if (ticketItem != null) {
+                JSONObject productInfo = ticketItem.optJSONObject("product_info");
+                if (productInfo != null) {
+                    String name = productInfo.optString("title");
+                    if (name != null && !name.isEmpty()) return name;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // ============================================================
@@ -486,6 +573,15 @@ public class MainActivity extends AppCompatActivity {
     private String callGetOrders(String token, String uuid) {
         try {
             String url = API_HOST + "/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=20";
+            return httpGet(url, token, uuid);
+        } catch (Exception e) {
+            return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
+        }
+    }
+
+    private String callQuerySeatList(String orderId, String token, String uuid) {
+        try {
+            String url = API_HOST + "/v2/userApi/ticketSeat/querySeatList?order_id=" + orderId;
             return httpGet(url, token, uuid);
         } catch (Exception e) {
             return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
