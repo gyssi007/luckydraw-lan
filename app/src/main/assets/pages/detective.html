@@ -68,14 +68,131 @@
         .dot.blue{background:#2a7de1}
         .dot.orange{background:#e68a2e}
         .dot.red{background:#d14545}
-        .seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;background:#fff;padding:14px;border-radius:14px;min-height:120px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-        .seat-card{background:#f8fafc;border-radius:10px;padding:10px 4px 8px;text-align:center;border-bottom:4px solid #d0dce8}
-        .seat-card .number{font-weight:700;font-size:18px;color:#0a2f44;line-height:1.3}
-        .seat-card .status-label{font-size:10px;font-weight:500;margin-top:2px;color:#1d3b4b;line-height:1.2}
-        .seat-card.status-10{border-bottom-color:#2b9c5c}
-        .seat-card.status-20{border-bottom-color:#e68a2e}
-        .seat-card.status-40{border-bottom-color:#2a7de1}
-        .seat-card.status-50{border-bottom-color:#d14545}
+        .seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(75px,1fr));gap:10px;background:#fff;padding:14px;border-radius:14px;min-height:120px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        /* ===== 钓位卡片 —— 颜色更显眼 ===== */
+        .seat-card{
+            border-radius:12px;
+            padding:8px 4px 6px;
+            text-align:center;
+            transition: transform .1s, box-shadow .1s;
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+        .seat-card:active{ transform: scale(0.96); }
+        .seat-card .number{
+            font-weight:800;
+            font-size:19px;
+            line-height:1.2;
+            letter-spacing:-0.5px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+        .seat-card .status-label{
+            font-size:10px;
+            font-weight:700;
+            margin-top:2px;
+            line-height:1.2;
+            text-transform: uppercase;
+            letter-spacing:0.3px;
+            opacity:0.9;
+        }
+        /* 空闲 —— 翠绿色底 + 深绿字 + 白色小圆点装饰 */
+        .seat-card.status-10{
+            background: #d4f0e0;
+            border: 1px solid #2b9c5c;
+            border-left: 6px solid #2b9c5c;
+            color: #0a3d2a;
+        }
+        .seat-card.status-10 .number{ color: #0a4d2e; }
+        .seat-card.status-10 .status-label{ color: #1a6b3c; }
+
+        /* 准备中 —— 明亮橙黄底 + 深橙字 + 左侧粗边 */
+        .seat-card.status-20{
+            background: #fff0d6;
+            border: 1px solid #e68a2e;
+            border-left: 6px solid #e68a2e;
+            color: #6b3e0a;
+        }
+        .seat-card.status-20 .number{ color: #8a4e0a; }
+        .seat-card.status-20 .status-label{ color: #b45f1a; }
+
+        /* 垂钓中 —— 清亮蓝底 + 深蓝字 + 左侧粗边 */
+        .seat-card.status-40{
+            background: #d9e9ff;
+            border: 1px solid #2a7de1;
+            border-left: 6px solid #2a7de1;
+            color: #0a2f5a;
+        }
+        .seat-card.status-40 .number{ color: #0a3d7a; }
+        .seat-card.status-40 .status-label{ color: #1a5aa8; }
+
+        /* 锁号 —— 醒目红底 + 深红字 + 左侧粗边 + 斜纹纹理增加警示感 */
+        .seat-card.status-50{
+            background: #ffe1e1;
+            border: 1px solid #d14545;
+            border-left: 6px solid #d14545;
+            color: #5a0a0a;
+            background-image: repeating-linear-gradient(45deg, rgba(209,69,69,0.08) 0px, rgba(209,69,69,0.08) 6px, transparent 6px, transparent 12px);
+        }
+        .seat-card.status-50 .number{ color: #8a1a1a; }
+        .seat-card.status-50 .status-label{ color: #b52a2a; }
+
+        /* 未知状态 —— 灰色 */
+        .seat-card.status-0{
+            background: #f0f3f7;
+            border: 1px solid #b0c0d0;
+            border-left: 6px solid #b0c0d0;
+            color: #3a4a5a;
+        }
+        .seat-card.status-0 .number{ color: #3a4a5a; }
+        .seat-card.status-0 .status-label{ color: #5a6a7a; }
+
+        /* 统一状态标签字重 */
+        .seat-card .status-label{
+            font-weight: 800;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        /* 增加图标点缀 (伪元素) */
+        .seat-card.status-10::after{
+            content: "🟢";
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 9px;
+            opacity: 0.7;
+        }
+        .seat-card.status-20::after{
+            content: "🟠";
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 9px;
+            opacity: 0.7;
+        }
+        .seat-card.status-40::after{
+            content: "🔵";
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 9px;
+            opacity: 0.7;
+        }
+        .seat-card.status-50::after{
+            content: "🔴";
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 9px;
+            opacity: 0.8;
+        }
+
         .loading-mask{display:flex;justify-content:center;align-items:center;min-height:120px;color:#6b8ba0;font-size:14px;gap:10px;grid-column:1/-1}
         .spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#2a7de1;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -93,8 +210,23 @@
         .bottom-nav .tab.active .tab-label{color:#0a2f44;font-weight:600}
         .bottom-nav .tab.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;background:#0a2f44;border-radius:0 0 3px 3px}
         .bottom-nav .tab:active{transform:scale(0.92)}
-        @media(max-width:400px){.header{padding:12px 14px}.header h1{font-size:15px}.seat-grid{grid-template-columns:repeat(auto-fill,minmax(60px,1fr));padding:10px;gap:6px}.seat-card .number{font-size:16px}.seat-card .status-label{font-size:9px}.stats{gap:6px}.stat-card{padding:10px 8px}.stat-card .number{font-size:22px}}
-        @media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr);gap:14px}.stat-card .number{font-size:30px}.seat-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;padding:18px}.seat-card .number{font-size:20px}}
+        @media(max-width:400px){
+            .header{padding:12px 14px}
+            .header h1{font-size:15px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(65px,1fr));padding:10px;gap:6px}
+            .seat-card .number{font-size:16px}
+            .seat-card .status-label{font-size:8px}
+            .stats{gap:6px}
+            .stat-card{padding:10px 8px}
+            .stat-card .number{font-size:22px}
+        }
+        @media(min-width:600px){
+            .stats{grid-template-columns:repeat(4,1fr);gap:14px}
+            .stat-card .number{font-size:30px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:12px;padding:18px}
+            .seat-card .number{font-size:21px}
+            .seat-card .status-label{font-size:11px}
+        }
     </style>
 </head>
 <body>
@@ -483,7 +615,7 @@ function renderSeats2(seatList) {
     var html = '';
     sorted.forEach(function(seat) {
         var status = seat.status || 0;
-        var statusInfo = STATUS_MAP[status] || { label: '未知', css: '' };
+        var statusInfo = STATUS_MAP[status] || { label: '未知', css: 'status-0' };
         var seatNum = seat.seat_number || '?';
         html += '<div class="seat-card ' + statusInfo.css + '"><div class="number">' + seatNum + '</div><div class="status-label">' + statusInfo.label + '</div></div>';
     });
