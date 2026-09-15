@@ -69,122 +69,116 @@
         .dot.orange{background:#e68a2e}
         .dot.red{background:#d14545}
 
-        /* ===== 钓位网格：缩小列宽与间距，一屏显示更多 ===== */
+        /* ===== 钓位网格 ===== */
         .seat-grid{
             display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
-            gap:6px;
+            grid-template-columns:repeat(auto-fill,minmax(56px,1fr));
+            gap:8px;
             background:#fff;
-            padding:10px;
+            padding:14px 10px;
             border-radius:14px;
             min-height:100px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
         }
 
-        /* ===== 钓位卡片 —— 缩小尺寸，保留颜色/图标/结构强化 ===== */
+        /* ===== 钓位卡片：带状态色边框的座位格子 ===== */
         .seat-card{
-            border-radius:9px;
-            padding:4px 2px 3px;
-            text-align:center;
-            transition: transform .1s, box-shadow .1s;
+            background: #fbfdff;
+            border-radius: 10px;
+            padding: 4px 2px 4px;
+            text-align: center;
             position: relative;
-            border: 1px solid rgba(0,0,0,0.02);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 48px;
+            cursor: pointer;
+            transition: transform .1s, box-shadow .15s, background .15s;
+            min-height: 62px;
+            border: 1.5px solid #d8e2ec;
         }
-        .seat-card:active{ transform: scale(0.96); }
-        .seat-card .number{
-            font-weight:800;
-            font-size:14px;
-            line-height:1.15;
-            letter-spacing:-0.4px;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.05);
-        }
-        .seat-card .status-label{
-            font-size:8px;
-            font-weight:800;
-            margin-top:1px;
-            line-height:1.1;
-            text-transform: uppercase;
-            letter-spacing:0.2px;
-            opacity:0.9;
-        }
+        .seat-card:active{ transform: scale(0.94); }
 
-        /* ===== 沙发图标：右上角，颜色随状态变化 ===== */
+        /* 沙发图标：主角 */
         .seat-card .seat-icon{
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 10px;
-            height: 10px;
-            opacity: 0.85;
-            pointer-events: none;
+            width: 28px;
+            height: 28px;
+            display: block;
+            flex-shrink: 0;
+            transition: color .15s;
         }
         .seat-card .seat-icon svg{
             width: 100%;
             height: 100%;
             display: block;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
         }
 
-        /* 空闲 —— 翠绿色底 + 深绿字 */
+        /* 座位号 */
+        .seat-card .number{
+            font-weight: 800;
+            font-size: 11px;
+            line-height: 1.2;
+            margin-top: 1px;
+            color: #33475a;
+            letter-spacing: -0.2px;
+        }
+
+        /* 状态文字 */
+        .seat-card .status-label{
+            display: block;
+            font-size: 8px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-top: 1px;
+            letter-spacing: 0.2px;
+            opacity: 0.9;
+        }
+
+        /* 空闲 —— 绿：边框 + 图标 + 文字都用绿色系 */
         .seat-card.status-10{
-            background: #d4f0e0;
-            border: 1px solid #2b9c5c;
-            border-left: 4px solid #2b9c5c;
-            color: #0a3d2a;
+            border-color: #2b9c5c;
+            background: #f4fbf7;
         }
-        .seat-card.status-10 .number{ color: #0a4d2e; }
-        .seat-card.status-10 .status-label{ color: #1a6b3c; }
         .seat-card.status-10 .seat-icon{ color: #2b9c5c; }
+        .seat-card.status-10 .number{ color: #1a6b3c; }
+        .seat-card.status-10 .status-label{ color: #2b9c5c; }
 
-        /* 准备中 —— 明亮橙黄底 + 深橙字 */
+        /* 准备中 —— 橙 */
         .seat-card.status-20{
-            background: #fff0d6;
-            border: 1px solid #e68a2e;
-            border-left: 4px solid #e68a2e;
-            color: #6b3e0a;
+            border-color: #e68a2e;
+            background: #fffaf2;
         }
-        .seat-card.status-20 .number{ color: #8a4e0a; }
-        .seat-card.status-20 .status-label{ color: #b45f1a; }
         .seat-card.status-20 .seat-icon{ color: #e68a2e; }
+        .seat-card.status-20 .number{ color: #b45f1a; }
+        .seat-card.status-20 .status-label{ color: #e68a2e; }
 
-        /* 垂钓中 —— 清亮蓝底 + 深蓝字 */
+        /* 垂钓中 —— 蓝 */
         .seat-card.status-40{
-            background: #d9e9ff;
-            border: 1px solid #2a7de1;
-            border-left: 4px solid #2a7de1;
-            color: #0a2f5a;
+            border-color: #2a7de1;
+            background: #f4f9ff;
         }
-        .seat-card.status-40 .number{ color: #0a3d7a; }
-        .seat-card.status-40 .status-label{ color: #1a5aa8; }
         .seat-card.status-40 .seat-icon{ color: #2a7de1; }
+        .seat-card.status-40 .number{ color: #1a5aa8; }
+        .seat-card.status-40 .status-label{ color: #2a7de1; }
 
-        /* 锁号 —— 醒目红底 + 深红字 + 斜纹纹理 */
+        /* 锁号 —— 红 */
         .seat-card.status-50{
-            background: #ffe1e1;
-            border: 1px solid #d14545;
-            border-left: 4px solid #d14545;
-            color: #5a0a0a;
-            background-image: repeating-linear-gradient(45deg, rgba(209,69,69,0.08) 0px, rgba(209,69,69,0.08) 5px, transparent 5px, transparent 10px);
+            border-color: #d14545;
+            background: #fff5f5;
         }
-        .seat-card.status-50 .number{ color: #8a1a1a; }
-        .seat-card.status-50 .status-label{ color: #b52a2a; }
         .seat-card.status-50 .seat-icon{ color: #d14545; }
+        .seat-card.status-50 .number{ color: #b52a2a; }
+        .seat-card.status-50 .status-label{ color: #d14545; }
 
-        /* 未知状态 —— 灰色 */
+        /* 未知 —— 灰 */
         .seat-card.status-0{
-            background: #f0f3f7;
-            border: 1px solid #b0c0d0;
-            border-left: 4px solid #b0c0d0;
-            color: #3a4a5a;
+            border-color: #c8d4e0;
+            background: #fafcff;
         }
-        .seat-card.status-0 .number{ color: #3a4a5a; }
-        .seat-card.status-0 .status-label{ color: #5a6a7a; }
         .seat-card.status-0 .seat-icon{ color: #b0c0d0; }
+        .seat-card.status-0 .number{ color: #5a6a7a; }
+        .seat-card.status-0 .status-label{ color: #b0c0d0; }
 
         .loading-mask{display:flex;justify-content:center;align-items:center;min-height:120px;color:#6b8ba0;font-size:14px;gap:10px;grid-column:1/-1}
         .spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#2a7de1;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
@@ -208,25 +202,25 @@
         @media(max-width:400px){
             .header{padding:12px 14px}
             .header h1{font-size:15px}
-            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(46px,1fr));padding:8px;gap:5px}
-            .seat-card{min-height:44px;padding:3px 1px 2px}
-            .seat-card .number{font-size:13px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));padding:10px 8px;gap:6px}
+            .seat-card{min-height:56px;padding:3px 1px}
+            .seat-card .seat-icon{width:24px;height:24px}
+            .seat-card .number{font-size:10px}
             .seat-card .status-label{font-size:7px}
-            .seat-card .seat-icon{width:8px;height:8px;top:1px;right:1px}
             .stats{gap:6px}
             .stat-card{padding:10px 8px}
             .stat-card .number{font-size:22px}
         }
 
-        /* 大屏：略放大一点 */
+        /* 大屏：略放大 */
         @media(min-width:600px){
             .stats{grid-template-columns:repeat(4,1fr);gap:14px}
             .stat-card .number{font-size:30px}
-            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;padding:14px}
-            .seat-card{min-height:56px;padding:5px 3px 4px}
-            .seat-card .number{font-size:16px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:10px;padding:18px 14px}
+            .seat-card{min-height:72px}
+            .seat-card .seat-icon{width:34px;height:34px}
+            .seat-card .number{font-size:12px}
             .seat-card .status-label{font-size:9px}
-            .seat-card .seat-icon{width:12px;height:12px;top:3px;right:3px}
         }
     </style>
 </head>
@@ -444,7 +438,7 @@ venueOverlay.addEventListener('click', function(e) {
 });
 
 // ============================================================
-// 👆 底部弹层下拉手势关闭（仅视觉/交互增强，不影响业务逻辑）
+// 👆 底部弹层下拉手势关闭
 // ============================================================
 (function enableSheetDragToClose() {
     var sheet = document.getElementById('venueSheet');
@@ -484,7 +478,6 @@ venueOverlay.addEventListener('click', function(e) {
 async function loadVenues2() {
     var venues = loadVenuesFromLocal();
 
-    // 如果本地没有，从 assets/pages/venues.json 加载
     if (venues === null) {
         try {
             var resp = await fetch('venues.json');
@@ -502,7 +495,6 @@ async function loadVenues2() {
     VENUES = venues;
 
     if (VENUES.length > 0) {
-        // 优先从缓存读取用户上次选择的钓场
         var savedVenueId = loadData('detective_selected_venue', '');
         var found = false;
         if (savedVenueId) {
@@ -531,7 +523,7 @@ async function loadVenues2() {
 }
 
 // ============================================================
-// 🎣 获取钓位数据（本地直连官方 API）
+// 🎣 获取钓位数据
 // ============================================================
 async function fetchVenueData() {
     var refreshBtn = document.getElementById('refreshBtn');
@@ -544,12 +536,10 @@ async function fetchVenueData() {
         window.AndroidBridge.setAuth(token, uuid);
     }
 
-    // 重新加载本地钓场列表（防止配置页添加后不更新）
     var venues = loadVenuesFromLocal();
     if (venues && venues.length > 0) {
         VENUES = venues;
         renderVenueList2();
-        // 如果当前选中的钓场已被删除，切换到第一个
         var stillExists = false;
         for (var i = 0; i < VENUES.length; i++) {
             if (VENUES[i].order_id === SELECTED_VENUE_ID) {
@@ -625,8 +615,8 @@ function renderSeats2(seatList) {
         var seatNum = seat.seat_number || '?';
         html += '<div class="seat-card ' + statusInfo.css + '">' +
                     '<span class="seat-icon">' + SOFA_SVG + '</span>' +
-                    '<div class="number">' + seatNum + '</div>' +
-                    '<div class="status-label">' + statusInfo.label + '</div>' +
+                    '<span class="number">' + seatNum + '</span>' +
+                    '<span class="status-label">' + statusInfo.label + '</span>' +
                 '</div>';
     });
     seatGrid.innerHTML = html;
@@ -679,25 +669,21 @@ function updateVenueInfo2(name, data) {
         window.AndroidBridge.setAuth(token, uuid);
     }
 
-    // 未配置 Token/UUID，直接加载本地钓场列表
     if (!token || !uuid) {
         console.warn('未配置 Token 或 UUID');
         loadVenues2();
         return;
     }
 
-    // 启动时检查 Token 有效性
     checkTokenValidity().then(function(res) {
         if (!res.valid) {
             console.error('Token 无效:', res.reason);
-            // 弹窗提示用户
             appAlert('Token 已过期，请到配置页面重新设置', { icon: '🔑', iconBg: '#fde8e8', title: '登录已失效' });
             setTimeout(function() {
                 navigateTo('config.html');
             }, 1500);
             return;
         }
-        // Token 有效，正常加载
         loadVenues2();
     });
 })();
