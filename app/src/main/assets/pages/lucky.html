@@ -161,7 +161,7 @@
             box-shadow: 0 30px 70px rgba(0,0,0,0.4);
             transform: translateY(30px) scale(.9);
             opacity: 0;
-            animation: none; /* 覆盖 app.css 里旧的 modalIn 关键帧动画，避免和下面的弹簧过渡打架 */
+            animation: none;
             transition: transform .38s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
             overflow: hidden;
         }
@@ -528,12 +528,14 @@
                 <div class="lock-title">一发入魂</div>
                 <div class="lock-row">
                     <select class="venue-select" id="lockVenueSelect">
+                        <option value="__AUTO__">🤖 全自动识别</option>
                         <option value="">选择钓场</option>
                     </select>
                     <input class="seat-input" id="lockSeatNumber" placeholder="钓位号（空格分隔）" inputmode="numeric" />
                     <button class="btn-lock" id="btnLock">🔒 锁定</button>
                     <button class="btn-stop-lock" id="btnStopLock">⏹ 停止</button>
                 </div>
+                <div class="hint" style="margin-top:6px;">🤖 全自动：不选钓场，脚本自动识别；或手动选钓场</div>
             </div>
 
             <div class="status-box">
@@ -764,17 +766,23 @@ function loadLockVenues() {
 
 function renderLockVenueSelect() {
     var select = luckyElements.lockVenueSelect;
-    select.innerHTML = '<option value="">选择钓场</option>';
+    // 保留当前的选中值
+    var currentVal = select.value;
+    select.innerHTML = '<option value="__AUTO__">🤖 全自动识别</option><option value="">选择钓场</option>';
     lockVenues.forEach(function(v) {
         var opt = document.createElement('option');
         opt.value = v.name;
         opt.textContent = v.name;
         select.appendChild(opt);
     });
+    // 恢复之前的选中
+    if (currentVal) {
+        select.value = currentVal;
+    }
 }
 
 // ============================================================
-// 🔒 自动锁定
+// 🔒 自动锁定（支持全自动识别）
 // ============================================================
 function startLockLoop() {
     if (isLocking) {
@@ -787,7 +795,9 @@ function startLockLoop() {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
 
-    if (!venueName) { addLog('❌ 请选择钓场', 'error'); return; }
+    var isAutoMode = (venueName === '__AUTO__');
+
+    if (!isAutoMode && !venueName) { addLog('❌ 请选择钓场', 'error'); return; }
     if (!seatInput) { addLog('❌ 请输入座位号', 'error'); return; }
     if (!token || !uuid) { addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error'); return; }
 
@@ -809,17 +819,23 @@ function startLockLoop() {
     luckyElements.btnStopLock.style.display = 'block';
     updateLuckyStatus('locking', null, null, null);
 
-    if (seatNumbers.length === 1) {
-        addLog('🔒 开始自动锁定: ' + venueName + ' → 座位 ' + seatNumbers[0], 'system');
+    if (isAutoMode) {
+        addLog('🤖 全自动模式: 座位 [' + seatNumbers.join(', ') + '] (等待订单出现...)', 'system');
+        if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
+            // 传空字符串表示全自动模式，原生层收到后会启用自动识别
+            window.AndroidBridge.startLockLoop(token, uuid, '', JSON.stringify(seatNumbers));
+        } else {
+            addLog('❌ AndroidBridge 不可用', 'error');
+            stopLockLoop();
+        }
     } else {
-        addLog('🔒 开始自动锁定: ' + venueName + ' → [' + seatNumbers.join(', ') + ']', 'system');
-    }
-
-    if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
-        window.AndroidBridge.startLockLoop(token, uuid, venueName, JSON.stringify(seatNumbers));
-    } else {
-        addLog('❌ AndroidBridge 不可用', 'error');
-        stopLockLoop();
+        addLog('🔒 手动模式: ' + venueName + ' → [' + seatNumbers.join(', ') + '] (等待订单出现...)', 'system');
+        if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
+            window.AndroidBridge.startLockLoop(token, uuid, venueName, JSON.stringify(seatNumbers));
+        } else {
+            addLog('❌ AndroidBridge 不可用', 'error');
+            stopLockLoop();
+        }
     }
 }
 
@@ -919,8 +935,19 @@ async function performAutoLock(orderId, hitSeat) {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
 
-    if (!venueName) {
+    var isAutoMode = (venueName === '__AUTO__');
+
+    if (!isAutoMode && !venueName) {
         addLog('❌ 自动锁定失败：未选择钓场', 'error');
+        return;
+    }
+
+    if (isAutoMode) {
+        // 全自动模式：调用原生层的自动锁定（会自动识别钓场）
+        addLog('🤖 命中后全自动锁定...', 'system');
+        if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
+            window.AndroidBridge.startLockLoop(token, uuid, '', JSON.stringify([hitSeat]));
+        }
         return;
     }
 
@@ -941,7 +968,7 @@ async function performAutoLock(orderId, hitSeat) {
 }
 
 // ============================================================
-// 🔒 performLock
+// 🔒 performLock（手动模式用）
 // ============================================================
 async function performLock(orderId, venueName, seatNumber, token, uuid) {
     try {
@@ -1066,12 +1093,31 @@ window._onHit = function(seats) {
     }
 };
 
-window._onLocked = function(seatNumber, orderId) {
-    addLog('🎉 座位 ' + seatNumber + ' 已成功锁定！', 'hit');
+window._onLocked = function(seatNumber, orderId, venueName) {
+    var msg = '🎉 座位 ' + seatNumber + ' 已成功锁定！';
+    if (venueName) msg += ' (' + venueName + ')';
+    addLog(msg, 'hit');
     playHitSound();
     if (navigator.vibrate) navigator.vibrate(200);
     updateLuckyStatus('idle', null, [seatNumber], orderId);
     stopLockLoop();
+    // 刷新钓场下拉（可能有新钓场被自动添加）
+    loadLockVenues();
+};
+
+// 全自动模式回调：识别到钓场
+window._onVenueDetected = function(venueName) {
+    addLog('🎯 识别到钓场: ' + venueName, 'system');
+};
+
+// 全自动模式回调：正在生成号码池
+window._onVenueGenerating = function(venueName) {
+    addLog('⏳ 首次遇到「' + venueName + '」，正在自动生成号码池...', 'warning');
+};
+
+// 全自动模式回调：号码池生成成功
+window._onVenueGenerated = function(venueName, seatCount) {
+    addLog('✅ 号码池已生成: ' + venueName + ' (' + seatCount + ' 个座位)', 'success');
 };
 
 // ============================================================
