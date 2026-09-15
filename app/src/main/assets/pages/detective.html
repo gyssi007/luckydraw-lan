@@ -69,23 +69,23 @@
         .dot.orange{background:#e68a2e}
         .dot.red{background:#d14545}
 
-        /* ===== 钓位网格 ===== */
+        /* ===== 钓位网格：适度放大 ===== */
         .seat-grid{
             display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(56px,1fr));
-            gap:8px;
+            grid-template-columns:repeat(auto-fill,minmax(68px,1fr));
+            gap:10px;
             background:#fff;
-            padding:14px 10px;
+            padding:16px 12px;
             border-radius:14px;
             min-height:100px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
         }
 
-        /* ===== 钓位卡片：带状态色边框的座位格子 ===== */
+        /* ===== 钓位卡片：放大一档 ===== */
         .seat-card{
             background: #fbfdff;
-            border-radius: 10px;
-            padding: 4px 2px 4px;
+            border-radius: 12px;
+            padding: 6px 3px 5px;
             text-align: center;
             position: relative;
             display: flex;
@@ -94,15 +94,15 @@
             justify-content: center;
             cursor: pointer;
             transition: transform .1s, box-shadow .15s, background .15s;
-            min-height: 62px;
+            min-height: 74px;
             border: 1.5px solid #d8e2ec;
         }
         .seat-card:active{ transform: scale(0.94); }
 
-        /* 沙发图标：主角 */
+        /* 沙发图标：放大 */
         .seat-card .seat-icon{
-            width: 28px;
-            height: 28px;
+            width: 34px;
+            height: 34px;
             display: block;
             flex-shrink: 0;
             transition: color .15s;
@@ -114,20 +114,20 @@
             filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
         }
 
-        /* 座位号 */
+        /* 座位号：放大 */
         .seat-card .number{
             font-weight: 800;
-            font-size: 11px;
+            font-size: 12px;
             line-height: 1.2;
-            margin-top: 1px;
+            margin-top: 2px;
             color: #33475a;
             letter-spacing: -0.2px;
         }
 
-        /* 状态文字 */
+        /* 状态文字：放大 */
         .seat-card .status-label{
             display: block;
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 700;
             line-height: 1.1;
             margin-top: 1px;
@@ -135,47 +135,32 @@
             opacity: 0.9;
         }
 
-        /* 空闲 —— 绿：边框 + 图标 + 文字都用绿色系 */
-        .seat-card.status-10{
-            border-color: #2b9c5c;
-            background: #f4fbf7;
-        }
+        /* 空闲 —— 绿 */
+        .seat-card.status-10{ border-color: #2b9c5c; background: #f4fbf7; }
         .seat-card.status-10 .seat-icon{ color: #2b9c5c; }
         .seat-card.status-10 .number{ color: #1a6b3c; }
         .seat-card.status-10 .status-label{ color: #2b9c5c; }
 
         /* 准备中 —— 橙 */
-        .seat-card.status-20{
-            border-color: #e68a2e;
-            background: #fffaf2;
-        }
+        .seat-card.status-20{ border-color: #e68a2e; background: #fffaf2; }
         .seat-card.status-20 .seat-icon{ color: #e68a2e; }
         .seat-card.status-20 .number{ color: #b45f1a; }
         .seat-card.status-20 .status-label{ color: #e68a2e; }
 
         /* 垂钓中 —— 蓝 */
-        .seat-card.status-40{
-            border-color: #2a7de1;
-            background: #f4f9ff;
-        }
+        .seat-card.status-40{ border-color: #2a7de1; background: #f4f9ff; }
         .seat-card.status-40 .seat-icon{ color: #2a7de1; }
         .seat-card.status-40 .number{ color: #1a5aa8; }
         .seat-card.status-40 .status-label{ color: #2a7de1; }
 
         /* 锁号 —— 红 */
-        .seat-card.status-50{
-            border-color: #d14545;
-            background: #fff5f5;
-        }
+        .seat-card.status-50{ border-color: #d14545; background: #fff5f5; }
         .seat-card.status-50 .seat-icon{ color: #d14545; }
         .seat-card.status-50 .number{ color: #b52a2a; }
         .seat-card.status-50 .status-label{ color: #d14545; }
 
         /* 未知 —— 灰 */
-        .seat-card.status-0{
-            border-color: #c8d4e0;
-            background: #fafcff;
-        }
+        .seat-card.status-0{ border-color: #c8d4e0; background: #fafcff; }
         .seat-card.status-0 .seat-icon{ color: #b0c0d0; }
         .seat-card.status-0 .number{ color: #5a6a7a; }
         .seat-card.status-0 .status-label{ color: #b0c0d0; }
@@ -198,29 +183,29 @@
         .bottom-nav .tab.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;background:#0a2f44;border-radius:0 0 3px 3px}
         .bottom-nav .tab:active{transform:scale(0.92)}
 
-        /* 小屏：进一步压缩 */
+        /* 小屏：比默认略小一点，但仍然比上一版大 */
         @media(max-width:400px){
             .header{padding:12px 14px}
             .header h1{font-size:15px}
-            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));padding:10px 8px;gap:6px}
-            .seat-card{min-height:56px;padding:3px 1px}
-            .seat-card .seat-icon{width:24px;height:24px}
-            .seat-card .number{font-size:10px}
-            .seat-card .status-label{font-size:7px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(60px,1fr));padding:12px 8px;gap:8px}
+            .seat-card{min-height:66px;padding:5px 2px 4px;border-radius:10px}
+            .seat-card .seat-icon{width:30px;height:30px}
+            .seat-card .number{font-size:11px}
+            .seat-card .status-label{font-size:8px}
             .stats{gap:6px}
             .stat-card{padding:10px 8px}
             .stat-card .number{font-size:22px}
         }
 
-        /* 大屏：略放大 */
+        /* 大屏：再放大一档 */
         @media(min-width:600px){
             .stats{grid-template-columns:repeat(4,1fr);gap:14px}
             .stat-card .number{font-size:30px}
-            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:10px;padding:18px 14px}
-            .seat-card{min-height:72px}
-            .seat-card .seat-icon{width:34px;height:34px}
-            .seat-card .number{font-size:12px}
-            .seat-card .status-label{font-size:9px}
+            .seat-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:12px;padding:20px 16px}
+            .seat-card{min-height:86px;padding:8px 4px 6px}
+            .seat-card .seat-icon{width:40px;height:40px}
+            .seat-card .number{font-size:14px}
+            .seat-card .status-label{font-size:10px}
         }
     </style>
 </head>
