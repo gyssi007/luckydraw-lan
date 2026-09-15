@@ -15,6 +15,10 @@ jobs:
           distribution: 'temurin'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''          # 关键：留空，跳过安装已废弃的 tools 包
+          # 如果构建时提示缺少 platform 或 build-tools，可以按需补上，例如：
+          # packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
       - name: Build APK
         run: |
           chmod +x gradlew
