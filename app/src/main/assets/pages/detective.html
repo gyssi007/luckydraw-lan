@@ -114,6 +114,22 @@
             opacity:0.9;
         }
 
+        /* ===== 沙发图标：右上角，颜色随状态变化 ===== */
+        .seat-card .seat-icon{
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 10px;
+            height: 10px;
+            opacity: 0.85;
+            pointer-events: none;
+        }
+        .seat-card .seat-icon svg{
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
         /* 空闲 —— 翠绿色底 + 深绿字 */
         .seat-card.status-10{
             background: #d4f0e0;
@@ -123,6 +139,7 @@
         }
         .seat-card.status-10 .number{ color: #0a4d2e; }
         .seat-card.status-10 .status-label{ color: #1a6b3c; }
+        .seat-card.status-10 .seat-icon{ color: #2b9c5c; }
 
         /* 准备中 —— 明亮橙黄底 + 深橙字 */
         .seat-card.status-20{
@@ -133,6 +150,7 @@
         }
         .seat-card.status-20 .number{ color: #8a4e0a; }
         .seat-card.status-20 .status-label{ color: #b45f1a; }
+        .seat-card.status-20 .seat-icon{ color: #e68a2e; }
 
         /* 垂钓中 —— 清亮蓝底 + 深蓝字 */
         .seat-card.status-40{
@@ -143,6 +161,7 @@
         }
         .seat-card.status-40 .number{ color: #0a3d7a; }
         .seat-card.status-40 .status-label{ color: #1a5aa8; }
+        .seat-card.status-40 .seat-icon{ color: #2a7de1; }
 
         /* 锁号 —— 醒目红底 + 深红字 + 斜纹纹理 */
         .seat-card.status-50{
@@ -154,6 +173,7 @@
         }
         .seat-card.status-50 .number{ color: #8a1a1a; }
         .seat-card.status-50 .status-label{ color: #b52a2a; }
+        .seat-card.status-50 .seat-icon{ color: #d14545; }
 
         /* 未知状态 —— 灰色 */
         .seat-card.status-0{
@@ -164,40 +184,7 @@
         }
         .seat-card.status-0 .number{ color: #3a4a5a; }
         .seat-card.status-0 .status-label{ color: #5a6a7a; }
-
-        /* 增加图标点缀 (伪元素) —— 缩小字号 */
-        .seat-card.status-10::after{
-            content: "🟢";
-            position: absolute;
-            top: 1px;
-            right: 2px;
-            font-size: 7px;
-            opacity: 0.7;
-        }
-        .seat-card.status-20::after{
-            content: "🟠";
-            position: absolute;
-            top: 1px;
-            right: 2px;
-            font-size: 7px;
-            opacity: 0.7;
-        }
-        .seat-card.status-40::after{
-            content: "🔵";
-            position: absolute;
-            top: 1px;
-            right: 2px;
-            font-size: 7px;
-            opacity: 0.7;
-        }
-        .seat-card.status-50::after{
-            content: "🔴";
-            position: absolute;
-            top: 1px;
-            right: 2px;
-            font-size: 7px;
-            opacity: 0.8;
-        }
+        .seat-card.status-0 .seat-icon{ color: #b0c0d0; }
 
         .loading-mask{display:flex;justify-content:center;align-items:center;min-height:120px;color:#6b8ba0;font-size:14px;gap:10px;grid-column:1/-1}
         .spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#2a7de1;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
@@ -225,6 +212,7 @@
             .seat-card{min-height:44px;padding:3px 1px 2px}
             .seat-card .number{font-size:13px}
             .seat-card .status-label{font-size:7px}
+            .seat-card .seat-icon{width:8px;height:8px;top:1px;right:1px}
             .stats{gap:6px}
             .stat-card{padding:10px 8px}
             .stat-card .number{font-size:22px}
@@ -238,6 +226,7 @@
             .seat-card{min-height:56px;padding:5px 3px 4px}
             .seat-card .number{font-size:16px}
             .seat-card .status-label{font-size:9px}
+            .seat-card .seat-icon{width:12px;height:12px;top:3px;right:3px}
         }
     </style>
 </head>
@@ -385,6 +374,11 @@ var lockedCount = document.getElementById('lockedCount');
 var venueName = document.getElementById('venueName');
 var venueStatus = document.getElementById('venueStatus');
 var updateTime = document.getElementById('updateTime');
+
+// ============================================================
+// 🛋️ 沙发 SVG 图标（fill 改为 currentColor，颜色由父级 color 控制）
+// ============================================================
+var SOFA_SVG = '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M921.809455 928.395636h-102.423273v18.059637c0 30.045091-22.970182 54.272-51.2 54.272-28.253091 0-51.223273-24.343273-51.223273-54.272v-18.059637H307.269818v18.059637c0 30.045091-22.970182 54.272-51.2 54.272-28.253091 0-51.223273-24.343273-51.223273-54.272v-18.059637H102.423273C64.721455 928.395636 0 859.810909 0 819.758545v-398.196363c0-39.936 30.510545-72.424727 68.235636-72.424727h68.258909c37.701818 0 68.235636 32.349091 68.235637 72.424727V711.214545h614.539636V421.562182c0-39.936 30.510545-72.424727 68.235637-72.424727h68.258909c37.701818 0 68.235636 32.349091 68.235636 72.424727V819.898182c0.232727 39.936-64.465455 108.520727-102.190545 108.520727zM853.550545 276.712727c-56.552727 0-102.4 48.686545-102.4 108.660364v253.416727H273.058909V385.349818c0-59.973818-45.847273-108.660364-102.4-108.660363-12.008727 0-23.458909-4.072727-34.210909 0V131.956364C136.494545 71.959273 182.341818 23.272727 238.941091 23.272727h546.280727c56.599273 0 102.423273 48.686545 102.423273 108.660364v144.872727c-10.752-4.189091-22.062545-0.116364-34.071273-0.116363z" fill="currentColor"/></svg>';
 
 // ============================================================
 // 📋 从本地读取钓场列表
@@ -629,7 +623,11 @@ function renderSeats2(seatList) {
         var status = seat.status || 0;
         var statusInfo = STATUS_MAP[status] || { label: '未知', css: 'status-0' };
         var seatNum = seat.seat_number || '?';
-        html += '<div class="seat-card ' + statusInfo.css + '"><div class="number">' + seatNum + '</div><div class="status-label">' + statusInfo.label + '</div></div>';
+        html += '<div class="seat-card ' + statusInfo.css + '">' +
+                    '<span class="seat-icon">' + SOFA_SVG + '</span>' +
+                    '<div class="number">' + seatNum + '</div>' +
+                    '<div class="status-label">' + statusInfo.label + '</div>' +
+                '</div>';
     });
     seatGrid.innerHTML = html;
 }
