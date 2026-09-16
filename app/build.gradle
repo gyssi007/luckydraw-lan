@@ -1,37 +1,67 @@
-plugins {
-    id 'com.android.application'
-}
+name: Build APK
 
-android {
-    namespace 'com.yourname.luckydraw'
-    compileSdk 34
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-    defaultConfig {
-        applicationId "com.yourname.luckydraw"
-        minSdk 23
-        targetSdk 34
-        versionCode 3
-        versionName "3.0"
-    }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    buildTypes {
-        debug {
-            minifyEnabled false
-        }
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
 
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
-}
+      # ========== 自动升级 versionCode + versionName ==========
+      - name: Auto Increment version
+        run: |
+          set -e
+          GRADLE_FILE=app/build.gradle
+
+          # 先看改之前的样子
+          echo "===== 修改前 ====="
+          grep -E "versionCode|versionName" "$GRADLE_FILE"
+
+          # 改 versionCode
+          sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+/\1versionCode ${{ github.run_number }}/" "$GRADLE_FILE"
+
+          # 改 versionName（保留主版本号，追加 build number）
+          sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\".*\"/\1versionName \"3.0.${{ github.run_number }}\"/" "$GRADLE_FILE"
+
+          # 打印改之后的样子，方便在 Actions 日志里确认
+          echo "===== 修改后 ====="
+          grep -E "versionCode|versionName" "$GRADLE_FILE"
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      # ========== 用 aapt 验证 APK 里真实的 versionCode ==========
+      - name: Verify APK version
+        run: |
+          AAPT=$(find $ANDROID_HOME/build-tools -name aapt | sort -V | tail -n 1)
+          echo "使用: $AAPT"
+          $AAPT dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "^package"
+
+      # ========== 重命名 APK（带版本号，肉眼可见） ==========
+      - name: Rename APK
+        run: |
+          mv app/build/outputs/apk/debug/app-debug.apk \
+             app/build/outputs/apk/debug/AutoTaskSystem-${{ github.run_number }}.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 自动刷号系统-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/AutoTaskSystem-${{ github.run_number }}.apk
