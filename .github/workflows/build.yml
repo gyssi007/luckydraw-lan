@@ -19,6 +19,13 @@ jobs:
           packages: ''          # 关键：留空，跳过安装已废弃的 tools 包
           # 如果构建时提示缺少 platform 或 build-tools，可以按需补上，例如：
           # packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+      # ==========新增：自动升级 versionCode==========
+      - name: Auto Increment versionCode
+        run: |
+          # 用 GitHub 运行序号覆盖 versionCode，每次构建自动 +1
+          sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/" app/build.gradle
+          # 打印一下，方便确认
+          grep "versionCode" app/build.gradle
       - name: Build APK
         run: |
           chmod +x gradlew
