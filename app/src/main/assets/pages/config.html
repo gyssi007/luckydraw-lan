@@ -37,6 +37,13 @@
         .pool-status.error { display: block; background: #fde8e8; color: #b33a3a; }
         .pool-status.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
+        .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 6px; padding: 12px 14px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; align-items: center; }
+        .backup-actions .btn-export { background: #0ea5e9; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
+        .backup-actions .btn-import { background: #14b8a6; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
+        .backup-actions .btn-export:disabled,
+        .backup-actions .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
+        .backup-actions .backup-hint { color: #64748b; font-size: 11px; flex: 1; min-width: 120px; }
+
         .venue-mgr-section { margin-top: 18px; border-top: 1px solid #e8edf4; padding-top: 16px; }
         .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #0a2f44; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-section .section-title .count-badge { background: #e8edf4; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
@@ -67,7 +74,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
         button { outline: none !important; border: none !important; }
 
-        /* ===== 原生 App 风格弹窗（替代系统 alert / confirm） ===== */
+        /* ===== 原生 App 风格弹窗 ===== */
         .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
         .app-dialog-mask.show { opacity: 1; }
         .app-dialog-card { background: #fff; border-radius: 26px; width: 100%; max-width: 340px; padding: 30px 24px 20px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.35); transform: translateY(24px) scale(.92); opacity: 0; transition: transform .32s cubic-bezier(.34,1.56,.64,1), opacity .25s ease; }
@@ -120,6 +127,14 @@
             
             <div id="poolStatus" class="pool-status"></div>
 
+            <!-- ✅ 新增：导入导出 -->
+            <div class="backup-actions">
+                <button class="btn-export" id="btnExport" onclick="exportConfig()">📤 导出配置</button>
+                <button class="btn-import" id="btnImport" onclick="importConfig()">📥 导入配置</button>
+                <span class="backup-hint">导出后文件保存在「下载」目录</span>
+            </div>
+            <div id="backupStatus" class="pool-status"></div>
+
             <div class="venue-mgr-section">
                 <div class="section-title">
                     <span>钓场管理</span>
@@ -155,7 +170,7 @@
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 📱 原生 App 风格弹窗（appAlert / appConfirm 替代系统 alert/confirm）
+// 📱 原生 App 风格弹窗
 // ============================================================
 function appDialog(opts) {
     return new Promise(function(resolve) {
@@ -374,6 +389,124 @@ async function deleteVenue(id) {
 }
 
 // ============================================================
+// 📤 导出配置（venues.json + seat_map.json）
+// ============================================================
+async function exportConfig() {
+    var btn = document.getElementById('btnExport');
+    var statusEl = document.getElementById('backupStatus');
+
+    if (!window.AndroidBridge || !window.AndroidBridge.exportConfig) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ AndroidBridge.exportConfig 未注入！';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ 导出中...';
+    statusEl.className = 'pool-status info';
+    statusEl.textContent = '⏳ 正在打包配置...';
+
+    try {
+        var venuesJson = window.AndroidBridge.loadVenues();
+        var seatMapJson = window.AndroidBridge.loadSeatMap();
+
+        // 打包成一个对象
+        var config = {
+            _meta: {
+                exportTime: new Date().toISOString(),
+                version: '1.0'
+            },
+            venues: JSON.parse(venuesJson || '[]'),
+            seatMap: JSON.parse(seatMapJson || '{}')
+        };
+
+        var filename = 'fishing-config-' + Date.now() + '.json';
+        var content = JSON.stringify(config, null, 2);
+
+        var result = window.AndroidBridge.exportConfig(content, filename);
+
+        if (result && result.indexOf('ERROR') === 0) {
+            statusEl.className = 'pool-status error';
+            statusEl.textContent = '❌ 导出失败: ' + result;
+        } else {
+            statusEl.className = 'pool-status success';
+            statusEl.textContent = '✅ 导出成功！文件已保存到手机「下载」目录: ' + filename;
+        }
+    } catch(e) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ 导出异常: ' + e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📤 导出配置';
+    }
+}
+
+// ============================================================
+// 📥 导入配置（从文件名读取）
+// ============================================================
+async function importConfig() {
+    var btn = document.getElementById('btnImport');
+    var statusEl = document.getElementById('backupStatus');
+
+    if (!window.AndroidBridge || !window.AndroidBridge.importConfig) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ AndroidBridge.importConfig 未注入！';
+        return;
+    }
+
+    // 用弹窗让用户输入文件名（默认提示格式）
+    var filename = prompt('请输入要导入的文件名（在手机「下载」目录下）', 'fishing-config-');
+    if (!filename) return;
+
+    var ok = await appConfirm('将覆盖当前的钓场列表和号码池，确定导入？', { icon: '📥', iconBg: '#cffafe', danger: true, okText: '覆盖导入' });
+    if (!ok) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ 导入中...';
+    statusEl.className = 'pool-status info';
+    statusEl.textContent = '⏳ 正在读取文件...';
+
+    try {
+        var content = window.AndroidBridge.importConfig(filename);
+        if (!content || content === '') {
+            statusEl.className = 'pool-status error';
+            statusEl.textContent = '❌ 文件不存在或内容为空: ' + filename;
+            return;
+        }
+
+        var config = JSON.parse(content);
+        if (!config.venues && !config.seatMap) {
+            statusEl.className = 'pool-status error';
+            statusEl.textContent = '❌ 文件格式不正确（缺少 venues 或 seatMap）';
+            return;
+        }
+
+        // 覆盖本地数据
+        if (config.venues) {
+            var venuesJson = JSON.stringify(config.venues);
+            window.AndroidBridge.saveVenues(venuesJson);
+            saveData('venues_data', venuesJson);
+        }
+        if (config.seatMap) {
+            var seatMapJson = JSON.stringify(config.seatMap);
+            window.AndroidBridge.saveSeatMap(seatMapJson);
+        }
+
+        // 刷新页面显示
+        loadVenueList();
+
+        statusEl.className = 'pool-status success';
+        statusEl.textContent = '✅ 导入成功！钓场: ' + (config.venues ? config.venues.length : 0) + ' 个，号码池已覆盖';
+    } catch(e) {
+        statusEl.className = 'pool-status error';
+        statusEl.textContent = '❌ 导入失败: ' + e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📥 导入配置';
+    }
+}
+
+// ============================================================
 // 🎣 自动生成钓场库（从历史订单提取）
 // ============================================================
 async function autoGenerateVenues() {
@@ -404,7 +537,6 @@ async function autoGenerateVenues() {
     statusEl.textContent = '⏳ 正在获取历史订单...';
 
     try {
-        // 1. 先拿第一页，拿到总数
         var firstPage = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=10', 'GET');
         if (firstPage.code !== '000') {
             throw new Error(firstPage.msg || '获取订单失败');
@@ -416,9 +548,8 @@ async function autoGenerateVenues() {
 
         statusEl.textContent = '⏳ 共 ' + totalCount + ' 个订单，正在分析...';
 
-        var venueMap = {};  // { product_id: { name, order_id } }
+        var venueMap = {};
 
-        // 2. 遍历所有页
         for (var page = 1; page <= totalPages; page++) {
             var pageResult;
             if (page === 1) {
@@ -436,7 +567,6 @@ async function autoGenerateVenues() {
                 if (!productId) continue;
                 if (venueMap[productId]) continue;
 
-                // 提取钓场名称（优先用 merchant_model.mer_name）
                 var venueName = null;
                 if (order.merchant_model && order.merchant_model.mer_name) {
                     venueName = order.merchant_model.mer_name;
@@ -456,7 +586,6 @@ async function autoGenerateVenues() {
             await new Promise(function(r) { setTimeout(r, 200); });
         }
 
-        // 3. 生成 venues.json
         var venues = [];
         var id = 1;
         for (var pid in venueMap) {
@@ -480,10 +609,8 @@ async function autoGenerateVenues() {
         statusEl.className = 'pool-status success';
         statusEl.textContent = '✅ 已生成 ' + venues.length + ' 个钓场，正在刷新号码池...';
 
-        // 刷新页面显示
         renderVenueList(venues);
 
-        // 4. 自动刷新号码池
         await refreshSeatMap();
 
     } catch(e) {
