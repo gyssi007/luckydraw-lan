@@ -1,8 +1,12 @@
 package com.yourname.luckydraw;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
@@ -72,6 +76,16 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
         progressBar = findViewById(R.id.progressBar);
+
+        // 申请存储权限（Android 6.0 - 9.0）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                }, 100);
+            }
+        }
 
         // 初始化 OkHttp
         httpClient = new OkHttpClient.Builder()
@@ -222,6 +236,39 @@ public class MainActivity extends AppCompatActivity {
             writeLocalJson("venues.json", json);
         }
 
+        // ✅ 新增：导出配置到手机 Download 目录
+        @JavascriptInterface
+        public String exportConfig(String json, String filename) {
+            try {
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) downloadsDir.mkdirs();
+                File file = new File(downloadsDir, filename);
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(json.getBytes("UTF-8"));
+                fos.close();
+                return file.getAbsolutePath();
+            } catch (Exception e) {
+                return "ERROR: " + e.getMessage();
+            }
+        }
+
+        // ✅ 新增：从手机 Download 目录读取配置文件
+        @JavascriptInterface
+        public String importConfig(String filename) {
+            try {
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                File file = new File(downloadsDir, filename);
+                if (!file.exists()) return "";
+                FileInputStream fis = new FileInputStream(file);
+                byte[] data = new byte[(int) file.length()];
+                fis.read(data);
+                fis.close();
+                return new String(data, "UTF-8");
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
         @JavascriptInterface
         public void startAutoLoop(String oid, String t, String u, String seatsJson) {
             orderId = oid;
@@ -246,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
         public void startLockLoop(String t, String u, String venue, String seatsJson) {
             token = t;
             uuid = u;
-            lockTargetVenue = venue;  // 空字符串 = 全自动模式
+            lockTargetVenue = venue;
             lockTargetSeats = parseSeats(seatsJson);
             isLocking = true;
             startLockLoopInternal();
@@ -321,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
     private String loadSeatMap() {
         return readLocalJson("seat_map.json", "{}");
     }
-    // ✅ 新增：类级别的 saveSeatMap 方法（供 startLockLoopInternal 调用）
+
     private void saveSeatMap(String json) {
         writeLocalJson("seat_map.json", json);
     }
@@ -406,15 +453,12 @@ public class MainActivity extends AppCompatActivity {
                                         String oid = targetOrder.optString("order_id");
                                         currentOrderId = oid;
 
-                                        // ✅ 判断是否全自动模式
                                         boolean isAutoMode = (lockTargetVenue == null || lockTargetVenue.isEmpty());
                                         String effectiveVenue = lockTargetVenue;
 
                                         if (isAutoMode) {
-                                            // 从订单里提取钓场名称
                                             effectiveVenue = extractVenueName(targetOrder);
                                             if (effectiveVenue == null || effectiveVenue.isEmpty()) {
-                                                // 提取失败，等下一个订单
                                                 if (isLocking) handler.postDelayed(lockLoopRunnable, 1500);
                                                 return;
                                             }
@@ -424,12 +468,10 @@ public class MainActivity extends AppCompatActivity {
                                             });
                                         }
 
-                                        // 加载本地 seat_map
                                         String seatMapJson = loadSeatMap();
                                         JSONObject seatMap = new JSONObject(seatMapJson);
                                         JSONObject venueData = seatMap.optJSONObject(effectiveVenue);
 
-                                        // ✅ 如果本地没有这个钓场，自动生成
                                         if (venueData == null) {
                                             final String vName2 = effectiveVenue;
                                             handler.post(() -> {
@@ -463,12 +505,10 @@ public class MainActivity extends AppCompatActivity {
                                         }
 
                                         if (venueData == null) {
-                                            // 生成失败，等下一个订单
                                             if (isLocking) handler.postDelayed(lockLoopRunnable, 1500);
                                             return;
                                         }
 
-                                        // ✅ 用 seat_id 锁定
                                         for (int seatNum : lockTargetSeats) {
                                             if (!isLocking) break;
                                             String seatId = venueData.optString(String.valueOf(seatNum));
@@ -504,10 +544,8 @@ public class MainActivity extends AppCompatActivity {
         handler.post(lockLoopRunnable);
     }
 
-    // 从订单里提取钓场名称
     private String extractVenueName(JSONObject order) {
         try {
-            // 优先用 merchant_model.mer_name
             if (order.has("merchant_model")) {
                 JSONObject merchant = order.optJSONObject("merchant_model");
                 if (merchant != null) {
@@ -515,7 +553,6 @@ public class MainActivity extends AppCompatActivity {
                     if (name != null && !name.isEmpty()) return name;
                 }
             }
-            // 兜底：product_info.title
             JSONObject ticketItem = order.optJSONObject("order_ticket_item");
             if (ticketItem != null) {
                 JSONObject productInfo = ticketItem.optJSONObject("product_info");
@@ -530,9 +567,6 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    // ============================================================
-    // 停止轮询（供 onDestroy 调用）
-    // ============================================================
     private void stopAutoLoop() {
         isRunning = false;
         if (autoLoopRunnable != null) {
