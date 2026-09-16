@@ -768,7 +768,7 @@ function renderLockVenueSelect() {
     var select = luckyElements.lockVenueSelect;
     // 保留当前的选中值
     var currentVal = select.value;
-    select.innerHTML = '<option value="__AUTO__">🤖 全自动识别</option><option value="">选择钓场</option>';
+    select.innerHTML = '<option value="__AUTO__">全自动识别</option><option value="">选择钓场</option>';
     lockVenues.forEach(function(v) {
         var opt = document.createElement('option');
         opt.value = v.name;
