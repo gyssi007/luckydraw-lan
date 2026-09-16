@@ -1,14 +1,17 @@
 package com.yourname.luckydraw;
 
-import android.Manifest;
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.view.KeyEvent;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -18,6 +21,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
@@ -25,11 +29,14 @@ import androidx.security.crypto.MasterKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +50,7 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     private static final String ALLOWED_HOST = "fishing.gysssi.com";
     private static final String API_HOST = "https://api.cdtx.top";
+    private static final int REQUEST_CODE_PICK_FILE = 1001;
 
     private WebView webView;
     private ProgressBar progressBar;
@@ -77,23 +85,11 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webView);
         progressBar = findViewById(R.id.progressBar);
 
-        // 申请存储权限（Android 6.0 - 9.0）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.READ_EXTERNAL_STORAGE
-                }, 100);
-            }
-        }
-
-        // 初始化 OkHttp
         httpClient = new OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(15, TimeUnit.SECONDS)
                 .build();
 
-        // 初始化 WebView
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
@@ -131,10 +127,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 注册 JS 接口
         webView.addJavascriptInterface(new JSInterface(), "AndroidBridge");
-
-        // 加载本地页面
         webView.loadUrl("file:///android_asset/pages/lucky.html");
     }
 
@@ -236,39 +229,6 @@ public class MainActivity extends AppCompatActivity {
             writeLocalJson("venues.json", json);
         }
 
-        // ✅ 新增：导出配置到手机 Download 目录
-        @JavascriptInterface
-        public String exportConfig(String json, String filename) {
-            try {
-                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                if (!downloadsDir.exists()) downloadsDir.mkdirs();
-                File file = new File(downloadsDir, filename);
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write(json.getBytes("UTF-8"));
-                fos.close();
-                return file.getAbsolutePath();
-            } catch (Exception e) {
-                return "ERROR: " + e.getMessage();
-            }
-        }
-
-        // ✅ 新增：从手机 Download 目录读取配置文件
-        @JavascriptInterface
-        public String importConfig(String filename) {
-            try {
-                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                File file = new File(downloadsDir, filename);
-                if (!file.exists()) return "";
-                FileInputStream fis = new FileInputStream(file);
-                byte[] data = new byte[(int) file.length()];
-                fis.read(data);
-                fis.close();
-                return new String(data, "UTF-8");
-            } catch (Exception e) {
-                return "";
-            }
-        }
-
         @JavascriptInterface
         public void startAutoLoop(String oid, String t, String u, String seatsJson) {
             orderId = oid;
@@ -325,6 +285,111 @@ public class MainActivity extends AppCompatActivity {
                 return "{\"success\":false,\"error\":\"" + e.getMessage() + "\"}";
             }
         }
+
+        /**
+         * 导出配置到手机 Download 目录
+         * @return 成功返回文件路径，失败返回以 ERROR: 开头
+         */
+        @JavascriptInterface
+        public String exportConfig(String json, String filename) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Android 10+ 使用 MediaStore 写入 Download
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/json");
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                    Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                    if (uri == null) return "ERROR: 无法创建文件";
+
+                    OutputStream os = getContentResolver().openOutputStream(uri);
+                    if (os == null) return "ERROR: 无法打开输出流";
+                    os.write(json.getBytes("UTF-8"));
+                    os.flush();
+                    os.close();
+
+                    values.clear();
+                    values.put(MediaStore.Downloads.IS_PENDING, 0);
+                    getContentResolver().update(uri, values, null, null);
+
+                    return "Download/" + filename;
+                } else {
+                    File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                    if (!downloadsDir.exists()) downloadsDir.mkdirs();
+                    File file = new File(downloadsDir, filename);
+                    FileOutputStream fos = new FileOutputStream(file);
+                    fos.write(json.getBytes("UTF-8"));
+                    fos.close();
+                    return file.getAbsolutePath();
+                }
+            } catch (Exception e) {
+                return "ERROR: " + e.getMessage();
+            }
+        }
+
+        /**
+         * 弹出系统文件选择器，让用户选择要导入的 json 文件
+         * 选择完成后会通过 window._onImportFileSelected(content) 回调前端
+         */
+        @JavascriptInterface
+        public void pickFileForImport() {
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                            "application/json",
+                            "text/plain",
+                            "application/octet-stream"
+                    });
+                    startActivityForResult(intent, REQUEST_CODE_PICK_FILE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    final String js = "window._onImportFileSelected('')";
+                    handler.post(() -> webView.evaluateJavascript(js, null));
+                }
+            });
+        }
+    }
+
+    // ============================================================
+    // 处理文件选择结果
+    // ============================================================
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PICK_FILE) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                Uri uri = data.getData();
+                if (uri != null) {
+                    try {
+                        InputStream is = getContentResolver().openInputStream(uri);
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            sb.append(line);
+                        }
+                        reader.close();
+                        is.close();
+                        String content = sb.toString();
+
+                        final String js = "window._onImportFileSelected(" + JSONObject.quote(content) + ")";
+                        handler.post(() -> webView.evaluateJavascript(js, null));
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        final String js = "window._onImportFileSelected('')";
+                        handler.post(() -> webView.evaluateJavascript(js, null));
+                    }
+                }
+            } else {
+                final String js = "window._onImportFileSelected('')";
+                handler.post(() -> webView.evaluateJavascript(js, null));
+            }
+        }
     }
 
     // ============================================================
@@ -363,14 +428,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private String loadSeatMap() {
-        return readLocalJson("seat_map.json", "{}");
-    }
-
-    private void saveSeatMap(String json) {
-        writeLocalJson("seat_map.json", json);
     }
 
     // ============================================================
@@ -423,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // 自动锁定轮询（支持全自动识别钓场）
+    // 自动锁定轮询
     // ============================================================
     private void startLockLoopInternal() {
         lockLoopRunnable = new Runnable() {
@@ -468,7 +525,7 @@ public class MainActivity extends AppCompatActivity {
                                             });
                                         }
 
-                                        String seatMapJson = loadSeatMap();
+                                        String seatMapJson = readLocalJson("seat_map.json", "{}");
                                         JSONObject seatMap = new JSONObject(seatMapJson);
                                         JSONObject venueData = seatMap.optJSONObject(effectiveVenue);
 
@@ -491,7 +548,7 @@ public class MainActivity extends AppCompatActivity {
                                                             newMap.put(seat.optString("seat_number"), seat.optString("product_ticket_seat_id"));
                                                         }
                                                         seatMap.put(effectiveVenue, newMap);
-                                                        saveSeatMap(seatMap.toString());
+                                                        writeLocalJson("seat_map.json", seatMap.toString());
                                                         venueData = newMap;
 
                                                         final String vName3 = effectiveVenue;
