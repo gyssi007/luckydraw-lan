@@ -62,7 +62,6 @@
         .venue-banner .info .label{color:#6b8ba0;font-size:11px}
         .venue-banner .info .value{font-weight:600;color:#0a2f44;font-size:14px}
         .venue-banner .update-time{color:#6b8ba0;font-size:11px;white-space:nowrap}
-        
 
         /* ===== 钓位网格 ===== */
         .seat-grid{
@@ -113,41 +112,25 @@
             letter-spacing: -0.2px;
         }
 
-        /* 状态文字 */
-        .seat-card .status-label{
-            display: block;
-            font-size: 9px;
-            font-weight: 700;
-            line-height: 1.1;
-            margin-top: 1px;
-            letter-spacing: 0.2px;
-            opacity: 0.9;
-        }
-
         /* 空闲 —— 绿 */
         .seat-card.status-10{ border-color: #2b9c5c; background: #f4fbf7; }
         .seat-card.status-10 .number{ color: #1a6b3c; }
-        .seat-card.status-10 .status-label{ color: #2b9c5c; }
 
         /* 准备中 —— 橙 */
         .seat-card.status-20{ border-color: #e68a2e; background: #fffaf2; }
         .seat-card.status-20 .number{ color: #b45f1a; }
-        .seat-card.status-20 .status-label{ color: #e68a2e; }
 
         /* 垂钓中 —— 蓝 */
         .seat-card.status-40{ border-color: #2a7de1; background: #f4f9ff; }
         .seat-card.status-40 .number{ color: #1a5aa8; }
-        .seat-card.status-40 .status-label{ color: #2a7de1; }
 
         /* 锁号 —— 红 */
         .seat-card.status-50{ border-color: #d14545; background: #fff5f5; }
         .seat-card.status-50 .number{ color: #b52a2a; }
-        .seat-card.status-50 .status-label{ color: #d14545; }
 
         /* 未知 —— 灰 */
         .seat-card.status-0{ border-color: #c8d4e0; background: #fafcff; }
         .seat-card.status-0 .number{ color: #5a6a7a; }
-        .seat-card.status-0 .status-label{ color: #b0c0d0; }
 
         .loading-mask{display:flex;justify-content:center;align-items:center;min-height:120px;color:#6b8ba0;font-size:14px;gap:10px;grid-column:1/-1}
         .spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#2a7de1;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
@@ -174,7 +157,6 @@
             .seat-card{min-height:66px;padding:5px 2px 4px;border-radius:10px}
             .seat-card .seat-icon{width:30px;height:30px}
             .seat-card .number{font-size:11px}
-            .seat-card .status-label{font-size:8px}
             .stats{gap:6px}
             .stat-card{padding:10px 8px}
             .stat-card .number{font-size:22px}
@@ -187,7 +169,6 @@
             .seat-card{min-height:86px;padding:8px 4px 6px}
             .seat-card .seat-icon{width:40px;height:40px}
             .seat-card .number{font-size:14px}
-            .seat-card .status-label{font-size:10px}
         }
     </style>
 </head>
@@ -235,8 +216,6 @@
                 </div>
                 <span class="update-time" id="updateTime">等待加载...</span>
             </div>
-
-            
 
             <div class="seat-grid" id="seatGrid">
                 <div class="loading-mask"><div class="spinner"></div>加载中...</div>
@@ -586,7 +565,6 @@ function renderSeats2(seatList) {
         html += '<div class="seat-card ' + statusInfo.css + '">' +
                     (iconSrc ? '<img class="seat-icon" src="' + iconSrc + '" alt="">' : '') +
                     '<span class="number">' + seatNum + '</span>' +
-                    '<span class="status-label">' + statusInfo.label + '</span>' +
                 '</div>';
     });
     seatGrid.innerHTML = html;
