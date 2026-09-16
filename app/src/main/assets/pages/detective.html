@@ -33,7 +33,7 @@
         .venue-selector-modal .venue-item.active{background:#eef6ff}
         .venue-selector-modal .venue-empty{padding:30px 20px;text-align:center;color:#94a3b8;font-size:13px}
 
-        /* ===== 原生 App 风格弹窗（替代系统 alert） ===== */
+        /* ===== 原生 App 风格弹窗 ===== */
         .app-dialog-mask{position:fixed;inset:0;background:rgba(8,15,25,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:30px;opacity:0;transition:opacity .2s ease}
         .app-dialog-mask.show{opacity:1}
         .app-dialog-card{background:#fff;border-radius:26px;width:100%;max-width:340px;padding:30px 24px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.35);transform:translateY(24px) scale(.92);opacity:0;transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s ease}
@@ -47,6 +47,7 @@
         .app-dialog-btn.primary{background:#3b82f6;color:#fff}
         .app-dialog-btn.danger{background:#ef4444;color:#fff}
         .app-dialog-btn.secondary{background:#eef2f6;color:#334455}
+
         .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
         .stat-card{background:#fff;border-radius:14px;padding:14px 12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
         .stat-card .number{font-size:26px;font-weight:700;line-height:1.2}
@@ -69,7 +70,7 @@
         .dot.orange{background:#e68a2e}
         .dot.red{background:#d14545}
 
-        /* ===== 钓位网格：适度放大 ===== */
+        /* ===== 钓位网格 ===== */
         .seat-grid{
             display:grid;
             grid-template-columns:repeat(auto-fill,minmax(68px,1fr));
@@ -81,7 +82,7 @@
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
         }
 
-        /* ===== 钓位卡片：放大一档 ===== */
+        /* ===== 钓位卡片 ===== */
         .seat-card{
             background: #fbfdff;
             border-radius: 12px;
@@ -99,22 +100,16 @@
         }
         .seat-card:active{ transform: scale(0.94); }
 
-        /* 沙发图标：放大 */
+        /* 图标：用 SVG 文件引用 */
         .seat-card .seat-icon{
             width: 34px;
             height: 34px;
             display: block;
             flex-shrink: 0;
-            transition: color .15s;
-        }
-        .seat-card .seat-icon svg{
-            width: 100%;
-            height: 100%;
-            display: block;
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+            object-fit: contain;
         }
 
-        /* 座位号：放大 */
+        /* 座位号 */
         .seat-card .number{
             font-weight: 800;
             font-size: 12px;
@@ -124,7 +119,7 @@
             letter-spacing: -0.2px;
         }
 
-        /* 状态文字：放大 */
+        /* 状态文字 */
         .seat-card .status-label{
             display: block;
             font-size: 9px;
@@ -137,31 +132,26 @@
 
         /* 空闲 —— 绿 */
         .seat-card.status-10{ border-color: #2b9c5c; background: #f4fbf7; }
-        .seat-card.status-10 .seat-icon{ color: #2b9c5c; }
         .seat-card.status-10 .number{ color: #1a6b3c; }
         .seat-card.status-10 .status-label{ color: #2b9c5c; }
 
         /* 准备中 —— 橙 */
         .seat-card.status-20{ border-color: #e68a2e; background: #fffaf2; }
-        .seat-card.status-20 .seat-icon{ color: #e68a2e; }
         .seat-card.status-20 .number{ color: #b45f1a; }
         .seat-card.status-20 .status-label{ color: #e68a2e; }
 
         /* 垂钓中 —— 蓝 */
         .seat-card.status-40{ border-color: #2a7de1; background: #f4f9ff; }
-        .seat-card.status-40 .seat-icon{ color: #2a7de1; }
         .seat-card.status-40 .number{ color: #1a5aa8; }
         .seat-card.status-40 .status-label{ color: #2a7de1; }
 
         /* 锁号 —— 红 */
         .seat-card.status-50{ border-color: #d14545; background: #fff5f5; }
-        .seat-card.status-50 .seat-icon{ color: #d14545; }
         .seat-card.status-50 .number{ color: #b52a2a; }
         .seat-card.status-50 .status-label{ color: #d14545; }
 
         /* 未知 —— 灰 */
         .seat-card.status-0{ border-color: #c8d4e0; background: #fafcff; }
-        .seat-card.status-0 .seat-icon{ color: #b0c0d0; }
         .seat-card.status-0 .number{ color: #5a6a7a; }
         .seat-card.status-0 .status-label{ color: #b0c0d0; }
 
@@ -183,7 +173,6 @@
         .bottom-nav .tab.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;background:#0a2f44;border-radius:0 0 3px 3px}
         .bottom-nav .tab:active{transform:scale(0.92)}
 
-        /* 小屏：比默认略小一点，但仍然比上一版大 */
         @media(max-width:400px){
             .header{padding:12px 14px}
             .header h1{font-size:15px}
@@ -197,7 +186,6 @@
             .stat-card .number{font-size:22px}
         }
 
-        /* 大屏：再放大一档 */
         @media(min-width:600px){
             .stats{grid-template-columns:repeat(4,1fr);gap:14px}
             .stat-card .number{font-size:30px}
@@ -286,7 +274,7 @@
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 📱 原生 App 风格弹窗（appAlert 替代系统 alert）
+// 📱 原生 App 风格弹窗
 // ============================================================
 function appDialog(opts) {
     return new Promise(function(resolve) {
@@ -340,6 +328,14 @@ var STATUS_MAP = {
     50: { label: '锁号', css: 'status-50' }
 };
 
+// ✅ 4 个 SVG 图标文件的路径
+var ICON_MAP = {
+    10: 'icons/seat-idle.svg',       // 空闲
+    20: 'icons/seat-preparing.svg',  // 准备中
+    40: 'icons/seat-fishing.svg',    // 垂钓中
+    50: 'icons/seat-locked.svg'      // 锁号
+};
+
 var venueTrigger = document.getElementById('venueTrigger');
 var venueOverlay = document.getElementById('venueOverlay');
 var venueList = document.getElementById('venueList');
@@ -353,11 +349,6 @@ var lockedCount = document.getElementById('lockedCount');
 var venueName = document.getElementById('venueName');
 var venueStatus = document.getElementById('venueStatus');
 var updateTime = document.getElementById('updateTime');
-
-// ============================================================
-// 🛋️ 沙发 SVG 图标（fill 改为 currentColor，颜色由父级 color 控制）
-// ============================================================
-var SOFA_SVG = '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M921.809455 928.395636h-102.423273v18.059637c0 30.045091-22.970182 54.272-51.2 54.272-28.253091 0-51.223273-24.343273-51.223273-54.272v-18.059637H307.269818v18.059637c0 30.045091-22.970182 54.272-51.2 54.272-28.253091 0-51.223273-24.343273-51.223273-54.272v-18.059637H102.423273C64.721455 928.395636 0 859.810909 0 819.758545v-398.196363c0-39.936 30.510545-72.424727 68.235636-72.424727h68.258909c37.701818 0 68.235636 32.349091 68.235637 72.424727V711.214545h614.539636V421.562182c0-39.936 30.510545-72.424727 68.235637-72.424727h68.258909c37.701818 0 68.235636 32.349091 68.235636 72.424727V819.898182c0.232727 39.936-64.465455 108.520727-102.190545 108.520727zM853.550545 276.712727c-56.552727 0-102.4 48.686545-102.4 108.660364v253.416727H273.058909V385.349818c0-59.973818-45.847273-108.660364-102.4-108.660363-12.008727 0-23.458909-4.072727-34.210909 0V131.956364C136.494545 71.959273 182.341818 23.272727 238.941091 23.272727h546.280727c56.599273 0 102.423273 48.686545 102.423273 108.660364v144.872727c-10.752-4.189091-22.062545-0.116364-34.071273-0.116363z" fill="currentColor"/></svg>';
 
 // ============================================================
 // 📋 从本地读取钓场列表
@@ -587,6 +578,9 @@ async function fetchVenueData() {
     }
 }
 
+// ============================================================
+// 🎨 渲染钓位卡片（使用 SVG 图标文件）
+// ============================================================
 function renderSeats2(seatList) {
     if (!Array.isArray(seatList) || seatList.length === 0) {
         seatGrid.innerHTML = '<div class="empty-state"><div class="icon">🏝️</div><p>暂无钓位数据</p></div>';
@@ -598,8 +592,10 @@ function renderSeats2(seatList) {
         var status = seat.status || 0;
         var statusInfo = STATUS_MAP[status] || { label: '未知', css: 'status-0' };
         var seatNum = seat.seat_number || '?';
+        var iconSrc = ICON_MAP[status] || '';
+
         html += '<div class="seat-card ' + statusInfo.css + '">' +
-                    '<span class="seat-icon">' + SOFA_SVG + '</span>' +
+                    (iconSrc ? '<img class="seat-icon" src="' + iconSrc + '" alt="">' : '') +
                     '<span class="number">' + seatNum + '</span>' +
                     '<span class="status-label">' + statusInfo.label + '</span>' +
                 '</div>';
