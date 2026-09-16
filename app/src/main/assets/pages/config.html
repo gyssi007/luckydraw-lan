@@ -5,86 +5,87 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>配置 - 渔榜助手</title>
     <style>
-        body { background: #f0f4f8; min-height: 100vh; padding: 0 0 100px 0; display: flex; justify-content: center; align-items: flex-start; }
-        .app-container { max-width: 800px; width: 100%; padding: 12px; padding-bottom: 100px; }
-        .page { display: block; }
-        .config-container { background: #fff; border-radius: 16px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-        .config-container .page-title { font-size: 20px; font-weight: 700; color: #0a2f44; margin-bottom: 4px; }
-        .config-container .page-subtitle { color: #8899aa; font-size: 13px; margin-bottom: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background: #f5f7fa; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+        .app-container { max-width: 800px; width: 100%; padding: 12px 12px 100px; }
+        .config-container { background: #fff; border-radius: 14px; padding: 22px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+        .page-title { font-size: 19px; font-weight: 700; color: #1a2b3c; margin-bottom: 4px; }
+        .page-subtitle { color: #8a99aa; font-size: 13px; margin-bottom: 22px; }
+
         .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 4px; }
-        .field .input-row { display: flex; gap: 6px; }
-        .field .input-row textarea,
-        .field .input-row input { flex: 1; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 10px; font-size: 13px; font-family: monospace; background: #f8fafc; min-height: 42px; resize: vertical; outline: none; }
-        .field .hint { font-size: 11px; color: #8899aa; margin-top: 4px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 6px; }
+        .field textarea,
+        .field input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; font-family: monospace; background: #f8fafc; min-height: 42px; resize: vertical; outline: none; color: #1a2b3c; }
+        .field textarea:focus,
+        .field input:focus { border-color: #3b82f6; background: #fff; }
+        .field .hint { font-size: 11px; color: #8a99aa; margin-top: 5px; }
+
         .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-        .actions button { padding: 10px 16px; border-radius: 10px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; flex: 1; min-width: 70px; min-height: 44px; }
+        .actions button { padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; flex: 1; min-width: 80px; min-height: 44px; }
         .actions .btn-save { background: #3b82f6; color: #fff; }
         .actions .btn-test { background: #22c55e; color: #fff; }
+        .actions button:active { opacity: 0.85; }
+
         .status-msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
         .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
         .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
-        .pool-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 6px; padding: 12px 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e8edf4; align-items: center; }
-        .pool-actions .btn-refresh-pool { background: #f59e0b; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
-        .pool-actions .btn-refresh-pool:disabled { opacity: 0.5; cursor: not-allowed; }
-        .pool-actions .btn-auto-venues { background: #8b5cf6; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
-        .pool-actions .btn-auto-venues:disabled { opacity: 0.5; cursor: not-allowed; }
-        .pool-actions .pool-hint { color: #8899aa; font-size: 11px; flex: 1; min-width: 120px; }
-        .pool-status { margin-top: 8px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
-        .pool-status.success { display: block; background: #e6f7ed; color: #1a7a44; }
-        .pool-status.error { display: block; background: #fde8e8; color: #b33a3a; }
-        .pool-status.info { display: block; background: #e3edf7; color: #1a5f7a; }
+        /* 操作区块 */
+        .section-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid #eef2f6; }
+        .section-block .section-label { font-size: 14px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; }
 
-        .backup-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 6px; padding: 12px 14px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; align-items: center; }
-        .backup-actions .btn-export { background: #0ea5e9; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
-        .backup-actions .btn-import { background: #14b8a6; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; flex: 1; }
-        .backup-actions .btn-export:disabled,
-        .backup-actions .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
-        .backup-actions .backup-hint { color: #64748b; font-size: 11px; flex: 1; min-width: 120px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-row button { flex: 1; min-width: 120px; padding: 11px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; color: #fff; }
+        .btn-row .btn-auto-venues { background: #8b5cf6; }
+        .btn-row .btn-refresh-pool { background: #f59e0b; }
+        .btn-row .btn-export { background: #0ea5e9; }
+        .btn-row .btn-import { background: #14b8a6; }
+        .btn-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-row button:active:not(:disabled) { opacity: 0.85; }
 
-        .venue-mgr-section { margin-top: 18px; border-top: 1px solid #e8edf4; padding-top: 16px; }
-        .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #0a2f44; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .venue-mgr-section .section-title .count-badge { background: #e8edf4; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
-        .venue-dropdown-wrapper { margin-top: 12px; border: 1px solid #e8edf4; border-radius: 10px; overflow: hidden; background: #f8fafc; }
-        .venue-dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; background: #ffffff; }
-        .venue-dropdown-header .title { font-weight: 600; color: #0a2f44; font-size: 14px; }
-        .venue-dropdown-header .arrow { color: #94a3b8; font-size: 14px; }
+        .block-hint { font-size: 11px; color: #8a99aa; margin-top: 8px; line-height: 1.5; }
+
+        /* 钓场管理 */
+        .venue-mgr-section { margin-top: 22px; border-top: 1px solid #eef2f6; padding-top: 18px; }
+        .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .venue-mgr-section .count-badge { background: #eef2f6; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
+        .venue-dropdown-wrapper { border: 1px solid #eef2f6; border-radius: 10px; overflow: hidden; background: #f8fafc; }
+        .venue-dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; cursor: pointer; background: #fff; }
+        .venue-dropdown-header .title { font-weight: 600; color: #1a2b3c; font-size: 14px; }
+        .venue-dropdown-header .arrow { color: #94a3b8; font-size: 12px; transition: transform .2s; }
         .venue-dropdown-header .arrow.open { transform: rotate(180deg); }
-        .venue-dropdown-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; padding: 0 16px; background: #ffffff; }
-        .venue-dropdown-body.open { padding: 12px 16px 16px 16px; }
-        .venue-mgr-add { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-        .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 10px; font-size: 13px; background: #f8fafc; min-height: 44px; }
-        .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 10px; padding: 8px 20px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; }
+        .venue-dropdown-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; padding: 0 16px; background: #fff; }
+        .venue-dropdown-body.open { padding: 12px 16px 16px; }
+        .venue-mgr-add { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; background: #f8fafc; min-height: 44px; }
+        .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; }
         .venue-mgr-list { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
-        .venue-mgr-item { background: #f8fafc; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+        .venue-mgr-item { background: #f8fafc; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-        .venue-mgr-item .info .name { font-weight: 600; color: #0a2f44; font-size: 14px; }
-        .venue-mgr-item .info .order-id { color: #8899aa; font-size: 11px; font-family: monospace; }
-        .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
-        .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8899aa; font-size: 13px; }
+        .venue-mgr-item .info .name { font-weight: 600; color: #1a2b3c; font-size: 14px; }
+        .venue-mgr-item .info .order-id { color: #8a99aa; font-size: 11px; font-family: monospace; }
+        .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
+        .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8a99aa; font-size: 13px; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e8edf4; display: flex; justify-content: space-around; align-items: center; height: 64px; z-index: 999; }
+        /* 底部导航 */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eef2f6; display: flex; justify-content: space-around; align-items: center; height: 62px; z-index: 999; }
         .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 500; text-decoration: none; position: relative; }
-        .bottom-nav .tab .tab-icon { font-size: 20px; line-height: 1.2; }
-        .bottom-nav .tab.active .tab-icon, .bottom-nav .tab.active .tab-label { color: #0a2f44; }
+        .bottom-nav .tab .tab-icon { font-size: 19px; line-height: 1.2; }
+        .bottom-nav .tab.active .tab-icon, .bottom-nav .tab.active .tab-label { color: #1a2b3c; }
         .bottom-nav .tab.active .tab-label { font-weight: 600; }
-        .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #0a2f44; border-radius: 0 0 3px 3px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
-        button { outline: none !important; border: none !important; }
+        .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #1a2b3c; border-radius: 0 0 3px 3px; }
 
-        /* ===== 原生 App 风格弹窗 ===== */
-        .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
+        /* 原生风格弹窗 */
+        .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
         .app-dialog-mask.show { opacity: 1; }
-        .app-dialog-card { background: #fff; border-radius: 26px; width: 100%; max-width: 340px; padding: 30px 24px 20px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.35); transform: translateY(24px) scale(.92); opacity: 0; transition: transform .32s cubic-bezier(.34,1.56,.64,1), opacity .25s ease; }
+        .app-dialog-card { background: #fff; border-radius: 18px; width: 100%; max-width: 320px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px) scale(.94); opacity: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; }
         .app-dialog-mask.show .app-dialog-card { transform: translateY(0) scale(1); opacity: 1; }
-        .app-dialog-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; }
-        .app-dialog-title { font-size: 17px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
-        .app-dialog-msg { font-size: 13.5px; color: #67798c; line-height: 1.65; margin-bottom: 22px; white-space: pre-line; word-break: break-word; }
+        .app-dialog-title { font-size: 16px; font-weight: 700; color: #1a2b3c; margin-bottom: 8px; }
+        .app-dialog-msg { font-size: 13.5px; color: #67798c; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; word-break: break-word; }
         .app-dialog-btns { display: flex; gap: 10px; }
-        .app-dialog-btn { flex: 1; border: none; border-radius: 14px; padding: 13px 10px; font-size: 14.5px; font-weight: 700; cursor: pointer; min-height: 46px; transition: transform .12s; }
-        .app-dialog-btn:active { transform: scale(.94); }
+        .app-dialog-btn { flex: 1; border: none; border-radius: 10px; padding: 12px 10px; font-size: 14.5px; font-weight: 600; cursor: pointer; min-height: 46px; transition: transform .12s; }
+        .app-dialog-btn:active { transform: scale(.95); }
         .app-dialog-btn.primary { background: #3b82f6; color: #fff; }
         .app-dialog-btn.danger { background: #ef4444; color: #fff; }
         .app-dialog-btn.secondary { background: #eef2f6; color: #334455; }
@@ -94,47 +95,49 @@
 <div class="app-container">
     <div class="page active" id="pageConfig">
         <div class="config-container">
-            <div class="page-title">⚙️ 代理配置</div>
+            <div class="page-title">代理配置</div>
             <div class="page-subtitle">配置 Token 和 UUID（已加密存储）</div>
 
             <div class="field">
                 <label>Token</label>
-                <div class="input-row">
-                    <textarea id="tokenInput" placeholder="Bearer ..."></textarea>
-                </div>
+                <textarea id="tokenInput" placeholder="Bearer ..."></textarea>
                 <div class="hint">复制 Authorization 头的完整值</div>
             </div>
 
             <div class="field">
                 <label>UUID</label>
-                <div class="input-row">
-                    <input id="uuidInput" placeholder="1776084841949" />
-                </div>
+                <input id="uuidInput" placeholder="1776084841949" />
                 <div class="hint">复制 uuid 头的值</div>
             </div>
 
             <div class="actions">
-                <button class="btn-save" onclick="saveConfig()">💾 保存配置</button>
-                <button class="btn-test" onclick="testConfig()">🔍 测试</button>
+                <button class="btn-save" onclick="saveConfig()">保存配置</button>
+                <button class="btn-test" onclick="testConfig()">测试连接</button>
             </div>
-
             <div id="configStatus" class="status-msg"></div>
 
-            <div class="pool-actions">
-                <button class="btn-auto-venues" id="btnAutoVenues" onclick="autoGenerateVenues()">自动生成钓场库</button>
-                <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">刷新号码池</button>
+            <!-- 号码池操作 -->
+            <div class="section-block">
+                <div class="section-label">号码池</div>
+                <div class="btn-row">
+                    <button class="btn-auto-venues" id="btnAutoVenues" onclick="autoGenerateVenues()">自动生成钓场库</button>
+                    <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">刷新号码池</button>
+                </div>
+                <div id="poolStatus" class="status-msg"></div>
             </div>
-            
-            <div id="poolStatus" class="pool-status"></div>
 
-            <!-- ✅ 新增：导入导出 -->
-            <div class="backup-actions">
-                <button class="btn-export" id="btnExport" onclick="exportConfig()">📤 导出配置</button>
-                <button class="btn-import" id="btnImport" onclick="importConfig()">📥 导入配置</button>
-                <span class="backup-hint">导出后文件保存在「下载」目录</span>
+            <!-- 配置备份 -->
+            <div class="section-block">
+                <div class="section-label">配置备份</div>
+                <div class="btn-row">
+                    <button class="btn-export" id="btnExport" onclick="exportConfig()">导出配置</button>
+                    <button class="btn-import" id="btnImport" onclick="importConfig()">导入配置</button>
+                </div>
+                <div class="block-hint">导出后文件保存在手机「下载」目录；导入时从系统文件选择器选择 JSON 文件。</div>
+                <div id="backupStatus" class="status-msg"></div>
             </div>
-            <div id="backupStatus" class="pool-status"></div>
 
+            <!-- 钓场管理 -->
             <div class="venue-mgr-section">
                 <div class="section-title">
                     <span>钓场管理</span>
@@ -142,14 +145,14 @@
                 </div>
                 <div class="venue-dropdown-wrapper">
                     <div class="venue-dropdown-header" id="venueDropdownToggle">
-                        <span class="title">📋 管理钓场</span>
+                        <span class="title">管理钓场列表</span>
                         <span class="arrow" id="dropdownArrow">▼</span>
                     </div>
                     <div class="venue-dropdown-body" id="venueDropdownBody">
                         <div class="venue-mgr-add">
                             <input id="venueNameInput" placeholder="钓场名称" />
                             <input id="venueOrderIdInput" placeholder="订单 ID" />
-                            <button class="btn-add" onclick="addVenue()">➕ 添加</button>
+                            <button class="btn-add" onclick="addVenue()">添加</button>
                         </div>
                         <div class="venue-mgr-list" id="venueMgrList">
                             <div class="venue-mgr-loading">加载中...</div>
@@ -163,14 +166,14 @@
 
 <div class="bottom-nav">
     <a class="tab" href="lucky.html"><span class="tab-icon">🎯</span><span class="tab-label">幸运号码</span></a>
-    <a class="tab" href="detective.html"><span class="tab-icon">🕵🏻</span><span class="tab-label">钓场侦探</span></a>
+    <a class="tab" href="detective.html"><span class="tab-icon">🕵️</span><span class="tab-label">钓场侦探</span></a>
     <a class="tab active" href="config.html"><span class="tab-icon">⚙️</span><span class="tab-label">配置</span></a>
 </div>
 
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 📱 原生 App 风格弹窗
+// 原生风格弹窗
 // ============================================================
 function appDialog(opts) {
     return new Promise(function(resolve) {
@@ -182,7 +185,6 @@ function appDialog(opts) {
         });
         mask.innerHTML =
             '<div class="app-dialog-card">' +
-                '<div class="app-dialog-icon" style="background:' + (opts.iconBg || '#e3edf7') + '">' + (opts.icon || '💬') + '</div>' +
                 '<div class="app-dialog-title">' + opts.title + '</div>' +
                 '<div class="app-dialog-msg">' + opts.message + '</div>' +
                 '<div class="app-dialog-btns">' + btnsHtml + '</div>' +
@@ -207,8 +209,6 @@ function appDialog(opts) {
 function appAlert(message, opts) {
     opts = opts || {};
     return appDialog({
-        icon: opts.icon || '💡',
-        iconBg: opts.iconBg || '#e3edf7',
         title: opts.title || '提示',
         message: message,
         buttons: [{ text: opts.okText || '知道了', type: 'primary', value: true }]
@@ -218,8 +218,6 @@ function appAlert(message, opts) {
 function appConfirm(message, opts) {
     opts = opts || {};
     return appDialog({
-        icon: opts.icon || '❓',
-        iconBg: opts.iconBg || '#f3e8ff',
         title: opts.title || '请确认',
         message: message,
         buttons: [
@@ -229,6 +227,9 @@ function appConfirm(message, opts) {
     });
 }
 
+// ============================================================
+// 下拉展开
+// ============================================================
 var dropdownToggle = document.getElementById('venueDropdownToggle');
 var dropdownBody = document.getElementById('venueDropdownBody');
 var dropdownArrow = document.getElementById('dropdownArrow');
@@ -254,20 +255,29 @@ dropdownBody.addEventListener('transitionend', function(e) {
     }
 });
 
+// ============================================================
+// 配置保存与测试
+// ============================================================
+function setStatusMsg(msg, type) {
+    var el = document.getElementById('configStatus');
+    el.className = 'status-msg ' + type;
+    el.textContent = msg;
+}
+
 function saveConfig() {
     var token = document.getElementById('tokenInput').value.trim();
     var uuid = document.getElementById('uuidInput').value.trim();
     if (!token || !uuid) {
-        setStatusMsg('⚠️ Token 和 UUID 不能为空', 'error');
+        setStatusMsg('Token 和 UUID 不能为空', 'error');
         return;
     }
     saveData('token', token);
     saveData('uuid', uuid);
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
-        setStatusMsg('✅ 配置已保存，请点击测试！', 'success');
+        setStatusMsg('配置已保存，请点击测试连接', 'success');
     } else {
-        setStatusMsg('⚠️ 已保存到本地，但 AndroidBridge 不可用', 'info');
+        setStatusMsg('已保存到本地，但 AndroidBridge 不可用', 'info');
     }
 }
 
@@ -275,14 +285,14 @@ async function testConfig() {
     var token = document.getElementById('tokenInput').value.trim();
     var uuid = document.getElementById('uuidInput').value.trim();
     if (!token || !uuid) {
-        setStatusMsg('⚠️ 请先填写 Token 和 UUID', 'error');
+        setStatusMsg('请先填写 Token 和 UUID', 'error');
         return;
     }
     if (!window.AndroidBridge) {
-        setStatusMsg('❌ AndroidBridge 未注入！', 'error');
+        setStatusMsg('AndroidBridge 未注入', 'error');
         return;
     }
-    setStatusMsg('⏳ 测试中...', 'info');
+    setStatusMsg('测试中...', 'info');
     saveData('token', token);
     saveData('uuid', uuid);
     if (window.AndroidBridge.setAuth) {
@@ -291,15 +301,18 @@ async function testConfig() {
     try {
         var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=20', 'GET');
         if (result.code === '000') {
-            setStatusMsg('✅ 测试成功！Token 和 UUID 有效', 'success');
+            setStatusMsg('测试成功，Token 和 UUID 有效', 'success');
         } else {
-            setStatusMsg('❌ 测试失败: ' + (result.msg || 'Token 无效'), 'error');
+            setStatusMsg('测试失败: ' + (result.msg || 'Token 无效'), 'error');
         }
     } catch(e) {
-        setStatusMsg('❌ 测试异常: ' + e.message, 'error');
+        setStatusMsg('测试异常: ' + e.message, 'error');
     }
 }
 
+// ============================================================
+// 钓场管理
+// ============================================================
 function loadVenuesFromLocal() {
     try {
         if (window.AndroidBridge && window.AndroidBridge.loadVenues) {
@@ -363,12 +376,12 @@ async function addVenue() {
     var name = nameInput.value.trim();
     var order_id = orderIdInput.value.trim();
     if (!name || !order_id) {
-        await appAlert('请填写完整的钓场名称和订单 ID', { icon: '✏️', iconBg: '#fef3c7' });
+        await appAlert('请填写完整的钓场名称和订单 ID');
         return;
     }
     var venues = loadVenuesFromLocal() || [];
     if (venues.some(function(v) { return v.order_id === order_id; })) {
-        await appAlert('该订单 ID 已存在，请勿重复添加', { icon: '⚠️', iconBg: '#fef3c7' });
+        await appAlert('该订单 ID 已存在，请勿重复添加');
         return;
     }
     var maxId = venues.reduce(function(max, v) { return Math.max(max, v.id || 0); }, 0);
@@ -380,7 +393,7 @@ async function addVenue() {
 }
 
 async function deleteVenue(id) {
-    var ok = await appConfirm('确定要删除该钓场吗？此操作不可撤销', { icon: '🗑️', iconBg: '#fde8e8', danger: true, okText: '删除' });
+    var ok = await appConfirm('确定要删除该钓场吗？此操作不可撤销', { danger: true, okText: '删除' });
     if (!ok) return;
     var venues = loadVenuesFromLocal() || [];
     venues = venues.filter(function(v) { return v.id !== id; });
@@ -389,28 +402,27 @@ async function deleteVenue(id) {
 }
 
 // ============================================================
-// 📤 导出配置（venues.json + seat_map.json）
+// 导出配置
 // ============================================================
 async function exportConfig() {
     var btn = document.getElementById('btnExport');
     var statusEl = document.getElementById('backupStatus');
 
     if (!window.AndroidBridge || !window.AndroidBridge.exportConfig) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ AndroidBridge.exportConfig 未注入！';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = 'AndroidBridge.exportConfig 未注入';
         return;
     }
 
     btn.disabled = true;
-    btn.textContent = '⏳ 导出中...';
-    statusEl.className = 'pool-status info';
-    statusEl.textContent = '⏳ 正在打包配置...';
+    btn.textContent = '导出中...';
+    statusEl.className = 'status-msg info';
+    statusEl.textContent = '正在打包配置...';
 
     try {
         var venuesJson = window.AndroidBridge.loadVenues();
         var seatMapJson = window.AndroidBridge.loadSeatMap();
 
-        // 打包成一个对象
         var config = {
             _meta: {
                 exportTime: new Date().toISOString(),
@@ -426,62 +438,66 @@ async function exportConfig() {
         var result = window.AndroidBridge.exportConfig(content, filename);
 
         if (result && result.indexOf('ERROR') === 0) {
-            statusEl.className = 'pool-status error';
-            statusEl.textContent = '❌ 导出失败: ' + result;
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '导出失败: ' + result;
         } else {
-            statusEl.className = 'pool-status success';
-            statusEl.textContent = '✅ 导出成功！文件已保存到手机「下载」目录: ' + filename;
+            statusEl.className = 'status-msg success';
+            statusEl.textContent = '导出成功，文件已保存到: ' + result;
         }
     } catch(e) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ 导出异常: ' + e.message;
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '导出异常: ' + e.message;
     } finally {
         btn.disabled = false;
-        btn.textContent = '📤 导出配置';
+        btn.textContent = '导出配置';
     }
 }
 
 // ============================================================
-// 📥 导入配置（从文件名读取）
+// 导入配置（通过系统文件选择器）
 // ============================================================
-async function importConfig() {
-    var btn = document.getElementById('btnImport');
-    var statusEl = document.getElementById('backupStatus');
+var importPending = false;
 
-    if (!window.AndroidBridge || !window.AndroidBridge.importConfig) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ AndroidBridge.importConfig 未注入！';
+function importConfig() {
+    var statusEl = document.getElementById('backupStatus');
+    if (!window.AndroidBridge || !window.AndroidBridge.pickFileForImport) {
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = 'AndroidBridge.pickFileForImport 未注入';
+        return;
+    }
+    importPending = true;
+    statusEl.className = 'status-msg info';
+    statusEl.textContent = '请选择要导入的配置文件...';
+    window.AndroidBridge.pickFileForImport();
+}
+
+// 由原生回调
+window._onImportFileSelected = async function(content) {
+    var statusEl = document.getElementById('backupStatus');
+    if (!importPending) return;
+    importPending = false;
+
+    if (!content || content === '') {
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '未选择文件或文件内容为空';
         return;
     }
 
-    // 用弹窗让用户输入文件名（默认提示格式）
-    var filename = prompt('请输入要导入的文件名（在手机「下载」目录下）', 'fishing-config-');
-    if (!filename) return;
-
-    var ok = await appConfirm('将覆盖当前的钓场列表和号码池，确定导入？', { icon: '📥', iconBg: '#cffafe', danger: true, okText: '覆盖导入' });
-    if (!ok) return;
-
-    btn.disabled = true;
-    btn.textContent = '⏳ 导入中...';
-    statusEl.className = 'pool-status info';
-    statusEl.textContent = '⏳ 正在读取文件...';
-
     try {
-        var content = window.AndroidBridge.importConfig(filename);
-        if (!content || content === '') {
-            statusEl.className = 'pool-status error';
-            statusEl.textContent = '❌ 文件不存在或内容为空: ' + filename;
-            return;
-        }
-
         var config = JSON.parse(content);
         if (!config.venues && !config.seatMap) {
-            statusEl.className = 'pool-status error';
-            statusEl.textContent = '❌ 文件格式不正确（缺少 venues 或 seatMap）';
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '文件格式不正确（缺少 venues 或 seatMap）';
             return;
         }
 
-        // 覆盖本地数据
+        var ok = await appConfirm('将覆盖当前的钓场列表和号码池，确定导入？', { danger: true, okText: '覆盖导入' });
+        if (!ok) {
+            statusEl.className = 'status-msg info';
+            statusEl.textContent = '已取消导入';
+            return;
+        }
+
         if (config.venues) {
             var venuesJson = JSON.stringify(config.venues);
             window.AndroidBridge.saveVenues(venuesJson);
@@ -492,22 +508,18 @@ async function importConfig() {
             window.AndroidBridge.saveSeatMap(seatMapJson);
         }
 
-        // 刷新页面显示
         loadVenueList();
 
-        statusEl.className = 'pool-status success';
-        statusEl.textContent = '✅ 导入成功！钓场: ' + (config.venues ? config.venues.length : 0) + ' 个，号码池已覆盖';
+        statusEl.className = 'status-msg success';
+        statusEl.textContent = '导入成功！钓场: ' + (config.venues ? config.venues.length : 0) + ' 个，号码池已覆盖';
     } catch(e) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ 导入失败: ' + e.message;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '📥 导入配置';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '导入失败: ' + e.message;
     }
-}
+};
 
 // ============================================================
-// 🎣 自动生成钓场库（从历史订单提取）
+// 自动生成钓场库
 // ============================================================
 async function autoGenerateVenues() {
     var btn = document.getElementById('btnAutoVenues');
@@ -516,25 +528,23 @@ async function autoGenerateVenues() {
     var uuid = loadData('uuid', '');
 
     if (!token || !uuid) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '⚠️ 请先配置 Token 和 UUID';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '请先配置 Token 和 UUID';
         return;
     }
     if (!window.AndroidBridge) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ AndroidBridge 未注入！';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = 'AndroidBridge 未注入';
         return;
     }
-    var confirmed = await appConfirm('将根据历史订单重新生成钓场库，覆盖现有钓场列表，确定继续？', { icon: '🎣', iconBg: '#ede9fe', okText: '继续' });
-    if (!confirmed) {
-        return;
-    }
+    var confirmed = await appConfirm('将根据历史订单重新生成钓场库，覆盖现有钓场列表，确定继续？', { okText: '继续' });
+    if (!confirmed) return;
 
     if (window.AndroidBridge.setAuth) window.AndroidBridge.setAuth(token, uuid);
     btn.disabled = true;
-    btn.textContent = '⏳ 分析中...';
-    statusEl.className = 'pool-status info';
-    statusEl.textContent = '⏳ 正在获取历史订单...';
+    btn.textContent = '分析中...';
+    statusEl.className = 'status-msg info';
+    statusEl.textContent = '正在获取历史订单...';
 
     try {
         var firstPage = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=10', 'GET');
@@ -546,7 +556,7 @@ async function autoGenerateVenues() {
         var totalPages = Math.ceil(totalCount / 10);
         if (totalPages === 0) totalPages = 1;
 
-        statusEl.textContent = '⏳ 共 ' + totalCount + ' 个订单，正在分析...';
+        statusEl.textContent = '共 ' + totalCount + ' 个订单，正在分析...';
 
         var venueMap = {};
 
@@ -582,7 +592,7 @@ async function autoGenerateVenues() {
                 }
             }
 
-            statusEl.textContent = '⏳ 分析中... ' + page + '/' + totalPages;
+            statusEl.textContent = '分析中... ' + page + '/' + totalPages;
             await new Promise(function(r) { setTimeout(r, 200); });
         }
 
@@ -600,30 +610,30 @@ async function autoGenerateVenues() {
         }
 
         if (venues.length === 0) {
-            statusEl.className = 'pool-status error';
-            statusEl.textContent = '❌ 没有找到任何钓场信息';
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '没有找到任何钓场信息';
             return;
         }
 
         saveVenuesToLocal(venues);
-        statusEl.className = 'pool-status success';
-        statusEl.textContent = '✅ 已生成 ' + venues.length + ' 个钓场，正在刷新号码池...';
+        statusEl.className = 'status-msg success';
+        statusEl.textContent = '已生成 ' + venues.length + ' 个钓场，正在刷新号码池...';
 
         renderVenueList(venues);
 
         await refreshSeatMap();
 
     } catch(e) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ 生成失败: ' + e.message;
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '生成失败: ' + e.message;
     } finally {
         btn.disabled = false;
-        btn.textContent = '🎣 自动生成钓场库';
+        btn.textContent = '自动生成钓场库';
     }
 }
 
 // ============================================================
-// 🔄 刷新号码池
+// 刷新号码池
 // ============================================================
 async function refreshSeatMap() {
     var btn = document.getElementById('btnRefreshPool');
@@ -631,27 +641,27 @@ async function refreshSeatMap() {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
     if (!token || !uuid) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '⚠️ 请先配置 Token 和 UUID';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '请先配置 Token 和 UUID';
         return;
     }
     if (!window.AndroidBridge) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ AndroidBridge 未注入！';
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = 'AndroidBridge 未注入';
         return;
     }
     if (window.AndroidBridge.setAuth) window.AndroidBridge.setAuth(token, uuid);
     btn.disabled = true;
-    btn.textContent = '⏳ 刷新中...';
-    statusEl.className = 'pool-status info';
-    statusEl.textContent = '⏳ 正在刷新号码池...';
+    btn.textContent = '刷新中...';
+    statusEl.className = 'status-msg info';
+    statusEl.textContent = '正在刷新号码池...';
     try {
         var venues = loadVenuesFromLocal() || [];
         if (venues.length === 0) {
-            statusEl.className = 'pool-status error';
-            statusEl.textContent = '❌ 钓场列表为空';
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '钓场列表为空';
             btn.disabled = false;
-            btn.textContent = '🔄 刷新号码池';
+            btn.textContent = '刷新号码池';
             return;
         }
         var seatMap = {};
@@ -678,30 +688,37 @@ async function refreshSeatMap() {
             }
             await new Promise(function(r) { setTimeout(r, 500); });
         }
-        saveSeatMapToLocal(seatMap);
-        statusEl.className = 'pool-status success';
-        statusEl.textContent = '✅ 号码池已刷新: ' + totalSeats + ' 个座位, ' + totalVenues + ' 个钓场' + (failedVenues.length > 0 ? ', 跳过: ' + failedVenues.join('、') : '');
+        var seatMapJson = JSON.stringify(seatMap);
+        if (window.AndroidBridge && window.AndroidBridge.saveSeatMap) {
+            window.AndroidBridge.saveSeatMap(seatMapJson);
+        }
+        saveData('seat_map_data', seatMapJson);
+        statusEl.className = 'status-msg success';
+        statusEl.textContent = '号码池已刷新: ' + totalSeats + ' 个座位, ' + totalVenues + ' 个钓场' + (failedVenues.length > 0 ? ', 跳过: ' + failedVenues.join('、') : '');
     } catch(e) {
-        statusEl.className = 'pool-status error';
-        statusEl.textContent = '❌ 刷新失败: ' + e.message;
+        statusEl.className = 'status-msg error';
+        statusEl.textContent = '刷新失败: ' + e.message;
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔄 刷新号码池';
+        btn.textContent = '刷新号码池';
     }
 }
 
+// ============================================================
+// 初始化
+// ============================================================
 (function initConfigPage() {
     var savedToken = loadData('token', '');
     var savedUuid = loadData('uuid', '');
     document.getElementById('tokenInput').value = savedToken;
     document.getElementById('uuidInput').value = savedUuid;
     if (savedToken && savedUuid) {
-        setStatusMsg('✅ 已加载本机保存的 Token / UUID', 'success');
+        setStatusMsg('已加载本机保存的 Token / UUID', 'success');
         if (window.AndroidBridge && window.AndroidBridge.setAuth) {
             window.AndroidBridge.setAuth(savedToken, savedUuid);
         }
     } else {
-        setStatusMsg('📌 请填写 Token 和 UUID，然后保存配置', 'info');
+        setStatusMsg('请填写 Token 和 UUID，然后保存配置', 'info');
     }
     loadVenueList();
 })();
