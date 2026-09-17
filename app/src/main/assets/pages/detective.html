@@ -13,7 +13,7 @@
         .btn-refresh{background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:16px;cursor:pointer;min-height:42px;display:flex;align-items:center;justify-content:center;outline:none!important}
         .btn-refresh:active{background:rgba(255,255,255,0.25)}
         .btn-refresh:disabled{opacity:0.4;cursor:not-allowed}
-        .venue-selector-trigger{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.05);cursor:pointer;touch-action:manipulation;min-height:52px}
+        .venue-selector-trigger{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.05);cursor:pointer;touch-action:manipulation;min-height:48px}
         .venue-selector-trigger .selected-placeholder{color:#0a2f44;font-weight:600;font-size:15px}
         .venue-selector-trigger .arrow{color:#94a3b8;font-size:14px}
         .venue-selector-trigger:active{background:#f1f5f9}
@@ -24,7 +24,7 @@
         .venue-selector-modal .sheet-handle{width:38px;height:5px;border-radius:3px;background:#e2e8f0;margin:6px auto 14px;flex-shrink:0}
         .venue-selector-modal .modal-title{font-size:16px;font-weight:700;color:#0a2f44;padding-bottom:14px;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
         .venue-selector-modal .modal-title .close-btn{cursor:pointer;font-size:18px;color:#94a3b8;background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;outline:none!important}
-        .venue-selector-modal .venue-list{overflow-y:auto;flex:1;padding-top:10px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+        .venue-selector-modal .venue-list{overflow-y:auto;flex:1;padding-top:10px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
         .venue-selector-modal .venue-item{padding:14px 16px;border-radius:14px;cursor:pointer;transition:background .15s,transform .1s;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;outline:none!important}
         .venue-selector-modal .venue-item:active{background:#eef2f6;transform:scale(.98)}
         .venue-selector-modal .venue-item .name{font-weight:500;color:#0a2f44;font-size:14.5px}
@@ -48,19 +48,51 @@
         .app-dialog-btn.danger{background:#ef4444;color:#fff}
         .app-dialog-btn.secondary{background:#eef2f6;color:#334455}
 
-        .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
-        .stat-card{background:#fff;border-radius:14px;padding:14px 12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-        .stat-card .number{font-size:26px;font-weight:700;line-height:1.2}
-        .stat-card .label{font-size:12px;color:#6b8ba0;margin-top:2px}
-        .stat-card.total .number{color:#0a2f44}
-        .stat-card.green .number{color:#2b9c5c}
-        .stat-card.orange .number{color:#e68a2e}
-        .stat-card.blue .number{color:#2a7de1}
-        .stat-card.red .number{color:#d14545}
-        .venue-banner{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-        .venue-banner .info{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+        /* ===== 紧凑统计条（替代原来的大卡片） ===== */
+        .stats-bar{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:#fff;
+            border-radius:12px;
+            padding:10px 8px;
+            margin-bottom:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+            gap:4px;
+        }
+        .stats-bar .stat-item{
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            min-width:0;
+            padding:0 2px;
+            border-right:1px solid #eef2f6;
+        }
+        .stats-bar .stat-item:last-child{ border-right:none; }
+        .stats-bar .stat-item .num{
+            font-size:17px;
+            font-weight:800;
+            line-height:1.1;
+            letter-spacing:-0.3px;
+        }
+        .stats-bar .stat-item .lbl{
+            font-size:10px;
+            color:#6b8ba0;
+            margin-top:3px;
+            white-space:nowrap;
+        }
+        .stats-bar .stat-item.total .num{ color:#0a2f44; }
+        .stats-bar .stat-item.green .num{ color:#2b9c5c; }
+        .stats-bar .stat-item.orange .num{ color:#e68a2e; }
+        .stats-bar .stat-item.blue .num{ color:#2a7de1; }
+        .stats-bar .stat-item.red .num{ color:#d14545; }
+
+        .venue-banner{background:#fff;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .venue-banner .info{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
         .venue-banner .info .label{color:#6b8ba0;font-size:11px}
-        .venue-banner .info .value{font-weight:600;color:#0a2f44;font-size:14px}
+        .venue-banner .info .value{font-weight:600;color:#0a2f44;font-size:13px}
         .venue-banner .update-time{color:#6b8ba0;font-size:11px;white-space:nowrap}
 
         /* ===== 钓位网格 ===== */
@@ -93,7 +125,6 @@
         }
         .seat-card:active{ transform: scale(0.94); }
 
-        /* 图标：用 SVG 文件引用 */
         .seat-card .seat-icon{
             width: 34px;
             height: 34px;
@@ -102,7 +133,6 @@
             object-fit: contain;
         }
 
-        /* 座位号 */
         .seat-card .number{
             font-weight: 800;
             font-size: 12px;
@@ -195,6 +225,13 @@
             transform: rotate(180deg);
         }
 
+        /* ===== 弹层打开时锁定 body 滚动 ===== */
+        body.no-scroll {
+            position: fixed;
+            width: 100%;
+            overflow: hidden;
+        }
+
         @media(max-width:400px){
             .header{padding:12px 14px}
             .header h1{font-size:15px}
@@ -202,18 +239,17 @@
             .seat-card{min-height:66px;padding:5px 2px 4px;border-radius:10px}
             .seat-card .seat-icon{width:30px;height:30px}
             .seat-card .number{font-size:11px}
-            .stats{gap:6px}
-            .stat-card{padding:10px 8px}
-            .stat-card .number{font-size:22px}
+            .stats-bar .stat-item .num{font-size:15px}
+            .stats-bar .stat-item .lbl{font-size:9px}
         }
 
         @media(min-width:600px){
-            .stats{grid-template-columns:repeat(4,1fr);gap:14px}
-            .stat-card .number{font-size:30px}
             .seat-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:12px;padding:20px 16px}
             .seat-card{min-height:86px;padding:8px 4px 6px}
             .seat-card .seat-icon{width:40px;height:40px}
             .seat-card .number{font-size:14px}
+            .stats-bar .stat-item .num{font-size:20px}
+            .stats-bar .stat-item .lbl{font-size:11px}
         }
     </style>
 </head>
@@ -252,12 +288,28 @@
                 </div>
             </div>
 
-            <div class="stats">
-                <div class="stat-card total"><div class="number" id="totalSeats">-</div><div class="label">总钓位</div></div>
-                <div class="stat-card green"><div class="number" id="freeCount">-</div><div class="label">🟢 空闲</div></div>
-                <div class="stat-card orange"><div class="number" id="preparingCount">-</div><div class="label">🟠 准备中</div></div>
-                <div class="stat-card blue"><div class="number" id="usedCount">-</div><div class="label">🔵 垂钓中</div></div>
-                <div class="stat-card red" style="grid-column: span 2;"><div class="number" id="lockedCount">-</div><div class="label">🔴 锁号</div></div>
+            <!-- ✅ 紧凑统计条 -->
+            <div class="stats-bar">
+                <div class="stat-item total">
+                    <div class="num" id="totalSeats">-</div>
+                    <div class="lbl">总钓位</div>
+                </div>
+                <div class="stat-item green">
+                    <div class="num" id="freeCount">-</div>
+                    <div class="lbl">空闲</div>
+                </div>
+                <div class="stat-item orange">
+                    <div class="num" id="preparingCount">-</div>
+                    <div class="lbl">准备中</div>
+                </div>
+                <div class="stat-item blue">
+                    <div class="num" id="usedCount">-</div>
+                    <div class="lbl">垂钓中</div>
+                </div>
+                <div class="stat-item red">
+                    <div class="num" id="lockedCount">-</div>
+                    <div class="lbl">锁号</div>
+                </div>
             </div>
 
             <div class="venue-banner">
@@ -347,12 +399,11 @@ var STATUS_MAP = {
     50: { label: '锁号', css: 'status-50' }
 };
 
-// ✅ 4 个 SVG 图标文件的路径
 var ICON_MAP = {
-    10: 'icons/seat-idle.svg',       // 空闲
-    20: 'icons/seat-preparing.svg',  // 准备中
-    40: 'icons/seat-fishing.svg',    // 垂钓中
-    50: 'icons/seat-locked.svg'      // 锁号
+    10: 'icons/seat-idle.svg',
+    20: 'icons/seat-preparing.svg',
+    40: 'icons/seat-fishing.svg',
+    50: 'icons/seat-locked.svg'
 };
 
 var venueTrigger = document.getElementById('venueTrigger');
@@ -368,6 +419,24 @@ var lockedCount = document.getElementById('lockedCount');
 var venueName = document.getElementById('venueName');
 var venueStatus = document.getElementById('venueStatus');
 var updateTime = document.getElementById('updateTime');
+
+// ============================================================
+// 🔒 弹层打开时锁定 body 滚动
+// ============================================================
+var _bodyScrollLockY = 0;
+
+function lockBodyScroll() {
+    _bodyScrollLockY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    document.body.style.top = '-' + _bodyScrollLockY + 'px';
+    document.body.classList.add('no-scroll');
+}
+
+function unlockBodyScroll() {
+    document.body.classList.remove('no-scroll');
+    document.body.style.top = '';
+    window.scrollTo(0, _bodyScrollLockY);
+    _bodyScrollLockY = 0;
+}
 
 // ============================================================
 // 📋 从本地读取钓场列表
@@ -388,14 +457,15 @@ function loadVenuesFromLocal() {
 
 function openVenueSelector() {
     venueOverlay.classList.add('show');
+    lockBodyScroll();               // ✅ 锁定背景滚动
     renderVenueList2();
 }
 
 function closeVenueSelector() {
     venueOverlay.classList.remove('show');
+    unlockBodyScroll();             // ✅ 恢复背景滚动
 }
 
-// ✅ 用 data-* 属性绑定点击，避免 order_id 里带单引号导致 onclick 字符串断掉
 function renderVenueList2() {
     if (!VENUES || VENUES.length === 0) {
         venueList.innerHTML = '<div class="venue-empty">暂无钓场数据</div>';
@@ -411,7 +481,6 @@ function renderVenueList2() {
         '</div>';
     });
     venueList.innerHTML = html;
-    // 事件委托：统一绑定一次
     venueList.querySelectorAll('.venue-item').forEach(function(el) {
         el.addEventListener('click', function() {
             var oid = el.getAttribute('data-order-id');
@@ -527,7 +596,7 @@ async function loadVenues2() {
 }
 
 // ============================================================
-// 🎣 获取钓位数据（带防抖，避免并发重复请求）
+// 🎣 获取钓位数据（带防抖）
 // ============================================================
 var _fetching = false;
 async function fetchVenueData() {
@@ -610,7 +679,7 @@ async function fetchVenueData() {
 }
 
 // ============================================================
-// 🎨 渲染钓位卡片（使用 SVG 图标文件）
+// 🎨 渲染钓位卡片
 // ============================================================
 function renderSeats2(seatList) {
     if (!Array.isArray(seatList) || seatList.length === 0) {
@@ -695,7 +764,7 @@ function updateVenueInfo2(name, data) {
 
     function onTouchStart(e) {
         if (isRefreshing) return;
-        if (isOverlayOpen()) return;              // ✅ 弹层打开时不响应下拉
+        if (isOverlayOpen()) return;
         if (getScrollTop() > 0) return;
         startY = e.touches[0].clientY;
         isPulling = true;
@@ -703,7 +772,7 @@ function updateVenueInfo2(name, data) {
 
     function onTouchMove(e) {
         if (!isPulling || isRefreshing) return;
-        if (isOverlayOpen()) {                    // ✅ 下拉过程中弹层被打开，立即取消
+        if (isOverlayOpen()) {
             isPulling = false;
             indicator.classList.remove('visible', 'ready');
             indicator.style.transform = '';
