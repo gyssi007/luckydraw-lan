@@ -132,6 +132,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
+    // 安全调用 WebView JS（统一守卫，防止 NPE）
+    // ============================================================
+    private void safeEvaluateJavascript(final String js) {
+        handler.post(() -> {
+            if (webView != null && !isFinishing() && !isDestroyed()) {
+                try {
+                    webView.evaluateJavascript(js, null);
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    // ============================================================
     // JS 接口
     // ============================================================
     public class JSInterface {
@@ -192,13 +205,17 @@ public class MainActivity extends AppCompatActivity {
                     String result = response.body().string();
 
                     final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(result) + ")";
-                    handler.post(() -> webView.evaluateJavascript(js, null));
+                    safeEvaluateJavascript(js);
 
                 } catch (Exception e) {
-                    String errMsg = e.getMessage() == null ? "unknown" : e.getMessage().replace("\"", "'");
-                    final String errorJson = "{\"error\":\"" + errMsg + "\"}";
-                    final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(errorJson) + ")";
-                    handler.post(() -> webView.evaluateJavascript(js, null));
+                    String errMsg = e.getMessage() == null ? "unknown" : e.getMessage();
+                    try {
+                        JSONObject errObj = new JSONObject();
+                        errObj.put("error", errMsg);
+                        final String errorJson = errObj.toString();
+                        final String js = "window._apiCallback(" + callbackId + ", " + JSONObject.quote(errorJson) + ")";
+                        safeEvaluateJavascript(js);
+                    } catch (Exception ignored) {}
                 }
             }).start();
         }
@@ -282,19 +299,24 @@ public class MainActivity extends AppCompatActivity {
                 obj.put("state", stateObj);
                 return obj.toString();
             } catch (Exception e) {
-                return "{\"success\":false,\"error\":\"" + e.getMessage() + "\"}";
+                try {
+                    JSONObject err = new JSONObject();
+                    err.put("success", false);
+                    err.put("error", e.getMessage());
+                    return err.toString();
+                } catch (Exception ignored) {
+                    return "{\"success\":false}";
+                }
             }
         }
 
         /**
          * 导出配置到手机 Download 目录
-         * @return 成功返回文件路径，失败返回以 ERROR: 开头
          */
         @JavascriptInterface
         public String exportConfig(String json, String filename) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    // Android 10+ 使用 MediaStore 写入 Download
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
                     values.put(MediaStore.Downloads.MIME_TYPE, "application/json");
@@ -313,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
                     values.put(MediaStore.Downloads.IS_PENDING, 0);
                     getContentResolver().update(uri, values, null, null);
 
-                    return "Download/" + filename;
+                    return "手机「下载」目录 / " + filename;
                 } else {
                     File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                     if (!downloadsDir.exists()) downloadsDir.mkdirs();
@@ -329,8 +351,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
-         * 弹出系统文件选择器，让用户选择要导入的 json 文件
-         * 选择完成后会通过 window._onImportFileSelected(content) 回调前端
+         * 弹出系统文件选择器
          */
         @JavascriptInterface
         public void pickFileForImport() {
@@ -347,8 +368,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(intent, REQUEST_CODE_PICK_FILE);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    final String js = "window._onImportFileSelected('')";
-                    handler.post(() -> webView.evaluateJavascript(js, null));
+                    safeEvaluateJavascript("window._onImportFileSelected('')");
                 }
             });
         }
@@ -375,19 +395,14 @@ public class MainActivity extends AppCompatActivity {
                         reader.close();
                         is.close();
                         String content = sb.toString();
-
-                        final String js = "window._onImportFileSelected(" + JSONObject.quote(content) + ")";
-                        handler.post(() -> webView.evaluateJavascript(js, null));
-
+                        safeEvaluateJavascript("window._onImportFileSelected(" + JSONObject.quote(content) + ")");
                     } catch (Exception e) {
                         e.printStackTrace();
-                        final String js = "window._onImportFileSelected('')";
-                        handler.post(() -> webView.evaluateJavascript(js, null));
+                        safeEvaluateJavascript("window._onImportFileSelected('')");
                     }
                 }
             } else {
-                final String js = "window._onImportFileSelected('')";
-                handler.post(() -> webView.evaluateJavascript(js, null));
+                safeEvaluateJavascript("window._onImportFileSelected('')");
             }
         }
     }
@@ -434,6 +449,9 @@ public class MainActivity extends AppCompatActivity {
     // 自动刷号轮询
     // ============================================================
     private void startAutoLoopInternal() {
+        if (autoLoopRunnable != null) {
+            handler.removeCallbacks(autoLoopRunnable);
+        }
         autoLoopRunnable = new Runnable() {
             @Override
             public void run() {
@@ -458,14 +476,10 @@ public class MainActivity extends AppCompatActivity {
                             if (hit) {
                                 isHitting = true;
                                 isRunning = false;
-                                handler.post(() -> {
-                                    webView.evaluateJavascript("window._onHit(" + toJsonArray(seats) + ")", null);
-                                });
+                                safeEvaluateJavascript("window._onHit(" + toJsonArray(seats) + ")");
                                 return;
                             }
-                            handler.post(() -> {
-                                webView.evaluateJavascript("window._onProgress(" + finalAttempt + ", " + toJsonArray(seats) + ")", null);
-                            });
+                            safeEvaluateJavascript("window._onProgress(" + finalAttempt + ", " + toJsonArray(seats) + ")");
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -483,6 +497,9 @@ public class MainActivity extends AppCompatActivity {
     // 自动锁定轮询
     // ============================================================
     private void startLockLoopInternal() {
+        if (lockLoopRunnable != null) {
+            handler.removeCallbacks(lockLoopRunnable);
+        }
         lockLoopRunnable = new Runnable() {
             @Override
             public void run() {
@@ -519,10 +536,7 @@ public class MainActivity extends AppCompatActivity {
                                                 if (isLocking) handler.postDelayed(lockLoopRunnable, 1500);
                                                 return;
                                             }
-                                            final String vName = effectiveVenue;
-                                            handler.post(() -> {
-                                                webView.evaluateJavascript("window._onVenueDetected('" + vName.replace("'", "\\'") + "')", null);
-                                            });
+                                            safeEvaluateJavascript("window._onVenueDetected(" + JSONObject.quote(effectiveVenue) + ")");
                                         }
 
                                         String seatMapJson = readLocalJson("seat_map.json", "{}");
@@ -530,10 +544,7 @@ public class MainActivity extends AppCompatActivity {
                                         JSONObject venueData = seatMap.optJSONObject(effectiveVenue);
 
                                         if (venueData == null) {
-                                            final String vName2 = effectiveVenue;
-                                            handler.post(() -> {
-                                                webView.evaluateJavascript("window._onVenueGenerating('" + vName2.replace("'", "\\'") + "')", null);
-                                            });
+                                            safeEvaluateJavascript("window._onVenueGenerating(" + JSONObject.quote(effectiveVenue) + ")");
 
                                             String seatListJson = callQuerySeatList(oid, token, uuid);
                                             JSONObject seatListResult = new JSONObject(seatListJson);
@@ -551,11 +562,10 @@ public class MainActivity extends AppCompatActivity {
                                                         writeLocalJson("seat_map.json", seatMap.toString());
                                                         venueData = newMap;
 
-                                                        final String vName3 = effectiveVenue;
                                                         final int seatCount = seatList.length();
-                                                        handler.post(() -> {
-                                                            webView.evaluateJavascript("window._onVenueGenerated('" + vName3.replace("'", "\\'") + "', " + seatCount + ")", null);
-                                                        });
+                                                        safeEvaluateJavascript("window._onVenueGenerated("
+                                                                + JSONObject.quote(effectiveVenue) + ", "
+                                                                + seatCount + ")");
                                                     }
                                                 }
                                             }
@@ -576,12 +586,10 @@ public class MainActivity extends AppCompatActivity {
                                             if ("000".equals(confirmJson.optString("code"))) {
                                                 isLocking = false;
                                                 final int finalSeat = seatNum;
-                                                final String finalOrderId = oid;
-                                                final String finalVenue = effectiveVenue;
-                                                handler.post(() -> {
-                                                    String js = "window._onLocked(" + finalSeat + ", '" + finalOrderId + "', '" + finalVenue.replace("'", "\\'") + "')";
-                                                    webView.evaluateJavascript(js, null);
-                                                });
+                                                safeEvaluateJavascript("window._onLocked("
+                                                        + finalSeat + ", "
+                                                        + JSONObject.quote(oid) + ", "
+                                                        + JSONObject.quote(effectiveVenue) + ")");
                                                 return;
                                             }
                                         }
@@ -649,7 +657,14 @@ public class MainActivity extends AppCompatActivity {
             body.put("is_lottery", 20);
             return httpPost(url, body.toString(), token, uuid);
         } catch (Exception e) {
-            return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
+            try {
+                JSONObject err = new JSONObject();
+                err.put("code", "500");
+                err.put("msg", e.getMessage());
+                return err.toString();
+            } catch (Exception ignored) {
+                return "{\"code\":\"500\"}";
+            }
         }
     }
 
@@ -661,7 +676,14 @@ public class MainActivity extends AppCompatActivity {
             body.put("seat_id", seatId);
             return httpPost(url, body.toString(), token, uuid);
         } catch (Exception e) {
-            return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
+            try {
+                JSONObject err = new JSONObject();
+                err.put("code", "500");
+                err.put("msg", e.getMessage());
+                return err.toString();
+            } catch (Exception ignored) {
+                return "{\"code\":\"500\"}";
+            }
         }
     }
 
@@ -670,7 +692,14 @@ public class MainActivity extends AppCompatActivity {
             String url = API_HOST + "/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=20";
             return httpGet(url, token, uuid);
         } catch (Exception e) {
-            return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
+            try {
+                JSONObject err = new JSONObject();
+                err.put("code", "500");
+                err.put("msg", e.getMessage());
+                return err.toString();
+            } catch (Exception ignored) {
+                return "{\"code\":\"500\"}";
+            }
         }
     }
 
@@ -679,7 +708,14 @@ public class MainActivity extends AppCompatActivity {
             String url = API_HOST + "/v2/userApi/ticketSeat/querySeatList?order_id=" + orderId;
             return httpGet(url, token, uuid);
         } catch (Exception e) {
-            return "{\"code\":\"500\",\"msg\":\"" + e.getMessage() + "\"}";
+            try {
+                JSONObject err = new JSONObject();
+                err.put("code", "500");
+                err.put("msg", e.getMessage());
+                return err.toString();
+            } catch (Exception ignored) {
+                return "{\"code\":\"500\"}";
+            }
         }
     }
 
@@ -725,8 +761,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean checkHit(List<Integer> seats, List<Integer> targets) {
+        if (targets == null || targets.isEmpty()) return false;
+        java.util.Set<Integer> targetSet = new java.util.HashSet<>(targets);
         for (int s : seats) {
-            if (targets.contains(s)) return true;
+            if (targetSet.contains(s)) return true;
         }
         return false;
     }
@@ -793,12 +831,14 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer = null;
         }
         if (webView != null) {
-            webView.loadUrl("about:blank");
-            webView.stopLoading();
-            webView.setWebViewClient(null);
-            webView.setWebChromeClient(null);
-            webView.removeAllViews();
-            webView.destroy();
+            try {
+                webView.loadUrl("about:blank");
+                webView.stopLoading();
+                webView.setWebViewClient(null);
+                webView.setWebChromeClient(null);
+                webView.removeAllViews();
+                webView.destroy();
+            } catch (Exception ignored) {}
             webView = null;
         }
         super.onDestroy();
