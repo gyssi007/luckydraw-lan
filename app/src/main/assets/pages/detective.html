@@ -395,6 +395,7 @@ function closeVenueSelector() {
     venueOverlay.classList.remove('show');
 }
 
+// ✅ 用 data-* 属性绑定点击，避免 order_id 里带单引号导致 onclick 字符串断掉
 function renderVenueList2() {
     if (!VENUES || VENUES.length === 0) {
         venueList.innerHTML = '<div class="venue-empty">暂无钓场数据</div>';
@@ -403,12 +404,20 @@ function renderVenueList2() {
     var html = '';
     VENUES.forEach(function(v) {
         var active = v.order_id === SELECTED_VENUE_ID ? 'active' : '';
-        html += '<div class="venue-item ' + active + '" data-id="' + v.order_id + '" onclick="selectVenue2(\'' + v.order_id + '\')">' +
-            '<span class="name">' + v.name + '</span>' +
+        var safeName = escapeHtml(v.name || '');
+        html += '<div class="venue-item ' + active + '" data-order-id="' + escapeHtml(v.order_id) + '">' +
+            '<span class="name">' + safeName + '</span>' +
             '<span class="check">✓</span>' +
         '</div>';
     });
     venueList.innerHTML = html;
+    // 事件委托：统一绑定一次
+    venueList.querySelectorAll('.venue-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var oid = el.getAttribute('data-order-id');
+            if (oid) selectVenue2(oid);
+        });
+    });
 }
 
 function selectVenue2(orderId) {
@@ -518,53 +527,55 @@ async function loadVenues2() {
 }
 
 // ============================================================
-// 🎣 获取钓位数据
+// 🎣 获取钓位数据（带防抖，避免并发重复请求）
 // ============================================================
+var _fetching = false;
 async function fetchVenueData() {
+    if (_fetching) return;
+    _fetching = true;
+
     var refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.disabled = true;
     refreshBtn.textContent = '⏳';
 
-    var token = loadData('token', '');
-    var uuid = loadData('uuid', '');
-    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
-        window.AndroidBridge.setAuth(token, uuid);
-    }
+    try {
+        var token = loadData('token', '');
+        var uuid = loadData('uuid', '');
+        if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+            window.AndroidBridge.setAuth(token, uuid);
+        }
 
-    var venues = loadVenuesFromLocal();
-    if (venues && venues.length > 0) {
-        VENUES = venues;
-        renderVenueList2();
-        var stillExists = false;
-        for (var i = 0; i < VENUES.length; i++) {
-            if (VENUES[i].order_id === SELECTED_VENUE_ID) {
-                stillExists = true;
-                break;
+        var venues = loadVenuesFromLocal();
+        if (venues && venues.length > 0) {
+            VENUES = venues;
+            renderVenueList2();
+            var stillExists = false;
+            for (var i = 0; i < VENUES.length; i++) {
+                if (VENUES[i].order_id === SELECTED_VENUE_ID) {
+                    stillExists = true;
+                    break;
+                }
+            }
+            if (!stillExists && VENUES.length > 0) {
+                SELECTED_VENUE_ID = VENUES[0].order_id;
+                saveData('detective_selected_venue', SELECTED_VENUE_ID);
+                selectedVenueDisplay.textContent = VENUES[0].name;
+                selectedVenueDisplay.className = 'selected-name';
             }
         }
-        if (!stillExists && VENUES.length > 0) {
-            SELECTED_VENUE_ID = VENUES[0].order_id;
-            saveData('detective_selected_venue', SELECTED_VENUE_ID);
-            selectedVenueDisplay.textContent = VENUES[0].name;
-            selectedVenueDisplay.className = 'selected-name';
+
+        var orderId = SELECTED_VENUE_ID;
+        if (!orderId) {
+            seatGrid.innerHTML = '<div class="empty-state"><div class="icon"></div><p>请选择钓场查看实时状态</p></div>';
+            resetDetectiveStats();
+            venueName.textContent = '未选择';
+            venueStatus.textContent = '-';
+            updateTime.textContent = '等待选择...';
+            return;
         }
-    }
 
-    var orderId = SELECTED_VENUE_ID;
-    if (!orderId) {
-        seatGrid.innerHTML = '<div class="empty-state"><div class="icon"></div><p>请选择钓场查看实时状态</p></div>';
-        resetDetectiveStats();
-        venueName.textContent = '未选择';
-        venueStatus.textContent = '-';
-        updateTime.textContent = '等待选择...';
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = '🔄 刷新';
-        return;
-    }
+        seatGrid.innerHTML = '<div class="loading-mask"><div class="spinner"></div>加载中...</div>';
 
-    seatGrid.innerHTML = '<div class="loading-mask"><div class="spinner"></div>加载中...</div>';
-
-    try {
         var result = await callApi('/v2/userApi/ticketSeat/querySeatList?order_id=' + orderId, 'GET');
 
         if (result.code !== '000') {
@@ -573,9 +584,9 @@ async function fetchVenueData() {
 
         var seatList = result.data && result.data.seat_list ? result.data.seat_list : [];
         var venue = null;
-        for (var i = 0; i < VENUES.length; i++) {
-            if (VENUES[i].order_id === orderId) {
-                venue = VENUES[i];
+        for (var k = 0; k < VENUES.length; k++) {
+            if (VENUES[k].order_id === orderId) {
+                venue = VENUES[k];
                 break;
             }
         }
@@ -592,6 +603,7 @@ async function fetchVenueData() {
         }
         resetDetectiveStats();
     } finally {
+        _fetching = false;
         refreshBtn.disabled = false;
         refreshBtn.textContent = '🔄 刷新';
     }
@@ -659,15 +671,15 @@ function updateVenueInfo2(name, data) {
 }
 
 // ============================================================
-// 🔄 下拉刷新
+// 🔄 下拉刷新（弹层打开时禁用）
 // ============================================================
 (function enablePullToRefresh() {
     var indicator = document.getElementById('pullRefreshIndicator');
     var textEl = document.getElementById('pullRefreshText');
     if (!indicator) return;
 
-    var THRESHOLD = 60;      // 触发刷新的下拉距离
-    var MAX_PULL = 100;      // 最大下拉距离
+    var THRESHOLD = 60;
+    var MAX_PULL = 100;
     var startY = 0;
     var currentY = 0;
     var isPulling = false;
@@ -677,8 +689,13 @@ function updateVenueInfo2(name, data) {
         return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     }
 
+    function isOverlayOpen() {
+        return venueOverlay && venueOverlay.classList.contains('show');
+    }
+
     function onTouchStart(e) {
         if (isRefreshing) return;
+        if (isOverlayOpen()) return;              // ✅ 弹层打开时不响应下拉
         if (getScrollTop() > 0) return;
         startY = e.touches[0].clientY;
         isPulling = true;
@@ -686,6 +703,12 @@ function updateVenueInfo2(name, data) {
 
     function onTouchMove(e) {
         if (!isPulling || isRefreshing) return;
+        if (isOverlayOpen()) {                    // ✅ 下拉过程中弹层被打开，立即取消
+            isPulling = false;
+            indicator.classList.remove('visible', 'ready');
+            indicator.style.transform = '';
+            return;
+        }
         if (getScrollTop() > 0) {
             isPulling = false;
             indicator.classList.remove('visible', 'ready');
@@ -700,7 +723,6 @@ function updateVenueInfo2(name, data) {
             return;
         }
 
-        // 阻尼效果
         var pull = Math.min(currentY * 0.5, MAX_PULL);
         indicator.style.transform = 'translateY(' + (pull - 60) + 'px)';
         indicator.classList.add('visible');
