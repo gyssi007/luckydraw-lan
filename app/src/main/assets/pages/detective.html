@@ -48,17 +48,17 @@
         .app-dialog-btn.danger{background:#ef4444;color:#fff}
         .app-dialog-btn.secondary{background:#eef2f6;color:#334455}
 
-        /* ===== 紧凑统计条（替代原来的大卡片） ===== */
+        /* ===== 紧凑统计条（已放大，保持一行） ===== */
         .stats-bar{
             display:flex;
             align-items:center;
             justify-content:space-between;
             background:#fff;
             border-radius:12px;
-            padding:10px 8px;
-            margin-bottom:10px;
+            padding:14px 6px;
+            margin-bottom:12px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
-            gap:4px;
+            gap:2px;
         }
         .stats-bar .stat-item{
             flex:1;
@@ -72,15 +72,15 @@
         }
         .stats-bar .stat-item:last-child{ border-right:none; }
         .stats-bar .stat-item .num{
-            font-size:17px;
+            font-size:24px;
             font-weight:800;
             line-height:1.1;
-            letter-spacing:-0.3px;
+            letter-spacing:-0.4px;
         }
         .stats-bar .stat-item .lbl{
-            font-size:10px;
+            font-size:11px;
             color:#6b8ba0;
-            margin-top:3px;
+            margin-top:5px;
             white-space:nowrap;
         }
         .stats-bar .stat-item.total .num{ color:#0a2f44; }
@@ -142,23 +142,18 @@
             letter-spacing: -0.2px;
         }
 
-        /* 空闲 —— 绿 */
         .seat-card.status-10{ border-color: #2b9c5c; background: #f4fbf7; }
         .seat-card.status-10 .number{ color: #1a6b3c; }
 
-        /* 准备中 —— 橙 */
         .seat-card.status-20{ border-color: #e68a2e; background: #fffaf2; }
         .seat-card.status-20 .number{ color: #b45f1a; }
 
-        /* 垂钓中 —— 蓝 */
         .seat-card.status-40{ border-color: #2a7de1; background: #f4f9ff; }
         .seat-card.status-40 .number{ color: #1a5aa8; }
 
-        /* 锁号 —— 红 */
         .seat-card.status-50{ border-color: #d14545; background: #fff5f5; }
         .seat-card.status-50 .number{ color: #b52a2a; }
 
-        /* 未知 —— 灰 */
         .seat-card.status-0{ border-color: #c8d4e0; background: #fafcff; }
         .seat-card.status-0 .number{ color: #5a6a7a; }
 
@@ -239,8 +234,10 @@
             .seat-card{min-height:66px;padding:5px 2px 4px;border-radius:10px}
             .seat-card .seat-icon{width:30px;height:30px}
             .seat-card .number{font-size:11px}
-            .stats-bar .stat-item .num{font-size:15px}
-            .stats-bar .stat-item .lbl{font-size:9px}
+            /* 小屏时数字稍微小一点，但依然醒目 */
+            .stats-bar{padding:12px 4px;}
+            .stats-bar .stat-item .num{font-size:20px;}
+            .stats-bar .stat-item .lbl{font-size:10px;}
         }
 
         @media(min-width:600px){
@@ -248,8 +245,9 @@
             .seat-card{min-height:86px;padding:8px 4px 6px}
             .seat-card .seat-icon{width:40px;height:40px}
             .seat-card .number{font-size:14px}
-            .stats-bar .stat-item .num{font-size:20px}
-            .stats-bar .stat-item .lbl{font-size:11px}
+            .stats-bar{padding:16px 10px;}
+            .stats-bar .stat-item .num{font-size:28px;}
+            .stats-bar .stat-item .lbl{font-size:12px;}
         }
     </style>
 </head>
@@ -288,7 +286,7 @@
                 </div>
             </div>
 
-            <!-- ✅ 紧凑统计条 -->
+            <!-- ✅ 紧凑统计条（已放大，保持一行） -->
             <div class="stats-bar">
                 <div class="stat-item total">
                     <div class="num" id="totalSeats">-</div>
@@ -457,13 +455,13 @@ function loadVenuesFromLocal() {
 
 function openVenueSelector() {
     venueOverlay.classList.add('show');
-    lockBodyScroll();               // ✅ 锁定背景滚动
+    lockBodyScroll();
     renderVenueList2();
 }
 
 function closeVenueSelector() {
     venueOverlay.classList.remove('show');
-    unlockBodyScroll();             // ✅ 恢复背景滚动
+    unlockBodyScroll();
 }
 
 function renderVenueList2() {
@@ -740,7 +738,7 @@ function updateVenueInfo2(name, data) {
 }
 
 // ============================================================
-// 🔄 下拉刷新（弹层打开时禁用）
+// 🔄 下拉刷新
 // ============================================================
 (function enablePullToRefresh() {
     var indicator = document.getElementById('pullRefreshIndicator');
