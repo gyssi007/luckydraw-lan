@@ -150,6 +150,51 @@
         .bottom-nav .tab.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;background:#0a2f44;border-radius:0 0 3px 3px}
         .bottom-nav .tab:active{transform:scale(0.92)}
 
+        /* ===== 下拉刷新 ===== */
+        .pull-refresh-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #6b8ba0;
+            font-size: 13px;
+            background: transparent;
+            pointer-events: none;
+            z-index: 900;
+            transform: translateY(-60px);
+            transition: transform .2s ease;
+        }
+        .pull-refresh-indicator.visible {
+            transform: translateY(0);
+        }
+        .pull-refresh-indicator .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #e0e8f0;
+            border-top-color: #2a7de1;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            display: none;
+        }
+        .pull-refresh-indicator.loading .spinner {
+            display: block;
+        }
+        .pull-refresh-indicator.loading .arrow {
+            display: none;
+        }
+        .pull-refresh-indicator .arrow {
+            font-size: 14px;
+            transition: transform .2s ease;
+        }
+        .pull-refresh-indicator.ready .arrow {
+            transform: rotate(180deg);
+        }
+
         @media(max-width:400px){
             .header{padding:12px 14px}
             .header h1{font-size:15px}
@@ -173,6 +218,12 @@
     </style>
 </head>
 <body>
+<div class="pull-refresh-indicator" id="pullRefreshIndicator">
+    <span class="arrow">↓</span>
+    <div class="spinner"></div>
+    <span class="text" id="pullRefreshText">下拉刷新</span>
+</div>
+
 <div class="app-container">
     <div class="page active" id="pageDetective">
         <div class="detective-container">
@@ -606,6 +657,104 @@ function updateVenueInfo2(name, data) {
     var timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
     updateTime.textContent = '🕒 ' + timeStr;
 }
+
+// ============================================================
+// 🔄 下拉刷新
+// ============================================================
+(function enablePullToRefresh() {
+    var indicator = document.getElementById('pullRefreshIndicator');
+    var textEl = document.getElementById('pullRefreshText');
+    if (!indicator) return;
+
+    var THRESHOLD = 60;      // 触发刷新的下拉距离
+    var MAX_PULL = 100;      // 最大下拉距离
+    var startY = 0;
+    var currentY = 0;
+    var isPulling = false;
+    var isRefreshing = false;
+
+    function getScrollTop() {
+        return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+
+    function onTouchStart(e) {
+        if (isRefreshing) return;
+        if (getScrollTop() > 0) return;
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+
+    function onTouchMove(e) {
+        if (!isPulling || isRefreshing) return;
+        if (getScrollTop() > 0) {
+            isPulling = false;
+            indicator.classList.remove('visible', 'ready');
+            indicator.style.transform = '';
+            return;
+        }
+
+        currentY = e.touches[0].clientY - startY;
+        if (currentY <= 0) {
+            indicator.classList.remove('visible', 'ready');
+            indicator.style.transform = '';
+            return;
+        }
+
+        // 阻尼效果
+        var pull = Math.min(currentY * 0.5, MAX_PULL);
+        indicator.style.transform = 'translateY(' + (pull - 60) + 'px)';
+        indicator.classList.add('visible');
+
+        if (pull >= THRESHOLD) {
+            indicator.classList.add('ready');
+            textEl.textContent = '松开刷新';
+        } else {
+            indicator.classList.remove('ready');
+            textEl.textContent = '下拉刷新';
+        }
+
+        if (e.cancelable) e.preventDefault();
+    }
+
+    function onTouchEnd() {
+        if (!isPulling) return;
+        isPulling = false;
+
+        var pull = Math.min(currentY * 0.5, MAX_PULL);
+        if (pull >= THRESHOLD && !isRefreshing) {
+            isRefreshing = true;
+            indicator.classList.add('visible', 'loading');
+            indicator.classList.remove('ready');
+            indicator.style.transform = 'translateY(0)';
+            textEl.textContent = '刷新中...';
+
+            var refreshPromise;
+            try {
+                refreshPromise = fetchVenueData();
+            } catch (e) {
+                refreshPromise = Promise.resolve();
+            }
+
+            Promise.resolve(refreshPromise).finally(function() {
+                setTimeout(function() {
+                    isRefreshing = false;
+                    indicator.classList.remove('visible', 'loading', 'ready');
+                    indicator.style.transform = '';
+                    textEl.textContent = '下拉刷新';
+                }, 400);
+            });
+        } else {
+            indicator.classList.remove('visible', 'ready');
+            indicator.style.transform = '';
+        }
+        currentY = 0;
+    }
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', onTouchEnd, { passive: true });
+})();
 
 // ============================================================
 // 🚀 初始化
