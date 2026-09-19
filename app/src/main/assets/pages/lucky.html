@@ -427,20 +427,158 @@
         .lock-card { background: #f0f7ff; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #d0e4ff; }
         .lock-card .lock-title { font-size: 14px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
         .lock-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .lock-row .venue-select {
+
+        /* ============================================================ */
+        /* 钓场选择触发器 */
+        /* ============================================================ */
+        .venue-picker-trigger {
             flex: 2;
-            min-width: 120px;
-            padding: 10px 12px;
-            border: 1px solid #dce4ec;
-            border-radius: 10px;
-            font-size: 14px;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
             background: #fff;
-            cursor: pointer;
-            outline: none;
+            border: 1.5px solid #dce4ec;
+            border-radius: 10px;
             min-height: 44px;
-            -webkit-appearance: none;
-            appearance: none;
+            padding: 0 12px;
+            cursor: pointer;
+            transition: border-color .2s, box-shadow .2s;
+            box-sizing: border-box;
         }
+        .venue-picker-trigger:active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .venue-picker-trigger .picker-icon {
+            font-size: 14px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .venue-picker-trigger .picker-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0a2f44;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .venue-picker-trigger .picker-text.placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .venue-picker-trigger .picker-arrow {
+            font-size: 10px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+
+        /* ============================================================ */
+        /* 顶部滑出钓场选择器 */
+        /* ============================================================ */
+        .venue-sheet-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(8,15,25,0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 2200;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0;
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+        .venue-sheet-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .venue-sheet-modal {
+            background: #fff;
+            border-radius: 0 0 26px 26px;
+            padding: calc(18px + env(safe-area-inset-top, 0px)) 20px 18px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 78vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+            transform: translateY(-100%);
+            transition: transform .32s cubic-bezier(.32,.72,0,1);
+        }
+        .venue-sheet-overlay.show .venue-sheet-modal { transform: translateY(0); }
+        .venue-sheet-modal .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0a2f44;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #eef2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .venue-sheet-modal .modal-title .close-btn {
+            cursor: pointer;
+            font-size: 18px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            outline: none !important;
+        }
+        .venue-sheet-modal .venue-list {
+            overflow-y: auto;
+            flex: 1;
+            padding-top: 10px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        .venue-sheet-modal .venue-item {
+            padding: 14px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            outline: none !important;
+        }
+        .venue-sheet-modal .venue-item:active { background: #eef2f6; transform: scale(.98); }
+        .venue-sheet-modal .venue-item .name {
+            font-weight: 500;
+            color: #0a2f44;
+            font-size: 14.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .venue-sheet-modal .venue-item .check {
+            color: #22c55e;
+            font-size: 18px;
+            display: none;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .venue-sheet-modal .venue-item.active .check { display: block; }
+        .venue-sheet-modal .venue-item.active { background: #eef6ff; }
+        .venue-sheet-modal .venue-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
         .lock-row .seat-input {
             flex: 1;
             min-width: 70px;
@@ -486,8 +624,15 @@
         }
         .lock-row .btn-stop-lock:active { transform: scale(0.94); }
 
+        body.no-scroll {
+            position: fixed;
+            width: 100%;
+            overflow: hidden;
+        }
+
         @media(max-width:400px) {
-            .lock-row .venue-select { min-width: 80px; font-size: 13px; }
+            .venue-picker-trigger { min-width: 110px; }
+            .venue-picker-trigger .picker-text { font-size: 13px; }
             .lock-row .seat-input { min-width: 60px; font-size: 13px; }
             .switch-row { padding: 8px 12px; }
             .switch-row .switch-label { font-size: 13px; }
@@ -548,10 +693,11 @@
             <div class="lock-card">
                 <div class="lock-title">一发入魂</div>
                 <div class="lock-row">
-                    <select class="venue-select" id="lockVenueSelect">
-                        <option value="__AUTO__">全自动识别</option>
-                        <option value="">选择钓场</option>
-                    </select>
+                    <div class="venue-picker-trigger" id="venueTrigger">
+                        
+                        <span class="picker-text placeholder" id="venueTriggerText">全自动识别</span>
+                        <span class="picker-arrow">▼</span>
+                    </div>
                     <input class="seat-input" id="lockSeatNumber" placeholder="钓位号" inputmode="numeric" />
                     <button class="btn-lock" id="btnLock">🔒 锁定</button>
                     <button class="btn-stop-lock" id="btnStopLock">⏹ 停止</button>
@@ -572,6 +718,17 @@
             </div>
             <div class="log-box" id="logBox"></div>
         </div>
+    </div>
+</div>
+
+<!-- 钓场选择弹层（顶部滑出） -->
+<div class="venue-sheet-overlay" id="venueSheetOverlay">
+    <div class="venue-sheet-modal">
+        <div class="modal-title">
+            <span>选择钓场</span>
+            <button class="close-btn" onclick="closeVenueSheet()">✕</button>
+        </div>
+        <div class="venue-list" id="venueSheetList"></div>
     </div>
 </div>
 
@@ -621,7 +778,6 @@ var luckyElements = {
     btnLock: document.getElementById('btnLock'),
     btnStopLock: document.getElementById('btnStopLock'),
     btnRefreshId: document.getElementById('btnRefreshId'),
-    lockVenueSelect: document.getElementById('lockVenueSelect'),
     lockSeatNumber: document.getElementById('lockSeatNumber'),
     autoLockSwitch: document.getElementById('autoLockSwitch'),
     statusDisplay: document.getElementById('statusDisplay'),
@@ -637,52 +793,19 @@ var luckyElements = {
     hitContinue: document.getElementById('hitContinue'),
     hitStop: document.getElementById('hitStop'),
     logBox: document.getElementById('logBox'),
-    btnClearLog: document.getElementById('btnClearLog')
+    btnClearLog: document.getElementById('btnClearLog'),
+    venueTrigger: document.getElementById('venueTrigger'),
+    venueTriggerText: document.getElementById('venueTriggerText'),
+    venueSheetOverlay: document.getElementById('venueSheetOverlay'),
+    venueSheetList: document.getElementById('venueSheetList')
 };
 
 var isAutoRunning = false;
 var isLocking = false;
 var lockVenues = [];
 
-// ============================================================
-// 日志持久化（localStorage）
-// ============================================================
-var LOG_STORAGE_KEY = 'lucky_log_entries';
-var LOG_MAX_ENTRIES = 300;
-
-function saveLogEntryToStorage(html, cls) {
-    try {
-        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
-        arr.push({ html: html, cls: cls, ts: Date.now() });
-        if (arr.length > LOG_MAX_ENTRIES) {
-            arr = arr.slice(arr.length - LOG_MAX_ENTRIES);
-        }
-        localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(arr));
-    } catch (e) {}
-}
-
-function restoreLogFromStorage() {
-    try {
-        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
-        if (!arr.length) return;
-        for (var i = 0; i < arr.length; i++) {
-            var item = arr[i];
-            var entry = document.createElement('div');
-            entry.className = 'log-entry ' + (item.cls || '');
-            entry.innerHTML = item.html;
-            luckyElements.logBox.appendChild(entry);
-        }
-        luckyElements.logBox.scrollTop = luckyElements.logBox.scrollHeight;
-    } catch (e) {}
-}
-
-function clearLog() {
-    try {
-        localStorage.removeItem(LOG_STORAGE_KEY);
-    } catch (e) {}
-    luckyElements.logBox.innerHTML = '';
-    addLog('🗑️ 日志已清空', 'system');
-}
+// 当前选中的钓场（'__AUTO__' 或钓场名）
+var SELECTED_VENUE = '__AUTO__';
 
 // ============================================================
 // 配置
@@ -696,7 +819,8 @@ function getLuckyConfig() {
         orderId: luckyElements.orderId.value.trim(),
         token: token,
         uuid: uuid,
-        targetSeats: targetSeats
+        targetSeats: targetSeats,
+        venue: SELECTED_VENUE
     };
 }
 
@@ -814,13 +938,11 @@ function loadLockVenues() {
     var venues = loadVenuesFromLocal();
     if (venues && venues.length > 0) {
         lockVenues = venues;
-        renderLockVenueSelect();
     } else {
         fetch('venues.json')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
                 lockVenues = data || [];
-                renderLockVenueSelect();
             })
             .catch(function(e) {
                 console.error('加载钓场列表失败:', e);
@@ -828,20 +950,72 @@ function loadLockVenues() {
     }
 }
 
-function renderLockVenueSelect() {
-    var select = luckyElements.lockVenueSelect;
-    var currentVal = select.value;
-    select.innerHTML = '<option value="__AUTO__">全自动识别</option><option value="">选择钓场</option>';
-    lockVenues.forEach(function(v) {
-        var opt = document.createElement('option');
-        opt.value = v.name;
-        opt.textContent = v.name;
-        select.appendChild(opt);
+// ============================================================
+// 钓场选择弹层（顶部滑出）
+// ============================================================
+function openVenueSheet() {
+    luckyElements.venueSheetOverlay.classList.add('show');
+    document.body.classList.add('no-scroll');
+    renderVenueSheetList();
+}
+
+function closeVenueSheet() {
+    luckyElements.venueSheetOverlay.classList.remove('show');
+    document.body.classList.remove('no-scroll');
+}
+
+function renderVenueSheetList() {
+    var listEl = luckyElements.venueSheetList;
+    var html = '';
+
+    var autoActive = (SELECTED_VENUE === '__AUTO__') ? 'active' : '';
+    html += '<div class="venue-item ' + autoActive + '" data-value="__AUTO__">' +
+                '<span class="name">🤖 全自动识别</span>' +
+                '<span class="check">✓</span>' +
+            '</div>';
+
+    if (lockVenues && lockVenues.length > 0) {
+        lockVenues.forEach(function(v) {
+            var active = (SELECTED_VENUE === v.name) ? 'active' : '';
+            html += '<div class="venue-item ' + active + '" data-value="' + escapeHtml(v.name) + '">' +
+                        '<span class="name">' + escapeHtml(v.name) + '</span>' +
+                        '<span class="check">✓</span>' +
+                    '</div>';
+        });
+    }
+
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll('.venue-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var val = el.getAttribute('data-value');
+            selectVenueFromSheet(val);
+        });
     });
-    if (currentVal) {
-        select.value = currentVal;
+}
+
+function selectVenueFromSheet(val) {
+    SELECTED_VENUE = val;
+    updateVenueTriggerText();
+    closeVenueSheet();
+}
+
+function updateVenueTriggerText() {
+    var textEl = luckyElements.venueTriggerText;
+    if (SELECTED_VENUE === '__AUTO__') {
+        textEl.textContent = '全自动识别';
+        textEl.classList.add('placeholder');
+    } else {
+        textEl.textContent = SELECTED_VENUE;
+        textEl.classList.remove('placeholder');
     }
 }
+
+luckyElements.venueTrigger.addEventListener('click', openVenueSheet);
+
+luckyElements.venueSheetOverlay.addEventListener('click', function(e) {
+    if (e.target === this) closeVenueSheet();
+});
 
 // ============================================================
 // 🔒 自动锁定
@@ -852,7 +1026,7 @@ function startLockLoop() {
         return;
     }
 
-    var venueName = luckyElements.lockVenueSelect.value;
+    var venueName = SELECTED_VENUE;
     var seatInput = luckyElements.lockSeatNumber.value.trim();
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
@@ -992,7 +1166,7 @@ async function stopAuto() {
 // 🔒 命中后自动锁定
 // ============================================================
 async function performAutoLock(orderId, hitSeat) {
-    var venueName = luckyElements.lockVenueSelect.value;
+    var venueName = SELECTED_VENUE;
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
 
@@ -1164,10 +1338,10 @@ window._onLocked = function(seatNumber, orderId, venueName) {
     loadLockVenues();
 };
 
-// 【新增】锁定失败回调
-window._onLockFailed = function(reason, orderId, venueName) {
+window._onLockFailed = function(reason, orderId, venueName, seatNumber) {
     var msg = '❌ 锁定失败';
     if (venueName) msg += ' (' + venueName + ')';
+    if (seatNumber) msg += ' 座位:' + seatNumber + '号';
     if (orderId) msg += ' 订单:' + orderId;
     msg += ' 原因: ' + (reason || '未知');
     addLog(msg, 'error');
@@ -1194,7 +1368,11 @@ luckyElements.btnAuto.addEventListener('click', startAuto);
 luckyElements.btnStop.addEventListener('click', stopAuto);
 luckyElements.btnLock.addEventListener('click', lockSeat);
 luckyElements.btnStopLock.addEventListener('click', stopLockLoop);
-luckyElements.btnClearLog.addEventListener('click', clearLog);
+luckyElements.btnClearLog.addEventListener('click', function() {
+    clearLogStorage();
+    luckyElements.logBox.innerHTML = '';
+    addLog('🗑️ 日志已清空', 'system');
+});
 
 luckyElements.hitConfirm.addEventListener('click', function() {
     closeHitModal();
@@ -1226,7 +1404,6 @@ window.addEventListener('beforeunload', function() {
 // 🚀 初始化
 // ============================================================
 (function initLuckyPage() {
-    // 恢复历史日志
     restoreLogFromStorage();
 
     var token = loadData('token', '');
@@ -1237,6 +1414,7 @@ window.addEventListener('beforeunload', function() {
 
     updateLuckyStatus('idle', 0, [], '');
     loadLockVenues();
+    updateVenueTriggerText();
 
     if (!token || !uuid) {
         addLog('📌 请先到"配置"页面设置 Token 和 UUID', 'warning');
