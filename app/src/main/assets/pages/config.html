@@ -31,7 +31,6 @@
         .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
         .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
-        /* 操作区块 */
         .section-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid #eef2f6; }
         .section-block .section-label { font-size: 14px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; }
 
@@ -46,7 +45,6 @@
 
         .block-hint { font-size: 11px; color: #8a99aa; margin-top: 8px; line-height: 1.5; }
 
-        /* 钓场管理 */
         .venue-mgr-section { margin-top: 22px; border-top: 1px solid #eef2f6; padding-top: 18px; }
         .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-section .count-badge { background: #eef2f6; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
@@ -60,6 +58,27 @@
         .venue-mgr-add { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; background: #f8fafc; min-height: 44px; }
         .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; }
+        /* 【新增】从订单选择按钮 */
+        .btn-pick-from-orders {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 44px;
+            margin-bottom: 12px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-pick-from-orders:active { transform: scale(0.97); }
+        .btn-pick-from-orders:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
         .venue-mgr-list { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
         .venue-mgr-item { background: #f8fafc; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
@@ -68,7 +87,99 @@
         .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
         .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8a99aa; font-size: 13px; }
 
-        /* 底部导航 */
+        /* 【新增】订单选择弹层 */
+        .order-picker-overlay {
+            position: fixed; inset: 0;
+            background: rgba(8,15,25,0.55);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 2500;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .25s ease;
+            pointer-events: none;
+        }
+        .order-picker-overlay.show { opacity: 1; pointer-events: auto; }
+        .order-picker-panel {
+            background: #fff;
+            border-radius: 22px 22px 0 0;
+            width: 100%;
+            max-width: 560px;
+            max-height: 78vh;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform .32s cubic-bezier(.32,.72,0,1);
+            padding: 8px 0 0;
+        }
+        .order-picker-overlay.show .order-picker-panel { transform: translateY(0); }
+        .order-picker-panel .sheet-handle { width: 38px; height: 5px; border-radius: 3px; background: #e2e8f0; margin: 6px auto 12px; flex-shrink: 0; }
+        .order-picker-panel .panel-title {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px 12px;
+            border-bottom: 1px solid #eef2f6;
+            font-size: 15px; font-weight: 700; color: #1a2b3c;
+            flex-shrink: 0;
+        }
+        .order-picker-panel .panel-title .close-x {
+            background: #f1f5f9; border: none; color: #64748b;
+            width: 30px; height: 30px; border-radius: 50%;
+            font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .order-picker-panel .order-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 16px 24px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .order-picker-panel .order-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border: 1.5px solid transparent;
+            transition: all .15s;
+        }
+        .order-picker-panel .order-item:active { background: #eef2f6; transform: scale(0.98); }
+        .order-picker-panel .order-item.already {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        .order-picker-panel .order-item .info { flex: 1; min-width: 0; }
+        .order-picker-panel .order-item .name {
+            font-weight: 600; font-size: 14px; color: #1a2b3c;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .order-picker-panel .order-item .meta {
+            font-size: 11px; color: #8a99aa; margin-top: 3px;
+            font-family: monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .order-picker-panel .order-item .status-tag {
+            font-size: 11px; font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .order-picker-panel .order-item.already .status-tag { background: #22c55e; color: #fff; }
+        .order-picker-panel .order-item:not(.already) .status-tag { background: #3b82f6; color: #fff; }
+        .order-picker-panel .empty, .order-picker-panel .loading {
+            text-align: center; padding: 40px 20px; color: #8a99aa; font-size: 13px;
+        }
+        .order-picker-panel .loading .spinner {
+            width: 28px; height: 28px; border: 3px solid #e0e8f0; border-top-color: #3b82f6;
+            border-radius: 50%; animation: spin .8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eef2f6; display: flex; justify-content: space-around; align-items: center; height: 62px; z-index: 999; }
         .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 500; text-decoration: none; position: relative; }
         .bottom-nav .tab .tab-icon { font-size: 19px; line-height: 1.2; }
@@ -76,7 +187,6 @@
         .bottom-nav .tab.active .tab-label { font-weight: 600; }
         .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #1a2b3c; border-radius: 0 0 3px 3px; }
 
-        /* 原生风格弹窗 */
         .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
         .app-dialog-mask.show { opacity: 1; }
         .app-dialog-card { background: #fff; border-radius: 18px; width: 100%; max-width: 320px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px) scale(.94); opacity: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; }
@@ -116,7 +226,6 @@
             </div>
             <div id="configStatus" class="status-msg"></div>
 
-            <!-- 号码池操作 -->
             <div class="section-block">
                 <div class="section-label">号码池</div>
                 <div class="btn-row">
@@ -126,7 +235,6 @@
                 <div id="poolStatus" class="status-msg"></div>
             </div>
 
-            <!-- 配置备份 -->
             <div class="section-block">
                 <div class="section-label">配置备份</div>
                 <div class="btn-row">
@@ -137,7 +245,6 @@
                 <div id="backupStatus" class="status-msg"></div>
             </div>
 
-            <!-- 钓场管理 -->
             <div class="venue-mgr-section">
                 <div class="section-title">
                     <span>钓场管理</span>
@@ -149,9 +256,15 @@
                         <span class="arrow" id="dropdownArrow">▼</span>
                     </div>
                     <div class="venue-dropdown-body" id="venueDropdownBody">
+                        <!-- 【新增】从订单选择按钮 -->
+                        <button class="btn-pick-from-orders" id="btnPickFromOrders" onclick="openOrderPicker()">
+                            <span>📋</span>
+                            <span>从我的订单中选择</span>
+                        </button>
+
                         <div class="venue-mgr-add">
-                            <input id="venueNameInput" placeholder="钓场名称" />
-                            <input id="venueOrderIdInput" placeholder="订单 ID" />
+                            <input id="venueNameInput" placeholder="钓场名称（手动输入）" />
+                            <input id="venueOrderIdInput" placeholder="订单 ID（手动输入）" />
                             <button class="btn-add" onclick="addVenue()">添加</button>
                         </div>
                         <div class="venue-mgr-list" id="venueMgrList">
@@ -160,6 +273,20 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- 【新增】订单选择弹层 -->
+<div class="order-picker-overlay" id="orderPickerOverlay">
+    <div class="order-picker-panel">
+        <div class="sheet-handle"></div>
+        <div class="panel-title">
+            <span>选择钓场（从订单）</span>
+            <button class="close-x" onclick="closeOrderPicker()">✕</button>
+        </div>
+        <div class="order-list" id="orderPickerList">
+            <div class="loading"><div class="spinner"></div>加载中...</div>
         </div>
     </div>
 </div>
@@ -402,6 +529,135 @@ async function deleteVenue(id) {
 }
 
 // ============================================================
+// 【新增】从订单列表中选择钓场
+// ============================================================
+var _orderPickerList = [];
+
+async function openOrderPicker() {
+    var overlay = document.getElementById('orderPickerOverlay');
+    var listEl = document.getElementById('orderPickerList');
+
+    overlay.classList.add('show');
+    listEl.innerHTML = '<div class="loading"><div class="spinner"></div>正在加载订单...</div>';
+
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (!token || !uuid) {
+        listEl.innerHTML = '<div class="empty">请先配置 Token 和 UUID</div>';
+        return;
+    }
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token, uuid);
+    }
+
+    try {
+        // 拉取订单列表（page=1, limit=50 够用）
+        var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=50', 'GET');
+        if (result.code !== '000') {
+            listEl.innerHTML = '<div class="empty">加载失败: ' + escapeHtml(result.msg || '未知错误') + '</div>';
+            return;
+        }
+
+        var orders = (result.data && result.data.list) || [];
+
+        // 按 product_id 去重
+        var seen = {};
+        var uniqueOrders = [];
+        orders.forEach(function(o) {
+            var pid = o.product_id;
+            if (!pid || seen[pid]) return;
+            seen[pid] = true;
+            uniqueOrders.push(o);
+        });
+
+        // 附加钓场名
+        uniqueOrders.forEach(function(o) {
+            var venueName = '';
+            if (o.merchant_model && o.merchant_model.mer_name) {
+                venueName = o.merchant_model.mer_name;
+            } else if (o.order_ticket_item && o.order_ticket_item.product_info && o.order_ticket_item.product_info.title) {
+                venueName = o.order_ticket_item.product_info.title;
+            }
+            o._venueName = venueName || '未知钓场';
+        });
+
+        // 已存在的订单ID集合
+        var existingVenues = loadVenuesFromLocal() || [];
+        var existingOrderIds = {};
+        existingVenues.forEach(function(v) { existingOrderIds[String(v.order_id)] = true; });
+
+        _orderPickerList = uniqueOrders;
+
+        if (uniqueOrders.length === 0) {
+            listEl.innerHTML = '<div class="empty">没有找到任何订单</div>';
+            return;
+        }
+
+        var html = '';
+        uniqueOrders.forEach(function(o, idx) {
+            var already = existingOrderIds[String(o.order_id)];
+            html += '<div class="order-item ' + (already ? 'already' : '') + '" data-idx="' + idx + '">' +
+                '<div class="info">' +
+                    '<div class="name">' + escapeHtml(o._venueName) + '</div>' +
+                    '<div class="meta">订单ID: ' + escapeHtml(o.order_id) + '</div>' +
+                '</div>' +
+                '<span class="status-tag">' + (already ? '已添加' : '添加') + '</span>' +
+            '</div>';
+        });
+        listEl.innerHTML = html;
+
+        listEl.querySelectorAll('.order-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var idx = parseInt(el.getAttribute('data-idx'), 10);
+                if (isNaN(idx)) return;
+                pickOrder(idx);
+            });
+        });
+
+    } catch(e) {
+        listEl.innerHTML = '<div class="empty">加载异常: ' + escapeHtml(e.message || '') + '</div>';
+    }
+}
+
+async function pickOrder(idx) {
+    var order = _orderPickerList[idx];
+    if (!order) return;
+
+    var venueName = order._venueName;
+    var orderId = String(order.order_id);
+
+    var venues = loadVenuesFromLocal() || [];
+    if (venues.some(function(v) { return String(v.order_id) === orderId; })) {
+        await appAlert('该订单 ID 已存在，无需重复添加');
+        return;
+    }
+
+    var maxId = venues.reduce(function(max, v) { return Math.max(max, v.id || 0); }, 0);
+    venues.push({
+        id: maxId + 1,
+        name: venueName,
+        order_id: orderId,
+        enabled: true,
+        sort: maxId + 1,
+        remark: ''
+    });
+    saveVenuesToLocal(venues);
+    renderVenueList(venues);
+
+    // 刷新弹层，把这条标记为已添加
+    await openOrderPicker();
+}
+
+function closeOrderPicker() {
+    document.getElementById('orderPickerOverlay').classList.remove('show');
+}
+
+// 点遮罩关闭
+document.getElementById('orderPickerOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeOrderPicker();
+});
+
+// ============================================================
 // 导出配置
 // ============================================================
 async function exportConfig() {
@@ -454,7 +710,7 @@ async function exportConfig() {
 }
 
 // ============================================================
-// 导入配置（通过系统文件选择器）
+// 导入配置
 // ============================================================
 var importPending = false;
 
@@ -471,7 +727,6 @@ function importConfig() {
     window.AndroidBridge.pickFileForImport();
 }
 
-// 由原生回调
 window._onImportFileSelected = async function(content) {
     var statusEl = document.getElementById('backupStatus');
     if (!importPending) return;
