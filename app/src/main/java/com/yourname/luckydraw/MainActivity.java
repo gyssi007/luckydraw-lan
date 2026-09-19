@@ -591,6 +591,14 @@ public class MainActivity extends AppCompatActivity {
                                                         + JSONObject.quote(oid) + ", "
                                                         + JSONObject.quote(effectiveVenue) + ")");
                                                 return;
+                                            } else {
+                                                // 【新增】锁定失败，把错误回调到前端
+                                                String failReason = confirmJson.optString("msg", "未知错误");
+                                                safeEvaluateJavascript("window._onLockFailed("
+                                                        + JSONObject.quote(failReason) + ", "
+                                                        + JSONObject.quote(oid) + ", "
+                                                        + JSONObject.quote(effectiveVenue) + ", "
+                                                        + seatNum + ")");
                                             }
                                         }
                                     }
