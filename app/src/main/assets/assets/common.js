@@ -70,12 +70,61 @@ function vibrate(duration) {
 }
 
 // ============================================================
-// 📋 日志系统
+// 📋 日志系统（持久化版）
 // ============================================================
+var LOG_STORAGE_KEY = 'lucky_log_entries';
+var LOG_MAX_ENTRIES = 300;
+
+/**
+ * 把一条日志追加写入 localStorage
+ */
+function saveLogEntryToStorage(html, cls) {
+    try {
+        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+        arr.push({ html: html, cls: cls, ts: Date.now() });
+        if (arr.length > LOG_MAX_ENTRIES) {
+            arr = arr.slice(arr.length - LOG_MAX_ENTRIES);
+        }
+        localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(arr));
+    } catch (e) {}
+}
+
+/**
+ * 从 localStorage 恢复历史日志到 DOM
+ */
+function restoreLogFromStorage() {
+    try {
+        var logBox = document.getElementById('logBox');
+        if (!logBox) return;
+        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+        if (!arr.length) return;
+        for (var i = 0; i < arr.length; i++) {
+            var item = arr[i];
+            var entry = document.createElement('div');
+            entry.className = 'log-entry ' + (item.cls || '');
+            entry.innerHTML = item.html;
+            logBox.appendChild(entry);
+        }
+        logBox.scrollTop = logBox.scrollHeight;
+    } catch (e) {}
+}
+
+/**
+ * 清空日志（DOM + localStorage）
+ */
+function clearLogStorage() {
+    try {
+        localStorage.removeItem(LOG_STORAGE_KEY);
+    } catch (e) {}
+}
+
+/**
+ * 主日志入口：写 DOM + 写 localStorage
+ */
 function addLog(message, type) {
     var logBox = document.getElementById('logBox');
     if (!logBox) { console.log(message); return; }
-    var entry = document.createElement('div');
+
     var time = new Date().toLocaleTimeString();
     var className = 'log-entry';
     if (type === 'hit') className += ' log-hit';
@@ -83,11 +132,22 @@ function addLog(message, type) {
     else if (type === 'success') className += ' log-success';
     else if (type === 'system') className += ' log-system';
     else if (type === 'warning') className += ' log-warning';
+
+    var html = '<span class="time">[' + time + ']</span>' + message;
+
+    var entry = document.createElement('div');
     entry.className = className;
-    entry.innerHTML = '<span class="time">[' + time + ']</span>' + message;
+    entry.innerHTML = html;
     logBox.appendChild(entry);
     logBox.scrollTop = logBox.scrollHeight;
-    if (logBox.children.length > 200) logBox.removeChild(logBox.firstChild);
+
+    // 写入持久化存储
+    saveLogEntryToStorage(html, className);
+
+    // 限制 DOM 节点数，防止卡顿
+    if (logBox.children.length > LOG_MAX_ENTRIES) {
+        logBox.removeChild(logBox.firstChild);
+    }
 }
 
 // ============================================================
@@ -170,14 +230,6 @@ function saveSeatMapToLocal(seatMap) {
 
 // ============================================================
 // 🔐 Token 有效性检测
-// ------------------------------------------------------------
-// 修复说明：原生 apiRequest 在网络异常时不会让 Promise reject，
-// 而是 resolve 一个 {error: "..."} 形状的对象（没有 code 字段）。
-// 之前的逻辑只看 result.code，网络异常时 code 是 undefined，
-// 会被误判进 else 分支，当成 "Token 无效"，进而触发强制跳转到
-// 配置页——即便 Token 完全没问题，只是网络抖了一下。
-// 这里显式判断 result.error，把"网络异常"和"Token 真的失效"
-// 两种情况分开返回。
 // ============================================================
 async function checkTokenValidity() {
     var token = loadData('token', '');
@@ -194,8 +246,6 @@ async function checkTokenValidity() {
     try {
         var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=1', 'GET');
 
-        // 原生层网络/请求异常：result 形如 {error: "timeout"}，没有 code 字段。
-        // 这种情况不代表 Token 失效，不应该跳转到配置页。
         if (result && result.error !== undefined && result.code === undefined) {
             return { valid: true, networkError: true, reason: result.error };
         }
@@ -208,8 +258,6 @@ async function checkTokenValidity() {
             return { valid: false, reason: result.msg || 'Token 无效' };
         }
     } catch(e) {
-        // 理论上 callApi 不会 reject（除非 AndroidBridge 本身不可用），
-        // 但保留这个分支作为兜底，同样按"网络异常"处理，不阻断使用。
         return { valid: true, networkError: true, reason: e.message };
     }
 }
