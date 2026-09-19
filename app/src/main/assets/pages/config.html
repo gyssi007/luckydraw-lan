@@ -25,12 +25,142 @@
         .actions .btn-save { background: #3b82f6; color: #fff; }
         .actions .btn-test { background: #22c55e; color: #fff; }
         .actions button:active { opacity: 0.85; }
+        .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .status-msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
         .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
         .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
         .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
+        /* ============================================================ */
+        /* 手机号登录 */
+        /* ============================================================ */
+        .login-section {
+            margin-top: 0;
+            margin-bottom: 18px;
+            padding: 16px;
+            background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+            border: 1.5px solid #bfdbfe;
+            border-radius: 12px;
+        }
+        .login-section .login-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a2b3c;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .login-section .login-title .tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: #3b82f6;
+            background: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .login-field {
+            margin-bottom: 10px;
+        }
+        .login-field:last-of-type {
+            margin-bottom: 0;
+        }
+        .login-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334455;
+            margin-bottom: 5px;
+        }
+        .login-field .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .login-field input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            outline: none;
+            color: #1a2b3c;
+            min-height: 44px;
+        }
+        .login-field input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .login-field .btn-send-sms {
+            padding: 0 14px;
+            border: none;
+            border-radius: 8px;
+            background: #3b82f6;
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            min-height: 44px;
+            min-width: 100px;
+            transition: opacity .15s;
+        }
+        .login-field .btn-send-sms:active { opacity: 0.85; }
+        .login-field .btn-send-sms:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .login-section .btn-login {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            min-height: 48px;
+            margin-top: 12px;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.25);
+            transition: transform .12s, box-shadow .2s;
+        }
+        .login-section .btn-login:active { transform: scale(0.97); }
+        .login-section .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .login-section .login-status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #67798c;
+            text-align: center;
+            min-height: 16px;
+        }
+        .login-section .login-status.error { color: #dc2626; }
+        .login-section .login-status.success { color: #16a34a; }
+
+        .login-section .divider {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            margin: 14px 0 10px;
+            position: relative;
+        }
+        .login-section .divider::before,
+        .login-section .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 38%;
+            height: 1px;
+            background: #cbd5e1;
+        }
+        .login-section .divider::before { left: 0; }
+        .login-section .divider::after { right: 0; }
+
+        /* ============================================================ */
+        /* 操作区块 */
+        /* ============================================================ */
         .section-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid #eef2f6; }
         .section-block .section-label { font-size: 14px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; }
 
@@ -45,6 +175,9 @@
 
         .block-hint { font-size: 11px; color: #8a99aa; margin-top: 8px; line-height: 1.5; }
 
+        /* ============================================================ */
+        /* 钓场管理 */
+        /* ============================================================ */
         .venue-mgr-section { margin-top: 22px; border-top: 1px solid #eef2f6; padding-top: 18px; }
         .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .venue-mgr-section .count-badge { background: #eef2f6; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
@@ -58,7 +191,6 @@
         .venue-mgr-add { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; background: #f8fafc; min-height: 44px; }
         .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; }
-        /* 【新增】从订单选择按钮 */
         .btn-pick-from-orders {
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: #fff;
@@ -87,7 +219,9 @@
         .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
         .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8a99aa; font-size: 13px; }
 
-        /* 【新增】订单选择弹层 */
+        /* ============================================================ */
+        /* 订单选择弹层 */
+        /* ============================================================ */
         .order-picker-overlay {
             position: fixed; inset: 0;
             background: rgba(8,15,25,0.55);
@@ -180,6 +314,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* 底部导航 */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eef2f6; display: flex; justify-content: space-around; align-items: center; height: 62px; z-index: 999; }
         .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 500; text-decoration: none; position: relative; }
         .bottom-nav .tab .tab-icon { font-size: 19px; line-height: 1.2; }
@@ -187,6 +322,7 @@
         .bottom-nav .tab.active .tab-label { font-weight: 600; }
         .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #1a2b3c; border-radius: 0 0 3px 3px; }
 
+        /* 弹窗 */
         .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
         .app-dialog-mask.show { opacity: 1; }
         .app-dialog-card { background: #fff; border-radius: 18px; width: 100%; max-width: 320px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px) scale(.94); opacity: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; }
@@ -206,18 +342,52 @@
     <div class="page active" id="pageConfig">
         <div class="config-container">
             <div class="page-title">代理配置</div>
-            <div class="page-subtitle">配置 Token 和 UUID（已加密存储）</div>
+            <div class="page-subtitle">登录后自动获取 Token（已加密存储）</div>
 
+            <!-- ============================================================ -->
+            <!-- 手机号登录 -->
+            <!-- ============================================================ -->
+            <div class="login-section">
+                <div class="login-title">
+                    📱 手机号登录
+                    <span class="tag">推荐</span>
+                </div>
+
+                <div class="login-field">
+                    <label>手机号</label>
+                    <div class="input-row">
+                        <input id="loginMobile" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric" />
+                    </div>
+                </div>
+
+                <div class="login-field">
+                    <label>验证码</label>
+                    <div class="input-row">
+                        <input id="loginSmsCode" type="tel" maxlength="6" placeholder="请输入短信验证码" inputmode="numeric" />
+                        <button class="btn-send-sms" id="btnSendSms" onclick="onSendSms()">获取验证码</button>
+                    </div>
+                </div>
+
+                <button class="btn-login" id="btnSmsLogin" onclick="onSmsLogin()">登 录</button>
+
+                <div class="login-status" id="loginStatus"></div>
+
+                <div class="divider">或手动配置</div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 手动配置 -->
+            <!-- ============================================================ -->
             <div class="field">
                 <label>Token</label>
-                <textarea id="tokenInput" placeholder="Bearer ..."></textarea>
-                <div class="hint">复制 Authorization 头的完整值</div>
+                <textarea id="tokenInput" placeholder="Bearer ... 或直接粘贴 token" rows="3"></textarea>
+                <div class="hint">登录成功后自动填入。也可手动复制 Authorization 头的完整值</div>
             </div>
 
             <div class="field">
                 <label>UUID</label>
-                <input id="uuidInput" placeholder="1776084841949" />
-                <div class="hint">复制 uuid 头的值</div>
+                <input id="uuidInput" placeholder="任意非空字符串即可" />
+                <div class="hint">测试表明此字段不能为空，内容无实际校验</div>
             </div>
 
             <div class="actions">
@@ -226,6 +396,7 @@
             </div>
             <div id="configStatus" class="status-msg"></div>
 
+            <!-- 号码池操作 -->
             <div class="section-block">
                 <div class="section-label">号码池</div>
                 <div class="btn-row">
@@ -235,6 +406,7 @@
                 <div id="poolStatus" class="status-msg"></div>
             </div>
 
+            <!-- 配置备份 -->
             <div class="section-block">
                 <div class="section-label">配置备份</div>
                 <div class="btn-row">
@@ -245,6 +417,7 @@
                 <div id="backupStatus" class="status-msg"></div>
             </div>
 
+            <!-- 钓场管理 -->
             <div class="venue-mgr-section">
                 <div class="section-title">
                     <span>钓场管理</span>
@@ -256,7 +429,6 @@
                         <span class="arrow" id="dropdownArrow">▼</span>
                     </div>
                     <div class="venue-dropdown-body" id="venueDropdownBody">
-                        <!-- 【新增】从订单选择按钮 -->
                         <button class="btn-pick-from-orders" id="btnPickFromOrders" onclick="openOrderPicker()">
                             <span>📋</span>
                             <span>从我的订单中选择</span>
@@ -277,7 +449,7 @@
     </div>
 </div>
 
-<!-- 【新增】订单选择弹层 -->
+<!-- 订单选择弹层 -->
 <div class="order-picker-overlay" id="orderPickerOverlay">
     <div class="order-picker-panel">
         <div class="sheet-handle"></div>
@@ -355,7 +527,126 @@ function appConfirm(message, opts) {
 }
 
 // ============================================================
-// 下拉展开
+// 手机号登录
+// ============================================================
+var smsCountdown = 0;
+var smsTimer = null;
+
+function setLoginStatus(msg, type) {
+    var el = document.getElementById('loginStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'login-status' + (type ? ' ' + type : '');
+}
+
+async function onSendSms() {
+    var mobile = document.getElementById('loginMobile').value.trim();
+    if (!/^1\d{10}$/.test(mobile)) {
+        setLoginStatus('请输入正确的 11 位手机号', 'error');
+        return;
+    }
+    if (smsCountdown > 0) return;
+
+    var btn = document.getElementById('btnSendSms');
+    btn.disabled = true;
+    btn.textContent = '发送中...';
+    setLoginStatus('正在发送验证码...', '');
+
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token || '', uuid || '');
+    }
+
+    try {
+        var result = await callApi('/v2/commonApi/sendLoginCaptcha', 'POST', { mobile: mobile });
+        if (result.code === '000') {
+            setLoginStatus('✅ 验证码已发送，请查收短信', 'success');
+            smsCountdown = 60;
+            btn.textContent = smsCountdown + 's';
+            smsTimer = setInterval(function() {
+                smsCountdown--;
+                if (smsCountdown <= 0) {
+                    clearInterval(smsTimer);
+                    smsTimer = null;
+                    btn.disabled = false;
+                    btn.textContent = '获取验证码';
+                } else {
+                    btn.textContent = smsCountdown + 's';
+                }
+            }, 1000);
+        } else {
+            setLoginStatus('发送失败: ' + (result.msg || '未知错误'), 'error');
+            btn.disabled = false;
+            btn.textContent = '获取验证码';
+        }
+    } catch(e) {
+        setLoginStatus('发送异常: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '获取验证码';
+    }
+}
+
+async function onSmsLogin() {
+    var mobile = document.getElementById('loginMobile').value.trim();
+    var smsCode = document.getElementById('loginSmsCode').value.trim();
+
+    if (!/^1\d{10}$/.test(mobile)) {
+        setLoginStatus('请输入正确的 11 位手机号', 'error');
+        return;
+    }
+    if (!smsCode) {
+        setLoginStatus('请输入短信验证码', 'error');
+        return;
+    }
+
+    var btn = document.getElementById('btnSmsLogin');
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+    setLoginStatus('正在登录...', '');
+
+    var uuid = loadData('uuid', '');
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth('', uuid || '');
+    }
+
+    try {
+        var result = await callApi('/v2/userApi/auth/smsCodeLogin', 'POST', {
+            account: mobile,
+            sms_code: smsCode,
+            user_type: 'app'
+        });
+
+        if (result.code === '000' && result.data && result.data.token) {
+            var token = result.data.token;
+            var userInfo = result.data;
+
+            // 保存 token 到本地
+            saveData('token', token);
+
+            // 自动填入 Token 输入框
+            document.getElementById('tokenInput').value = token;
+
+            // 通知 AndroidBridge 设置 auth
+            if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+                window.AndroidBridge.setAuth(token, uuid || '');
+            }
+
+            setLoginStatus('✅ 登录成功，欢迎 ' + (userInfo.name || userInfo.account), 'success');
+            setStatusMsg('Token 已自动填入并保存', 'success');
+        } else {
+            setLoginStatus('登录失败: ' + (result.msg || '验证码错误或已过期'), 'error');
+        }
+    } catch(e) {
+        setLoginStatus('登录异常: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '登 录';
+    }
+}
+
+// ============================================================
+// 下拉展开（钓场管理）
 // ============================================================
 var dropdownToggle = document.getElementById('venueDropdownToggle');
 var dropdownBody = document.getElementById('venueDropdownBody');
@@ -529,7 +820,7 @@ async function deleteVenue(id) {
 }
 
 // ============================================================
-// 【新增】从订单列表中选择钓场
+// 从订单列表中选择钓场
 // ============================================================
 var _orderPickerList = [];
 
@@ -551,7 +842,6 @@ async function openOrderPicker() {
     }
 
     try {
-        // 拉取订单列表（page=1, limit=50 够用）
         var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=50', 'GET');
         if (result.code !== '000') {
             listEl.innerHTML = '<div class="empty">加载失败: ' + escapeHtml(result.msg || '未知错误') + '</div>';
@@ -560,7 +850,6 @@ async function openOrderPicker() {
 
         var orders = (result.data && result.data.list) || [];
 
-        // 按 product_id 去重
         var seen = {};
         var uniqueOrders = [];
         orders.forEach(function(o) {
@@ -570,7 +859,6 @@ async function openOrderPicker() {
             uniqueOrders.push(o);
         });
 
-        // 附加钓场名
         uniqueOrders.forEach(function(o) {
             var venueName = '';
             if (o.merchant_model && o.merchant_model.mer_name) {
@@ -581,7 +869,6 @@ async function openOrderPicker() {
             o._venueName = venueName || '未知钓场';
         });
 
-        // 已存在的订单ID集合
         var existingVenues = loadVenuesFromLocal() || [];
         var existingOrderIds = {};
         existingVenues.forEach(function(v) { existingOrderIds[String(v.order_id)] = true; });
@@ -644,7 +931,6 @@ async function pickOrder(idx) {
     saveVenuesToLocal(venues);
     renderVenueList(venues);
 
-    // 刷新弹层，把这条标记为已添加
     await openOrderPicker();
 }
 
@@ -652,7 +938,6 @@ function closeOrderPicker() {
     document.getElementById('orderPickerOverlay').classList.remove('show');
 }
 
-// 点遮罩关闭
 document.getElementById('orderPickerOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeOrderPicker();
 });
@@ -967,14 +1252,23 @@ async function refreshSeatMap() {
     var savedUuid = loadData('uuid', '');
     document.getElementById('tokenInput').value = savedToken;
     document.getElementById('uuidInput').value = savedUuid;
-    if (savedToken && savedUuid) {
-        setStatusMsg('已加载本机保存的 Token / UUID', 'success');
+
+    // 如果 uuid 为空，自动生成一个
+    if (!savedUuid) {
+        var autoUuid = String(Date.now());
+        document.getElementById('uuidInput').value = autoUuid;
+        saveData('uuid', autoUuid);
+    }
+
+    if (savedToken) {
+        setStatusMsg('已加载本机保存的 Token', 'success');
         if (window.AndroidBridge && window.AndroidBridge.setAuth) {
-            window.AndroidBridge.setAuth(savedToken, savedUuid);
+            window.AndroidBridge.setAuth(savedToken, loadData('uuid', ''));
         }
     } else {
-        setStatusMsg('请填写 Token 和 UUID，然后保存配置', 'info');
+        setStatusMsg('请用手机号登录，或手动填写 Token', 'info');
     }
+
     loadVenueList();
 })();
 </script>
