@@ -22,6 +22,28 @@
         }
         .lock-row .btn-stop-lock:active { transform: scale(0.94); }
 
+        .log-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: -4px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .log-toolbar .btn-clear-log {
+            background: #eef2f6;
+            color: #334455;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none !important;
+        }
+        .log-toolbar .btn-clear-log:active { transform: scale(0.94); }
+
         .switch-row {
             display: flex !important;
             flex-wrap: nowrap !important;
@@ -488,7 +510,6 @@
     <div class="page active" id="pageLucky">
         <div class="lucky-container">
             <div class="page-title">祝您爆护！</div>
-            
 
             <div class="form-group">
                 <label>📋 订单 ID</label>
@@ -535,7 +556,6 @@
                     <button class="btn-lock" id="btnLock">🔒 锁定</button>
                     <button class="btn-stop-lock" id="btnStopLock">⏹ 停止</button>
                 </div>
-                
             </div>
 
             <div class="status-box">
@@ -546,9 +566,11 @@
                 <div class="status-row"><span class="status-label">当前订单ID</span><span class="status-value" id="orderIdDisplay" style="font-size:12px;color:#64748b;">-</span></div>
             </div>
 
-            <div class="log-box" id="logBox">
-                <div class="log-entry log-system"><span class="time">[系统]</span>📌 系统就绪，等待操作...</div>
+            <div class="log-toolbar">
+                <span>运行日志</span>
+                <button class="btn-clear-log" id="btnClearLog">清空日志</button>
             </div>
+            <div class="log-box" id="logBox"></div>
         </div>
     </div>
 </div>
@@ -613,12 +635,54 @@ var luckyElements = {
     hitDetail: document.getElementById('hitDetail'),
     hitConfirm: document.getElementById('hitConfirm'),
     hitContinue: document.getElementById('hitContinue'),
-    hitStop: document.getElementById('hitStop')
+    hitStop: document.getElementById('hitStop'),
+    logBox: document.getElementById('logBox'),
+    btnClearLog: document.getElementById('btnClearLog')
 };
 
 var isAutoRunning = false;
 var isLocking = false;
 var lockVenues = [];
+
+// ============================================================
+// 日志持久化（localStorage）
+// ============================================================
+var LOG_STORAGE_KEY = 'lucky_log_entries';
+var LOG_MAX_ENTRIES = 300;
+
+function saveLogEntryToStorage(html, cls) {
+    try {
+        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+        arr.push({ html: html, cls: cls, ts: Date.now() });
+        if (arr.length > LOG_MAX_ENTRIES) {
+            arr = arr.slice(arr.length - LOG_MAX_ENTRIES);
+        }
+        localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(arr));
+    } catch (e) {}
+}
+
+function restoreLogFromStorage() {
+    try {
+        var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+        if (!arr.length) return;
+        for (var i = 0; i < arr.length; i++) {
+            var item = arr[i];
+            var entry = document.createElement('div');
+            entry.className = 'log-entry ' + (item.cls || '');
+            entry.innerHTML = item.html;
+            luckyElements.logBox.appendChild(entry);
+        }
+        luckyElements.logBox.scrollTop = luckyElements.logBox.scrollHeight;
+    } catch (e) {}
+}
+
+function clearLog() {
+    try {
+        localStorage.removeItem(LOG_STORAGE_KEY);
+    } catch (e) {}
+    luckyElements.logBox.innerHTML = '';
+    addLog('🗑️ 日志已清空', 'system');
+}
 
 // ============================================================
 // 配置
@@ -766,7 +830,6 @@ function loadLockVenues() {
 
 function renderLockVenueSelect() {
     var select = luckyElements.lockVenueSelect;
-    // 保留当前的选中值
     var currentVal = select.value;
     select.innerHTML = '<option value="__AUTO__">全自动识别</option><option value="">选择钓场</option>';
     lockVenues.forEach(function(v) {
@@ -775,14 +838,13 @@ function renderLockVenueSelect() {
         opt.textContent = v.name;
         select.appendChild(opt);
     });
-    // 恢复之前的选中
     if (currentVal) {
         select.value = currentVal;
     }
 }
 
 // ============================================================
-// 🔒 自动锁定（支持全自动识别）
+// 🔒 自动锁定
 // ============================================================
 function startLockLoop() {
     if (isLocking) {
@@ -822,7 +884,6 @@ function startLockLoop() {
     if (isAutoMode) {
         addLog('🤖 全自动模式: 座位 [' + seatNumbers.join(', ') + '] (等待订单出现...)', 'system');
         if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
-            // 传空字符串表示全自动模式，原生层收到后会启用自动识别
             window.AndroidBridge.startLockLoop(token, uuid, '', JSON.stringify(seatNumbers));
         } else {
             addLog('❌ AndroidBridge 不可用', 'error');
@@ -943,7 +1004,6 @@ async function performAutoLock(orderId, hitSeat) {
     }
 
     if (isAutoMode) {
-        // 全自动模式：调用原生层的自动锁定（会自动识别钓场）
         addLog('🤖 命中后全自动锁定...', 'system');
         if (window.AndroidBridge && window.AndroidBridge.startLockLoop) {
             window.AndroidBridge.startLockLoop(token, uuid, '', JSON.stringify([hitSeat]));
@@ -1101,21 +1161,26 @@ window._onLocked = function(seatNumber, orderId, venueName) {
     if (navigator.vibrate) navigator.vibrate(200);
     updateLuckyStatus('idle', null, [seatNumber], orderId);
     stopLockLoop();
-    // 刷新钓场下拉（可能有新钓场被自动添加）
     loadLockVenues();
 };
 
-// 全自动模式回调：识别到钓场
+// 【新增】锁定失败回调
+window._onLockFailed = function(reason, orderId, venueName) {
+    var msg = '❌ 锁定失败';
+    if (venueName) msg += ' (' + venueName + ')';
+    if (orderId) msg += ' 订单:' + orderId;
+    msg += ' 原因: ' + (reason || '未知');
+    addLog(msg, 'error');
+};
+
 window._onVenueDetected = function(venueName) {
     addLog('🎯 识别到钓场: ' + venueName, 'system');
 };
 
-// 全自动模式回调：正在生成号码池
 window._onVenueGenerating = function(venueName) {
     addLog('⏳ 首次遇到「' + venueName + '」，正在自动生成号码池...', 'warning');
 };
 
-// 全自动模式回调：号码池生成成功
 window._onVenueGenerated = function(venueName, seatCount) {
     addLog('✅ 号码池已生成: ' + venueName + ' (' + seatCount + ' 个座位)', 'success');
 };
@@ -1129,6 +1194,7 @@ luckyElements.btnAuto.addEventListener('click', startAuto);
 luckyElements.btnStop.addEventListener('click', stopAuto);
 luckyElements.btnLock.addEventListener('click', lockSeat);
 luckyElements.btnStopLock.addEventListener('click', stopLockLoop);
+luckyElements.btnClearLog.addEventListener('click', clearLog);
 
 luckyElements.hitConfirm.addEventListener('click', function() {
     closeHitModal();
@@ -1160,6 +1226,9 @@ window.addEventListener('beforeunload', function() {
 // 🚀 初始化
 // ============================================================
 (function initLuckyPage() {
+    // 恢复历史日志
+    restoreLogFromStorage();
+
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
@@ -1192,7 +1261,6 @@ window.addEventListener('beforeunload', function() {
         }
     });
 })();
-
 </script>
 </body>
 </html>
