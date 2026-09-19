@@ -73,6 +73,12 @@ public class MainActivity extends AppCompatActivity {
     private String lockTargetVenue = "";
     private String currentOrderId = "";
 
+    // 换号锁定专用状态
+    private boolean isTranspositionLocking = false;
+    private String transpositionParentOrderId = "";
+    private List<Integer> transpositionTargetSeats = new ArrayList<>();
+    private Runnable transpositionLockRunnable;
+
     // 轮询定时器
     private Runnable autoLoopRunnable;
     private Runnable lockLoopRunnable;
@@ -284,6 +290,27 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // ============================================================
+        // 【新增】换号锁定
+        // ============================================================
+        @JavascriptInterface
+        public void startTranspositionLock(String parentOrderId, String t, String u, String seatsJson) {
+            transpositionParentOrderId = parentOrderId;
+            token = t;
+            uuid = u;
+            transpositionTargetSeats = parseSeats(seatsJson);
+            isTranspositionLocking = true;
+            startTranspositionLockInternal();
+        }
+
+        @JavascriptInterface
+        public void stopTranspositionLock() {
+            isTranspositionLocking = false;
+            if (transpositionLockRunnable != null) {
+                handler.removeCallbacks(transpositionLockRunnable);
+            }
+        }
+
         @JavascriptInterface
         public String getStatus() {
             try {
@@ -292,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 stateObj.put("isRunning", isRunning);
                 stateObj.put("isHitting", isHitting);
                 stateObj.put("isLocking", isLocking);
+                stateObj.put("isTranspositionLocking", isTranspositionLocking);
                 stateObj.put("attemptCount", attemptCount);
                 stateObj.put("orderId", currentOrderId);
                 stateObj.put("lastSeats", new JSONArray(lastSeats));
@@ -310,9 +338,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /**
-         * 导出配置到手机 Download 目录
-         */
         @JavascriptInterface
         public String exportConfig(String json, String filename) {
             try {
@@ -350,9 +375,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /**
-         * 弹出系统文件选择器
-         */
         @JavascriptInterface
         public void pickFileForImport() {
             runOnUiThread(() -> {
@@ -494,7 +516,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // 自动锁定轮询
+    // 自动锁定轮询（现有）
     // ============================================================
     private void startLockLoopInternal() {
         if (lockLoopRunnable != null) {
@@ -609,6 +631,127 @@ public class MainActivity extends AppCompatActivity {
         handler.post(lockLoopRunnable);
     }
 
+    // ============================================================
+    // 【新增】换号锁定轮询（300ms 一次，专门抓换座订单）
+    // ============================================================
+    private void startTranspositionLockInternal() {
+        if (transpositionLockRunnable != null) {
+            handler.removeCallbacks(transpositionLockRunnable);
+        }
+        transpositionLockRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isTranspositionLocking) return;
+                new Thread(() -> {
+                    try {
+                        String ordersJson = callGetOrders(token, uuid);
+                        JSONObject json = new JSONObject(ordersJson);
+                        if ("000".equals(json.optString("code"))) {
+                            JSONObject dataObj = json.optJSONObject("data");
+                            if (dataObj != null) {
+                                JSONArray list = dataObj.optJSONArray("list");
+                                if (list != null) {
+                                    for (int i = 0; i < list.length(); i++) {
+                                        JSONObject o = list.getJSONObject(i);
+                                        JSONObject ticketItem = o.optJSONObject("order_ticket_item");
+                                        if (ticketItem == null) continue;
+
+                                        // 判断：是换座订单 + parent_order_id 匹配 + seat_id 为空
+                                        String parentId = o.optString("parent_order_id");
+                                        String seatId = ticketItem.optString("seat_id");
+
+                                        if (transpositionParentOrderId.equals(parentId)
+                                                && "0".equals(seatId)) {
+
+                                            String newOrderId = o.optString("order_id");
+                                            currentOrderId = newOrderId;
+
+                                            // 提取钓场名
+                                            String venueName = extractVenueName(o);
+                                            if (venueName == null || venueName.isEmpty()) {
+                                                if (isTranspositionLocking) handler.postDelayed(transpositionLockRunnable, 300);
+                                                return;
+                                            }
+
+                                            safeEvaluateJavascript("window._onTranspositionDetected("
+                                                    + JSONObject.quote(newOrderId) + ", "
+                                                    + JSONObject.quote(venueName) + ")");
+
+                                            // 从 seat_map.json 拿座位池
+                                            String seatMapJson = readLocalJson("seat_map.json", "{}");
+                                            JSONObject seatMap = new JSONObject(seatMapJson);
+                                            JSONObject venueData = seatMap.optJSONObject(venueName);
+
+                                            if (venueData == null) {
+                                                safeEvaluateJavascript("window._onTranspositionGenerating("
+                                                        + JSONObject.quote(venueName) + ")");
+
+                                                String seatListJson = callQuerySeatList(newOrderId, token, uuid);
+                                                JSONObject seatListResult = new JSONObject(seatListJson);
+                                                if ("000".equals(seatListResult.optString("code"))) {
+                                                    JSONObject seatData = seatListResult.optJSONObject("data");
+                                                    if (seatData != null) {
+                                                        JSONArray seatList = seatData.optJSONArray("seat_list");
+                                                        if (seatList != null) {
+                                                            JSONObject newMap = new JSONObject();
+                                                            for (int j = 0; j < seatList.length(); j++) {
+                                                                JSONObject seat = seatList.getJSONObject(j);
+                                                                newMap.put(seat.optString("seat_number"), seat.optString("product_ticket_seat_id"));
+                                                            }
+                                                            seatMap.put(venueName, newMap);
+                                                            writeLocalJson("seat_map.json", seatMap.toString());
+                                                            venueData = newMap;
+
+                                                            final int seatCount = seatList.length();
+                                                            safeEvaluateJavascript("window._onTranspositionGenerated("
+                                                                    + JSONObject.quote(venueName) + ", "
+                                                                    + seatCount + ")");
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if (venueData == null) {
+                                                if (isTranspositionLocking) handler.postDelayed(transpositionLockRunnable, 300);
+                                                return;
+                                            }
+
+                                            // 立刻锁定
+                                            for (int seatNum : transpositionTargetSeats) {
+                                                if (!isTranspositionLocking) break;
+                                                String targetSeatId = venueData.optString(String.valueOf(seatNum));
+                                                if (targetSeatId == null || targetSeatId.isEmpty()) continue;
+
+                                                String confirmResult = callConfirmSeat(newOrderId, targetSeatId, token, uuid);
+                                                JSONObject confirmJson = new JSONObject(confirmResult);
+                                                if ("000".equals(confirmJson.optString("code"))) {
+                                                    isTranspositionLocking = false;
+                                                    final int finalSeat = seatNum;
+                                                    final String finalVenue = venueName;
+                                                    safeEvaluateJavascript("window._onTranspositionLocked("
+                                                            + finalSeat + ", "
+                                                            + JSONObject.quote(newOrderId) + ", "
+                                                            + JSONObject.quote(finalVenue) + ")");
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (isTranspositionLocking) {
+                        handler.postDelayed(transpositionLockRunnable, 300);  // 300ms 一次
+                    }
+                }).start();
+            }
+        };
+        handler.post(transpositionLockRunnable);
+    }
+
     private String extractVenueName(JSONObject order) {
         try {
             if (order.has("merchant_model")) {
@@ -643,6 +786,13 @@ public class MainActivity extends AppCompatActivity {
         isLocking = false;
         if (lockLoopRunnable != null) {
             handler.removeCallbacks(lockLoopRunnable);
+        }
+    }
+
+    private void stopTranspositionLock() {
+        isTranspositionLocking = false;
+        if (transpositionLockRunnable != null) {
+            handler.removeCallbacks(transpositionLockRunnable);
         }
     }
 
@@ -826,6 +976,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         stopAutoLoop();
         stopLockLoop();
+        stopTranspositionLock();
         if (mediaPlayer != null) {
             try { mediaPlayer.release(); } catch (Exception ignored) {}
             mediaPlayer = null;
