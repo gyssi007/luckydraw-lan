@@ -8,164 +8,345 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
         body { background: #f5f7fa; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
         .app-container { max-width: 800px; width: 100%; padding: 12px 12px 100px; }
-        .config-container { background: #fff; border-radius: 14px; padding: 22px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
-        .page-title { font-size: 19px; font-weight: 700; color: #1a2b3c; margin-bottom: 4px; }
-        .page-subtitle { color: #8a99aa; font-size: 13px; margin-bottom: 22px; }
-
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 6px; }
-        .field textarea,
-        .field input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; font-family: monospace; background: #f8fafc; min-height: 42px; resize: vertical; outline: none; color: #1a2b3c; }
-        .field textarea:focus,
-        .field input:focus { border-color: #3b82f6; background: #fff; }
-        .field .hint { font-size: 11px; color: #8a99aa; margin-top: 5px; }
-
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-        .actions button { padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; flex: 1; min-width: 80px; min-height: 44px; }
-        .actions .btn-save { background: #3b82f6; color: #fff; }
-        .actions .btn-test { background: #22c55e; color: #fff; }
-        .actions button:active { opacity: 0.85; }
-        .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .status-msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
-        .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
-        .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
-        .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
         /* ============================================================ */
-        /* 手机号登录 */
+        /* 仪表盘顶栏 */
         /* ============================================================ */
-        .login-section {
-            margin-top: 0;
-            margin-bottom: 18px;
-            padding: 16px;
-            background: linear-gradient(135deg, #eff6ff, #f0f9ff);
-            border: 1.5px solid #bfdbfe;
-            border-radius: 12px;
+        .dashboard-header {
+            background: linear-gradient(135deg, #0a2f44, #1a5f7a);
+            border-radius: 16px;
+            padding: 18px 18px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 20px rgba(10,47,68,0.25);
+            position: relative;
+            overflow: hidden;
         }
-        .login-section .login-title {
-            font-size: 14px;
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .dashboard-header::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -20px;
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+        }
+        .dashboard-header .greeting {
+            color: #fff;
+            font-size: 16px;
             font-weight: 700;
-            color: #1a2b3c;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        .dashboard-header .sub-greeting {
+            color: rgba(255,255,255,0.65);
+            font-size: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================================ */
+        /* 统计卡片 */
+        /* ============================================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform .15s;
+        }
+        .stat-card:active { transform: scale(0.97); }
+        .stat-card .stat-icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+        .stat-card .stat-num {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+        .stat-card .stat-label {
+            font-size: 11px;
+            color: #6b8ba0;
+            margin-top: 4px;
+        }
+        .stat-card.blue .stat-num { color: #2563eb; }
+        .stat-card.green .stat-num { color: #16a34a; }
+        .stat-card.orange .stat-num { color: #ea580c; }
+        .stat-card.gray .stat-num { color: #64748b; }
+
+        /* ============================================================ */
+        /* 用户信息条（已登录时显示） */
+        /* ============================================================ */
+        .user-bar {
+            background: #fff;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 12px;
         }
-        .login-section .login-title .tag {
-            font-size: 11px;
+        .user-bar .avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 20px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-bar .avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .user-bar .user-meta {
+            flex: 1; min-width: 0;
+        }
+        .user-bar .user-meta .name {
+            font-size: 15px; font-weight: 700; color: #1a2b3c;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .user-bar .user-meta .account {
+            font-size: 12px; color: #8a99aa;
+            font-family: monospace;
+            margin-top: 2px;
+        }
+        .user-bar .btn-logout {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+            flex-shrink: 0;
+        }
+        .user-bar .btn-logout:active { background: #fee2e2; }
+
+        /* ============================================================ */
+        /* 登录区（未登录时显示，紧凑版） */
+        /* ============================================================ */
+        .login-card {
+            background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+            border: 1.5px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        .login-card .login-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .login-card .login-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #1a2b3c;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .login-card .login-title .tag {
+            font-size: 10px;
             font-weight: 500;
             color: #3b82f6;
             background: #fff;
-            padding: 2px 8px;
+            padding: 2px 7px;
             border-radius: 6px;
         }
-        .login-field {
-            margin-bottom: 10px;
-        }
-        .login-field:last-of-type {
-            margin-bottom: 0;
-        }
-        .login-field label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #334455;
-            margin-bottom: 5px;
-        }
-        .login-field .input-row {
+        .login-card .login-row {
             display: flex;
             gap: 8px;
-            align-items: stretch;
+            margin-bottom: 8px;
         }
-        .login-field input {
+        .login-card .login-row:last-child { margin-bottom: 0; }
+        .login-card input {
             flex: 1;
             min-width: 0;
-            padding: 10px 12px;
+            padding: 9px 12px;
             border: 1px solid #dce4ec;
             border-radius: 8px;
             font-size: 14px;
             background: #fff;
             outline: none;
             color: #1a2b3c;
-            min-height: 44px;
+            min-height: 40px;
         }
-        .login-field input:focus {
+        .login-card input:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-        .login-field .btn-send-sms {
-            padding: 0 14px;
+        .login-card .btn-send-sms {
+            padding: 0 12px;
             border: none;
             border-radius: 8px;
             background: #3b82f6;
             color: #fff;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12.5px;
             cursor: pointer;
             white-space: nowrap;
-            min-height: 44px;
-            min-width: 100px;
-            transition: opacity .15s;
+            min-height: 40px;
+            min-width: 92px;
         }
-        .login-field .btn-send-sms:active { opacity: 0.85; }
-        .login-field .btn-send-sms:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .login-section .btn-login {
+        .login-card .btn-send-sms:active { opacity: 0.85; }
+        .login-card .btn-send-sms:disabled { opacity: 0.5; cursor: not-allowed; }
+        .login-card .btn-login {
             width: 100%;
-            padding: 12px;
+            padding: 11px;
             border: none;
             border-radius: 10px;
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #fff;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
-            min-height: 48px;
-            margin-top: 12px;
+            min-height: 44px;
             box-shadow: 0 4px 12px rgba(34,197,94,0.25);
-            transition: transform .12s, box-shadow .2s;
+            transition: transform .12s;
         }
-        .login-section .btn-login:active { transform: scale(0.97); }
-        .login-section .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .login-section .login-status {
-            margin-top: 10px;
+        .login-card .btn-login:active { transform: scale(0.97); }
+        .login-card .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .login-card .login-status {
+            margin-top: 8px;
             font-size: 12px;
             color: #67798c;
             text-align: center;
-            min-height: 16px;
+            min-height: 15px;
         }
-        .login-section .login-status.error { color: #dc2626; }
-        .login-section .login-status.success { color: #16a34a; }
+        .login-card .login-status.error { color: #dc2626; }
+        .login-card .login-status.success { color: #16a34a; }
 
-        .login-section .divider {
-            text-align: center;
+        /* ============================================================ */
+        /* 折叠区块 */
+        /* ============================================================ */
+        .section-fold {
+            background: #fff;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .section-fold .fold-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .section-fold .fold-head:active { background: #f8fafc; }
+        .section-fold .fold-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a2b3c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-fold .fold-title .icon {
+            font-size: 16px;
+        }
+        .section-fold .fold-title .badge {
             font-size: 11px;
+            color: #3b82f6;
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .section-fold .fold-arrow {
             color: #94a3b8;
-            margin: 14px 0 10px;
-            position: relative;
+            font-size: 12px;
+            transition: transform .25s;
         }
-        .login-section .divider::before,
-        .login-section .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 38%;
-            height: 1px;
-            background: #cbd5e1;
+        .section-fold .fold-arrow.open { transform: rotate(180deg); }
+        .section-fold .fold-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease;
+            padding: 0 16px;
         }
-        .login-section .divider::before { left: 0; }
-        .login-section .divider::after { right: 0; }
+        .section-fold .fold-body.open {
+            padding: 0 16px 16px;
+        }
 
         /* ============================================================ */
-        /* 操作区块 */
+        /* 表单 */
         /* ============================================================ */
-        .section-block { margin-top: 22px; padding-top: 18px; border-top: 1px solid #eef2f6; }
-        .section-block .section-label { font-size: 14px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #334455; margin-bottom: 6px; }
+        .field textarea,
+        .field input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: monospace;
+            background: #f8fafc;
+            min-height: 42px;
+            resize: vertical;
+            outline: none;
+            color: #1a2b3c;
+        }
+        .field textarea:focus,
+        .field input:focus { border-color: #3b82f6; background: #fff; }
+        .field .hint { font-size: 11px; color: #8a99aa; margin-top: 5px; }
+
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .actions button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 80px;
+            min-height: 44px;
+        }
+        .actions .btn-save { background: #3b82f6; color: #fff; }
+        .actions .btn-test { background: #22c55e; color: #fff; }
+        .actions button:active { opacity: 0.85; }
+        .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-msg { margin-top: 12px; padding: 9px 12px; border-radius: 8px; font-size: 12.5px; display: none; }
+        .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
+        .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
+        .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
 
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-row button { flex: 1; min-width: 120px; padding: 11px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; color: #fff; }
+        .btn-row button {
+            flex: 1;
+            min-width: 120px;
+            padding: 11px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 44px;
+            color: #fff;
+        }
         .btn-row .btn-auto-venues { background: #8b5cf6; }
         .btn-row .btn-refresh-pool { background: #f59e0b; }
         .btn-row .btn-export { background: #0ea5e9; }
@@ -178,19 +359,28 @@
         /* ============================================================ */
         /* 钓场管理 */
         /* ============================================================ */
-        .venue-mgr-section { margin-top: 22px; border-top: 1px solid #eef2f6; padding-top: 18px; }
-        .venue-mgr-section .section-title { font-size: 15px; font-weight: 700; color: #1a2b3c; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .venue-mgr-section .count-badge { background: #eef2f6; color: #334455; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
-        .venue-dropdown-wrapper { border: 1px solid #eef2f6; border-radius: 10px; overflow: hidden; background: #f8fafc; }
-        .venue-dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; cursor: pointer; background: #fff; }
-        .venue-dropdown-header .title { font-weight: 600; color: #1a2b3c; font-size: 14px; }
-        .venue-dropdown-header .arrow { color: #94a3b8; font-size: 12px; transition: transform .2s; }
-        .venue-dropdown-header .arrow.open { transform: rotate(180deg); }
-        .venue-dropdown-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; padding: 0 16px; background: #fff; }
-        .venue-dropdown-body.open { padding: 12px 16px 16px; }
         .venue-mgr-add { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .venue-mgr-add input { width: 100%; padding: 10px 12px; border: 1px solid #dce4ec; border-radius: 8px; font-size: 13px; background: #f8fafc; min-height: 44px; }
-        .venue-mgr-add .btn-add { align-self: flex-end; background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-weight: 600; font-size: 13px; cursor: pointer; min-height: 44px; }
+        .venue-mgr-add input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dce4ec;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #f8fafc;
+            min-height: 44px;
+        }
+        .venue-mgr-add .btn-add {
+            align-self: flex-end;
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 22px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 44px;
+        }
         .btn-pick-from-orders {
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: #fff;
@@ -212,11 +402,28 @@
         .btn-pick-from-orders:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .venue-mgr-list { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
-        .venue-mgr-item { background: #f8fafc; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+        .venue-mgr-item {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         .venue-mgr-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
         .venue-mgr-item .info .name { font-weight: 600; color: #1a2b3c; font-size: 14px; }
         .venue-mgr-item .info .order-id { color: #8a99aa; font-size: 11px; font-family: monospace; }
-        .venue-mgr-item .btn-del { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
+        .venue-mgr-item .btn-del {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 36px;
+        }
         .venue-mgr-empty, .venue-mgr-loading { text-align: center; padding: 20px; color: #8a99aa; font-size: 13px; }
 
         /* ============================================================ */
@@ -225,7 +432,8 @@
         .order-picker-overlay {
             position: fixed; inset: 0;
             background: rgba(8,15,25,0.55);
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             z-index: 2500;
             display: flex;
             align-items: flex-end;
@@ -248,7 +456,13 @@
             padding: 8px 0 0;
         }
         .order-picker-overlay.show .order-picker-panel { transform: translateY(0); }
-        .order-picker-panel .sheet-handle { width: 38px; height: 5px; border-radius: 3px; background: #e2e8f0; margin: 6px auto 12px; flex-shrink: 0; }
+        .order-picker-panel .sheet-handle {
+            width: 38px; height: 5px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            margin: 6px auto 12px;
+            flex-shrink: 0;
+        }
         .order-picker-panel .panel-title {
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px 12px;
@@ -282,10 +496,7 @@
             transition: all .15s;
         }
         .order-picker-panel .order-item:active { background: #eef2f6; transform: scale(0.98); }
-        .order-picker-panel .order-item.already {
-            background: #f0fdf4;
-            border-color: #86efac;
-        }
+        .order-picker-panel .order-item.already { background: #f0fdf4; border-color: #86efac; }
         .order-picker-panel .order-item .info { flex: 1; min-width: 0; }
         .order-picker-panel .order-item .name {
             font-weight: 600; font-size: 14px; color: #1a2b3c;
@@ -308,76 +519,123 @@
             text-align: center; padding: 40px 20px; color: #8a99aa; font-size: 13px;
         }
         .order-picker-panel .loading .spinner {
-            width: 28px; height: 28px; border: 3px solid #e0e8f0; border-top-color: #3b82f6;
-            border-radius: 50%; animation: spin .8s linear infinite;
+            width: 28px; height: 28px;
+            border: 3px solid #e0e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
             margin: 0 auto 12px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ============================================================ */
         /* 底部导航 */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eef2f6; display: flex; justify-content: space-around; align-items: center; height: 62px; z-index: 999; }
-        .bottom-nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0; color: #94a3b8; font-size: 11px; font-weight: 500; text-decoration: none; position: relative; }
+        /* ============================================================ */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-top: 1px solid #eef2f6;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 62px;
+            z-index: 999;
+        }
+        .bottom-nav .tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 0;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            position: relative;
+        }
         .bottom-nav .tab .tab-icon { font-size: 19px; line-height: 1.2; }
-        .bottom-nav .tab.active .tab-icon, .bottom-nav .tab.active .tab-label { color: #1a2b3c; }
+        .bottom-nav .tab.active .tab-icon,
+        .bottom-nav .tab.active .tab-label { color: #1a2b3c; }
         .bottom-nav .tab.active .tab-label { font-weight: 600; }
-        .bottom-nav .tab.active::after { content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: #1a2b3c; border-radius: 0 0 3px 3px; }
-
-        /* 弹窗 */
-        .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
-        .app-dialog-mask.show { opacity: 1; }
-        .app-dialog-card { background: #fff; border-radius: 18px; width: 100%; max-width: 320px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px) scale(.94); opacity: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; }
-        .app-dialog-mask.show .app-dialog-card { transform: translateY(0) scale(1); opacity: 1; }
-        .app-dialog-title { font-size: 16px; font-weight: 700; color: #1a2b3c; margin-bottom: 8px; }
-        .app-dialog-msg { font-size: 13.5px; color: #67798c; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; word-break: break-word; }
-        .app-dialog-btns { display: flex; gap: 10px; }
-        .app-dialog-btn { flex: 1; border: none; border-radius: 10px; padding: 12px 10px; font-size: 14.5px; font-weight: 600; cursor: pointer; min-height: 46px; transition: transform .12s; }
-        .app-dialog-btn:active { transform: scale(.95); }
-        .app-dialog-btn.primary { background: #3b82f6; color: #fff; }
-        .app-dialog-btn.danger { background: #ef4444; color: #fff; }
-        .app-dialog-btn.secondary { background: #eef2f6; color: #334455; }
+        .bottom-nav .tab.active::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 30%; right: 30%;
+            height: 3px;
+            background: #1a2b3c;
+            border-radius: 0 0 3px 3px;
+        }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <div class="page active" id="pageConfig">
-        <div class="config-container">
-            <div class="page-title">代理配置</div>
-            <div class="page-subtitle">登录后自动获取 Token（已加密存储）</div>
 
-            <!-- ============================================================ -->
-            <!-- 手机号登录 -->
-            <!-- ============================================================ -->
-            <div class="login-section">
-                <div class="login-title">
-                    📱 手机号登录
-                    <span class="tag">推荐</span>
-                </div>
+    <!-- 顶部仪表盘 -->
+    <div class="dashboard-header">
+        <div class="greeting" id="dashboardGreeting">⚙️ 代理配置</div>
+        <div class="sub-greeting" id="dashboardSubGreeting">管理您的账号与钓场数据</div>
+    </div>
 
-                <div class="login-field">
-                    <label>手机号</label>
-                    <div class="input-row">
-                        <input id="loginMobile" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric" />
-                    </div>
-                </div>
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon">🎣</div>
+            <div class="stat-num" id="statVenues">0</div>
+            <div class="stat-label">钓场数</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon">💺</div>
+            <div class="stat-num" id="statSeats">0</div>
+            <div class="stat-label">座位数</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon">🔑</div>
+            <div class="stat-num" id="statStatus">-</div>
+            <div class="stat-label">登录状态</div>
+        </div>
+    </div>
 
-                <div class="login-field">
-                    <label>验证码</label>
-                    <div class="input-row">
-                        <input id="loginSmsCode" type="tel" maxlength="6" placeholder="请输入短信验证码" inputmode="numeric" />
-                        <button class="btn-send-sms" id="btnSendSms" onclick="onSendSms()">获取验证码</button>
-                    </div>
-                </div>
+    <!-- 用户信息条（已登录时显示） -->
+    <div class="user-bar" id="userBar" style="display:none;">
+        <div class="avatar" id="userAvatar">👤</div>
+        <div class="user-meta">
+            <div class="name" id="userName">-</div>
+            <div class="account" id="userAccount">-</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">退出</button>
+    </div>
 
-                <button class="btn-login" id="btnSmsLogin" onclick="onSmsLogin()">登 录</button>
-
-                <div class="login-status" id="loginStatus"></div>
-
-                <div class="divider">或手动配置</div>
+    <!-- 登录卡片（未登录时显示） -->
+    <div class="login-card" id="loginCard">
+        <div class="login-head">
+            <div class="login-title">
+                📱 手机号登录
+                <span class="tag">推荐</span>
             </div>
+        </div>
+        <div class="login-row">
+            <input id="loginMobile" type="tel" maxlength="11" placeholder="请输入手机号" inputmode="numeric" />
+        </div>
+        <div class="login-row">
+            <input id="loginSmsCode" type="tel" maxlength="6" placeholder="请输入验证码" inputmode="numeric" />
+            <button class="btn-send-sms" id="btnSendSms" onclick="onSendSms()">获取验证码</button>
+        </div>
+        <button class="btn-login" id="btnSmsLogin" onclick="onSmsLogin()">登 录</button>
+        <div class="login-status" id="loginStatus"></div>
+    </div>
 
-            <!-- ============================================================ -->
-            <!-- 手动配置 -->
-            <!-- ============================================================ -->
+    <!-- 手动 Token 配置 -->
+    <div class="section-fold" id="foldManual">
+        <div class="fold-head" onclick="toggleFold('foldManual')">
+            <div class="fold-title">
+                <span class="icon">🔧</span>
+                <span>手动配置 Token</span>
+            </div>
+            <span class="fold-arrow" id="foldManualArrow">▼</span>
+        </div>
+        <div class="fold-body" id="foldManualBody">
             <div class="field">
                 <label>Token</label>
                 <textarea id="tokenInput" placeholder="Bearer ... 或直接粘贴 token" rows="3"></textarea>
@@ -395,58 +653,74 @@
                 <button class="btn-test" onclick="testConfig()">测试连接</button>
             </div>
             <div id="configStatus" class="status-msg"></div>
+        </div>
+    </div>
 
-            <!-- 号码池操作 -->
-            <div class="section-block">
-                <div class="section-label">号码池</div>
-                <div class="btn-row">
-                    <button class="btn-auto-venues" id="btnAutoVenues" onclick="autoGenerateVenues()">自动生成钓场库</button>
-                    <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">刷新号码池</button>
-                </div>
-                <div id="poolStatus" class="status-msg"></div>
+    <!-- 号码池 -->
+    <div class="section-fold" id="foldPool">
+        <div class="fold-head" onclick="toggleFold('foldPool')">
+            <div class="fold-title">
+                <span class="icon">💺</span>
+                <span>号码池</span>
+                <span class="badge" id="poolBadge">0 座</span>
             </div>
-
-            <!-- 配置备份 -->
-            <div class="section-block">
-                <div class="section-label">配置备份</div>
-                <div class="btn-row">
-                    <button class="btn-export" id="btnExport" onclick="exportConfig()">导出配置</button>
-                    <button class="btn-import" id="btnImport" onclick="importConfig()">导入配置</button>
-                </div>
-                <div class="block-hint">导出后文件保存在手机「下载」目录；导入时从系统文件选择器选择 JSON 文件。</div>
-                <div id="backupStatus" class="status-msg"></div>
+            <span class="fold-arrow" id="foldPoolArrow">▼</span>
+        </div>
+        <div class="fold-body" id="foldPoolBody">
+            <div class="btn-row">
+                <button class="btn-auto-venues" id="btnAutoVenues" onclick="autoGenerateVenues()">自动生成钓场库</button>
+                <button class="btn-refresh-pool" id="btnRefreshPool" onclick="refreshSeatMap()">刷新号码池</button>
             </div>
+            <div id="poolStatus" class="status-msg"></div>
+        </div>
+    </div>
 
-            <!-- 钓场管理 -->
-            <div class="venue-mgr-section">
-                <div class="section-title">
-                    <span>钓场管理</span>
-                    <span class="count-badge" id="venueCount">0 个</span>
-                </div>
-                <div class="venue-dropdown-wrapper">
-                    <div class="venue-dropdown-header" id="venueDropdownToggle">
-                        <span class="title">管理钓场列表</span>
-                        <span class="arrow" id="dropdownArrow">▼</span>
-                    </div>
-                    <div class="venue-dropdown-body" id="venueDropdownBody">
-                        <button class="btn-pick-from-orders" id="btnPickFromOrders" onclick="openOrderPicker()">
-                            <span>📋</span>
-                            <span>从我的订单中选择</span>
-                        </button>
+    <!-- 配置备份 -->
+    <div class="section-fold" id="foldBackup">
+        <div class="fold-head" onclick="toggleFold('foldBackup')">
+            <div class="fold-title">
+                <span class="icon">💾</span>
+                <span>配置备份</span>
+            </div>
+            <span class="fold-arrow" id="foldBackupArrow">▼</span>
+        </div>
+        <div class="fold-body" id="foldBackupBody">
+            <div class="btn-row">
+                <button class="btn-export" id="btnExport" onclick="exportConfig()">导出配置</button>
+                <button class="btn-import" id="btnImport" onclick="importConfig()">导入配置</button>
+            </div>
+            <div class="block-hint">导出后文件保存在手机「下载」目录；导入时从系统文件选择器选择 JSON 文件。</div>
+            <div id="backupStatus" class="status-msg"></div>
+        </div>
+    </div>
 
-                        <div class="venue-mgr-add">
-                            <input id="venueNameInput" placeholder="钓场名称（手动输入）" />
-                            <input id="venueOrderIdInput" placeholder="订单 ID（手动输入）" />
-                            <button class="btn-add" onclick="addVenue()">添加</button>
-                        </div>
-                        <div class="venue-mgr-list" id="venueMgrList">
-                            <div class="venue-mgr-loading">加载中...</div>
-                        </div>
-                    </div>
-                </div>
+    <!-- 钓场管理 -->
+    <div class="section-fold" id="foldVenues">
+        <div class="fold-head" onclick="toggleFold('foldVenues')">
+            <div class="fold-title">
+                <span class="icon">🎣</span>
+                <span>钓场管理</span>
+                <span class="badge" id="venueCount">0 个</span>
+            </div>
+            <span class="fold-arrow" id="foldVenuesArrow">▼</span>
+        </div>
+        <div class="fold-body" id="foldVenuesBody">
+            <button class="btn-pick-from-orders" id="btnPickFromOrders" onclick="openOrderPicker()">
+                <span>📋</span>
+                <span>从我的订单中选择</span>
+            </button>
+
+            <div class="venue-mgr-add">
+                <input id="venueNameInput" placeholder="钓场名称（手动输入）" />
+                <input id="venueOrderIdInput" placeholder="订单 ID（手动输入）" />
+                <button class="btn-add" onclick="addVenue()">添加</button>
+            </div>
+            <div class="venue-mgr-list" id="venueMgrList">
+                <div class="venue-mgr-loading">加载中...</div>
             </div>
         </div>
     </div>
+
 </div>
 
 <!-- 订单选择弹层 -->
@@ -472,58 +746,111 @@
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 原生风格弹窗
+// 折叠区块
 // ============================================================
-function appDialog(opts) {
-    return new Promise(function(resolve) {
-        var mask = document.createElement('div');
-        mask.className = 'app-dialog-mask';
-        var btnsHtml = '';
-        opts.buttons.forEach(function(b, i) {
-            btnsHtml += '<button class="app-dialog-btn ' + (b.type || 'secondary') + '" data-i="' + i + '">' + b.text + '</button>';
-        });
-        mask.innerHTML =
-            '<div class="app-dialog-card">' +
-                '<div class="app-dialog-title">' + opts.title + '</div>' +
-                '<div class="app-dialog-msg">' + opts.message + '</div>' +
-                '<div class="app-dialog-btns">' + btnsHtml + '</div>' +
-            '</div>';
-        document.body.appendChild(mask);
-        requestAnimationFrame(function() { mask.classList.add('show'); });
+var _foldStates = {};
 
-        function close(val) {
-            mask.classList.remove('show');
-            setTimeout(function() { mask.remove(); }, 220);
-            resolve(val);
+function toggleFold(foldId) {
+    var body = document.getElementById(foldId + 'Body');
+    var arrow = document.getElementById(foldId + 'Arrow');
+    if (!body || !arrow) return;
+
+    if (_foldStates[foldId]) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        void body.offsetHeight;
+        body.style.maxHeight = '0px';
+        body.classList.remove('open');
+        arrow.classList.remove('open');
+        _foldStates[foldId] = false;
+    } else {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.classList.add('open');
+        arrow.classList.add('open');
+        _foldStates[foldId] = true;
+    }
+}
+
+function openFold(foldId) {
+    if (_foldStates[foldId]) return;
+    toggleFold(foldId);
+    setTimeout(function() {
+        var body = document.getElementById(foldId + 'Body');
+        if (body) body.style.maxHeight = 'none';
+    }, 320);
+}
+
+// 折叠区块展开后，允许内容自动增高
+document.querySelectorAll('.fold-body').forEach(function(el) {
+    el.addEventListener('transitionend', function(e) {
+        if (e.propertyName === 'max-height') {
+            var id = el.id.replace('Body', '');
+            if (_foldStates[id]) el.style.maxHeight = 'none';
         }
-        mask.querySelectorAll('.app-dialog-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var idx = parseInt(btn.getAttribute('data-i'), 10);
-                close(opts.buttons[idx].value);
-            });
-        });
     });
-}
+});
 
-function appAlert(message, opts) {
-    opts = opts || {};
-    return appDialog({
-        title: opts.title || '提示',
-        message: message,
-        buttons: [{ text: opts.okText || '知道了', type: 'primary', value: true }]
-    });
-}
+// ============================================================
+// 顶部仪表盘刷新
+// ============================================================
+function refreshDashboard() {
+    var token = loadData('token', '');
+    var name = loadData('user_name', '');
+    var account = loadData('user_account', '');
+    var avatar = loadData('user_avatar', '');
 
-function appConfirm(message, opts) {
-    opts = opts || {};
-    return appDialog({
-        title: opts.title || '请确认',
-        message: message,
-        buttons: [
-            { text: opts.cancelText || '取消', type: 'secondary', value: false },
-            { text: opts.okText || '确定', type: opts.danger ? 'danger' : 'primary', value: true }
-        ]
-    });
+    // 顶部问候语
+    var greetingEl = document.getElementById('dashboardGreeting');
+    var subEl = document.getElementById('dashboardSubGreeting');
+
+    if (token && name) {
+        greetingEl.textContent = '👋 ' + name;
+        subEl.textContent = account || '已登录';
+    } else {
+        greetingEl.textContent = '⚙️ 代理配置';
+        subEl.textContent = '管理您的账号与钓场数据';
+    }
+
+    // 用户信息条
+    var userBar = document.getElementById('userBar');
+    var loginCard = document.getElementById('loginCard');
+
+    if (token && (name || account)) {
+        userBar.style.display = 'flex';
+        loginCard.style.display = 'none';
+        document.getElementById('userName').textContent = name || '已登录';
+        document.getElementById('userAccount').textContent = account || '';
+
+        var avatarEl = document.getElementById('userAvatar');
+        if (avatar) {
+            avatarEl.innerHTML = '<img src="' + escapeHtml(avatar) + '" alt="" onerror="this.style.display=\'none\'">';
+        } else {
+            avatarEl.innerHTML = '👤';
+        }
+
+        document.getElementById('statStatus').textContent = '✓';
+        document.getElementById('statStatus').style.color = '#16a34a';
+    } else {
+        userBar.style.display = 'none';
+        loginCard.style.display = 'block';
+        document.getElementById('statStatus').textContent = '未登录';
+        document.getElementById('statStatus').style.color = '#ea580c';
+    }
+
+    // 钓场统计
+    var venues = loadVenuesFromLocal() || [];
+    document.getElementById('statVenues').textContent = venues.length;
+    document.getElementById('venueCount').textContent = venues.length + ' 个';
+
+    // 座位统计
+    var seatMap = loadSeatMapFromLocal() || {};
+    var totalSeats = 0;
+    for (var k in seatMap) {
+        if (typeof seatMap[k] === 'object') {
+            totalSeats += Object.keys(seatMap[k]).length;
+        }
+    }
+    document.getElementById('statSeats').textContent = totalSeats;
+    document.getElementById('poolBadge').textContent = totalSeats + ' 座';
 }
 
 // ============================================================
@@ -621,19 +948,20 @@ async function onSmsLogin() {
             var token = result.data.token;
             var userInfo = result.data;
 
-            // 保存 token 到本地
             saveData('token', token);
+            saveData('user_name', userInfo.name || '');
+            saveData('user_account', userInfo.account || '');
+            saveData('user_avatar', userInfo.avatar || '');
+            saveData('user_id', userInfo.user_id || '');
 
-            // 自动填入 Token 输入框
             document.getElementById('tokenInput').value = token;
 
-            // 通知 AndroidBridge 设置 auth
             if (window.AndroidBridge && window.AndroidBridge.setAuth) {
                 window.AndroidBridge.setAuth(token, uuid || '');
             }
 
-            setLoginStatus('✅ 登录成功，欢迎 ' + (userInfo.name || userInfo.account), 'success');
-            setStatusMsg('Token 已自动填入并保存', 'success');
+            setLoginStatus('✅ 登录成功', 'success');
+            refreshDashboard();
         } else {
             setLoginStatus('登录失败: ' + (result.msg || '验证码错误或已过期'), 'error');
         }
@@ -646,39 +974,35 @@ async function onSmsLogin() {
 }
 
 // ============================================================
-// 下拉展开（钓场管理）
+// 退出登录
 // ============================================================
-var dropdownToggle = document.getElementById('venueDropdownToggle');
-var dropdownBody = document.getElementById('venueDropdownBody');
-var dropdownArrow = document.getElementById('dropdownArrow');
-var isDropdownOpen = false;
-
-dropdownToggle.addEventListener('click', function() {
-    if (isDropdownOpen) {
-        dropdownBody.style.maxHeight = dropdownBody.scrollHeight + 'px';
-        void dropdownBody.offsetHeight;
-        dropdownBody.style.maxHeight = '0px';
-        dropdownArrow.classList.remove('open');
-        isDropdownOpen = false;
-    } else {
-        dropdownBody.style.maxHeight = dropdownBody.scrollHeight + 'px';
-        dropdownArrow.classList.add('open');
-        isDropdownOpen = true;
-    }
-});
-
-dropdownBody.addEventListener('transitionend', function(e) {
-    if (e.propertyName === 'max-height' && isDropdownOpen) {
-        dropdownBody.style.maxHeight = 'none';
-    }
-});
+function logout() {
+    appConfirm('确定要退出登录吗？', { danger: true, okText: '退出' }).then(function(ok) {
+        if (!ok) return;
+        saveData('token', '');
+        saveData('user_name', '');
+        saveData('user_account', '');
+        saveData('user_avatar', '');
+        saveData('user_id', '');
+        if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+            window.AndroidBridge.setAuth('', loadData('uuid', ''));
+        }
+        document.getElementById('tokenInput').value = '';
+        document.getElementById('loginMobile').value = '';
+        document.getElementById('loginSmsCode').value = '';
+        setLoginStatus('', '');
+        setStatusMsg('', '');
+        refreshDashboard();
+    });
+}
 
 // ============================================================
 // 配置保存与测试
 // ============================================================
 function setStatusMsg(msg, type) {
     var el = document.getElementById('configStatus');
-    el.className = 'status-msg ' + type;
+    if (!el) return;
+    el.className = 'status-msg ' + (type || '');
     el.textContent = msg;
 }
 
@@ -694,6 +1018,7 @@ function saveConfig() {
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
         setStatusMsg('配置已保存，请点击测试连接', 'success');
+        refreshDashboard();
     } else {
         setStatusMsg('已保存到本地，但 AndroidBridge 不可用', 'info');
     }
@@ -749,6 +1074,7 @@ function saveVenuesToLocal(venues) {
         window.AndroidBridge.saveVenues(json);
     }
     saveData('venues_data', json);
+    refreshDashboard();
 }
 
 async function loadVenueList() {
@@ -765,6 +1091,7 @@ async function loadVenueList() {
         }
     }
     renderVenueList(venues);
+    refreshDashboard();
 }
 
 function renderVenueList(venues) {
@@ -834,7 +1161,7 @@ async function openOrderPicker() {
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
     if (!token || !uuid) {
-        listEl.innerHTML = '<div class="empty">请先配置 Token 和 UUID</div>';
+        listEl.innerHTML = '<div class="empty">请先登录或配置 Token</div>';
         return;
     }
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
@@ -849,7 +1176,6 @@ async function openOrderPicker() {
         }
 
         var orders = (result.data && result.data.list) || [];
-
         var seen = {};
         var uniqueOrders = [];
         orders.forEach(function(o) {
@@ -1069,7 +1395,7 @@ async function autoGenerateVenues() {
 
     if (!token || !uuid) {
         statusEl.className = 'status-msg error';
-        statusEl.textContent = '请先配置 Token 和 UUID';
+        statusEl.textContent = '请先登录或配置 Token 和 UUID';
         return;
     }
     if (!window.AndroidBridge) {
@@ -1182,7 +1508,7 @@ async function refreshSeatMap() {
     var uuid = loadData('uuid', '');
     if (!token || !uuid) {
         statusEl.className = 'status-msg error';
-        statusEl.textContent = '请先配置 Token 和 UUID';
+        statusEl.textContent = '请先登录或配置 Token 和 UUID';
         return;
     }
     if (!window.AndroidBridge) {
@@ -1235,6 +1561,7 @@ async function refreshSeatMap() {
         saveData('seat_map_data', seatMapJson);
         statusEl.className = 'status-msg success';
         statusEl.textContent = '号码池已刷新: ' + totalSeats + ' 个座位, ' + totalVenues + ' 个钓场' + (failedVenues.length > 0 ? ', 跳过: ' + failedVenues.join('、') : '');
+        refreshDashboard();
     } catch(e) {
         statusEl.className = 'status-msg error';
         statusEl.textContent = '刷新失败: ' + e.message;
@@ -1253,7 +1580,6 @@ async function refreshSeatMap() {
     document.getElementById('tokenInput').value = savedToken;
     document.getElementById('uuidInput').value = savedUuid;
 
-    // 如果 uuid 为空，自动生成一个
     if (!savedUuid) {
         var autoUuid = String(Date.now());
         document.getElementById('uuidInput').value = autoUuid;
@@ -1261,15 +1587,18 @@ async function refreshSeatMap() {
     }
 
     if (savedToken) {
-        setStatusMsg('已加载本机保存的 Token', 'success');
         if (window.AndroidBridge && window.AndroidBridge.setAuth) {
             window.AndroidBridge.setAuth(savedToken, loadData('uuid', ''));
         }
-    } else {
-        setStatusMsg('请用手机号登录，或手动填写 Token', 'info');
     }
 
     loadVenueList();
+    refreshDashboard();
+
+    // 页面切回来时刷新
+    window.addEventListener('pageshow', function() {
+        refreshDashboard();
+    });
 })();
 </script>
 </body>
