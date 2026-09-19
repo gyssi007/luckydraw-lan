@@ -252,6 +252,7 @@
             padding: 14px 16px;
             cursor: pointer;
             user-select: none;
+            transition: background .2s ease;
         }
         .section-fold .fold-head:active { background: #f8fafc; }
         .section-fold .fold-title {
@@ -276,13 +277,13 @@
         .section-fold .fold-arrow {
             color: #94a3b8;
             font-size: 12px;
-            transition: transform .25s;
+            transition: transform .35s cubic-bezier(.22,.61,.36,1);
         }
         .section-fold .fold-arrow.open { transform: rotate(180deg); }
         .section-fold .fold-body {
             max-height: 0;
             overflow: hidden;
-            transition: max-height .3s ease;
+            transition: max-height .35s cubic-bezier(.22,.61,.36,1), padding .35s cubic-bezier(.22,.61,.36,1);
             padding: 0 16px;
         }
         .section-fold .fold-body.open {
@@ -581,17 +582,14 @@
     <!-- 统计卡片 -->
     <div class="stats-grid">
         <div class="stat-card blue">
-            
             <div class="stat-num" id="statVenues">0</div>
             <div class="stat-label">钓场数</div>
         </div>
         <div class="stat-card green">
-            
             <div class="stat-num" id="statSeats">0</div>
             <div class="stat-label">钓位池</div>
         </div>
         <div class="stat-card orange">
-            
             <div class="stat-num" id="statStatus">-</div>
             <div class="stat-label">登录状态</div>
         </div>
@@ -746,7 +744,7 @@
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 折叠区块
+// 折叠区块（丝滑版）
 // ============================================================
 var _foldStates = {};
 
@@ -756,13 +754,15 @@ function toggleFold(foldId) {
     if (!body || !arrow) return;
 
     if (_foldStates[foldId]) {
+        // 收起：先固定当前高度，再收到 0
         body.style.maxHeight = body.scrollHeight + 'px';
-        void body.offsetHeight;
+        body.offsetHeight;
         body.style.maxHeight = '0px';
         body.classList.remove('open');
         arrow.classList.remove('open');
         _foldStates[foldId] = false;
     } else {
+        // 展开：从 0 到实际高度
         body.style.maxHeight = body.scrollHeight + 'px';
         body.classList.add('open');
         arrow.classList.add('open');
@@ -773,21 +773,7 @@ function toggleFold(foldId) {
 function openFold(foldId) {
     if (_foldStates[foldId]) return;
     toggleFold(foldId);
-    setTimeout(function() {
-        var body = document.getElementById(foldId + 'Body');
-        if (body) body.style.maxHeight = 'none';
-    }, 320);
 }
-
-// 折叠区块展开后，允许内容自动增高
-document.querySelectorAll('.fold-body').forEach(function(el) {
-    el.addEventListener('transitionend', function(e) {
-        if (e.propertyName === 'max-height') {
-            var id = el.id.replace('Body', '');
-            if (_foldStates[id]) el.style.maxHeight = 'none';
-        }
-    });
-});
 
 // ============================================================
 // 顶部仪表盘刷新
