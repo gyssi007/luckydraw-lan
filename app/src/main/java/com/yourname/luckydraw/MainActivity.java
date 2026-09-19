@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private OkHttpClient httpClient;
     private Handler handler = new Handler(Looper.getMainLooper());
 
-    // 全局状态
     private boolean isRunning = false;
     private boolean isLocking = false;
     private boolean isHitting = false;
@@ -73,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
     private String lockTargetVenue = "";
     private String currentOrderId = "";
 
-    // 轮询定时器
     private Runnable autoLoopRunnable;
     private Runnable lockLoopRunnable;
 
@@ -131,9 +129,6 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl("file:///android_asset/pages/lucky.html");
     }
 
-    // ============================================================
-    // 安全调用 WebView JS（统一守卫，防止 NPE）
-    // ============================================================
     private void safeEvaluateJavascript(final String js) {
         handler.post(() -> {
             if (webView != null && !isFinishing() && !isDestroyed()) {
@@ -144,9 +139,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ============================================================
-    // JS 接口
-    // ============================================================
     public class JSInterface {
         @JavascriptInterface
         public void playHitSound() {
@@ -310,9 +302,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /**
-         * 导出配置到手机 Download 目录
-         */
         @JavascriptInterface
         public String exportConfig(String json, String filename) {
             try {
@@ -350,9 +339,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /**
-         * 弹出系统文件选择器
-         */
         @JavascriptInterface
         public void pickFileForImport() {
             runOnUiThread(() -> {
@@ -374,9 +360,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ============================================================
-    // 处理文件选择结果
-    // ============================================================
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -407,9 +390,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ============================================================
-    // 本地文件读写
-    // ============================================================
     private String readLocalJson(String filename, String defaultVal) {
         try {
             File file = new File(getFilesDir(), filename);
@@ -440,6 +420,43 @@ public class MainActivity extends AppCompatActivity {
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(json.getBytes("UTF-8"));
             fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ============================================================
+    // 【新增】把新钓场追加到 venues.json
+    // ============================================================
+    private void writeVenueToVenuesJson(String venueName, String orderId) {
+        try {
+            String venuesJson = readLocalJson("venues.json", "[]");
+            JSONArray venuesArr;
+            try {
+                venuesArr = new JSONArray(venuesJson);
+            } catch (Exception e) {
+                venuesArr = new JSONArray();
+            }
+
+            boolean exists = false;
+            for (int i = 0; i < venuesArr.length(); i++) {
+                JSONObject v = venuesArr.optJSONObject(i);
+                if (v != null && venueName.equals(v.optString("name"))) {
+                    exists = true;
+                    // 更新 order_id（保证正确）
+                    v.put("order_id", orderId);
+                    break;
+                }
+            }
+
+            if (!exists) {
+                JSONObject newVenue = new JSONObject();
+                newVenue.put("name", venueName);
+                newVenue.put("order_id", orderId);
+                venuesArr.put(newVenue);
+            }
+
+            writeLocalJson("venues.json", venuesArr.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -562,6 +579,9 @@ public class MainActivity extends AppCompatActivity {
                                                         writeLocalJson("seat_map.json", seatMap.toString());
                                                         venueData = newMap;
 
+                                                        // 【新增】同时写进 venues.json
+                                                        writeVenueToVenuesJson(effectiveVenue, oid);
+
                                                         final int seatCount = seatList.length();
                                                         safeEvaluateJavascript("window._onVenueGenerated("
                                                                 + JSONObject.quote(effectiveVenue) + ", "
@@ -592,7 +612,6 @@ public class MainActivity extends AppCompatActivity {
                                                         + JSONObject.quote(effectiveVenue) + ")");
                                                 return;
                                             } else {
-                                                // 【新增】锁定失败，把错误回调到前端
                                                 String failReason = confirmJson.optString("msg", "未知错误");
                                                 safeEvaluateJavascript("window._onLockFailed("
                                                         + JSONObject.quote(failReason) + ", "
@@ -654,9 +673,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ============================================================
-    // 官方 API 调用
-    // ============================================================
     private String callSelectSeat(String orderId, String token, String uuid) {
         try {
             String url = API_HOST + "/v2/userApi/ticketSeat/selectSeat";
@@ -754,9 +770,6 @@ public class MainActivity extends AppCompatActivity {
         return response.body().string();
     }
 
-    // ============================================================
-    // 工具方法
-    // ============================================================
     private List<Integer> parseSeats(String json) {
         List<Integer> list = new ArrayList<>();
         try {
