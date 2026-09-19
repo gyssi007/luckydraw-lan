@@ -24,10 +24,88 @@ function loadData(key, defaultValue) {
 }
 
 // ============================================================
+// 🪟 原生风格弹窗（从各页面挪到公共）
+// ============================================================
+function appDialog(opts) {
+    return new Promise(function(resolve) {
+        var mask = document.createElement('div');
+        mask.className = 'app-dialog-mask';
+        var btnsHtml = '';
+        opts.buttons.forEach(function(b, i) {
+            btnsHtml += '<button class="app-dialog-btn ' + (b.type || 'secondary') + '" data-i="' + i + '">' + b.text + '</button>';
+        });
+        mask.innerHTML =
+            '<div class="app-dialog-card">' +
+                '<div class="app-dialog-title">' + (opts.title || '提示') + '</div>' +
+                '<div class="app-dialog-msg">' + opts.message + '</div>' +
+                '<div class="app-dialog-btns">' + btnsHtml + '</div>' +
+            '</div>';
+        document.body.appendChild(mask);
+        requestAnimationFrame(function() { mask.classList.add('show'); });
+
+        function close(val) {
+            mask.classList.remove('show');
+            setTimeout(function() { mask.remove(); }, 220);
+            resolve(val);
+        }
+        mask.querySelectorAll('.app-dialog-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.getAttribute('data-i'), 10);
+                close(opts.buttons[idx].value);
+            });
+        });
+    });
+}
+
+function appAlert(message, opts) {
+    opts = opts || {};
+    return appDialog({
+        title: opts.title || '提示',
+        message: message,
+        buttons: [{ text: opts.okText || '知道了', type: 'primary', value: true }]
+    });
+}
+
+function appConfirm(message, opts) {
+    opts = opts || {};
+    return appDialog({
+        title: opts.title || '请确认',
+        message: message,
+        buttons: [
+            { text: opts.cancelText || '取消', type: 'secondary', value: false },
+            { text: opts.okText || '确定', type: opts.danger ? 'danger' : 'primary', value: true }
+        ]
+    });
+}
+
+// 注入弹窗样式（如果页面没有自己定义）
+(function injectDialogStyle() {
+    if (document.getElementById('global-dialog-style')) return;
+    var style = document.createElement('style');
+    style.id = 'global-dialog-style';
+    style.textContent = `
+        .app-dialog-mask { position: fixed; inset: 0; background: rgba(8,15,25,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 30px; opacity: 0; transition: opacity .2s ease; }
+        .app-dialog-mask.show { opacity: 1; }
+        .app-dialog-card { background: #fff; border-radius: 18px; width: 100%; max-width: 320px; padding: 26px 22px 18px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px) scale(.94); opacity: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; }
+        .app-dialog-mask.show .app-dialog-card { transform: translateY(0) scale(1); opacity: 1; }
+        .app-dialog-title { font-size: 16px; font-weight: 700; color: #1a2b3c; margin-bottom: 8px; }
+        .app-dialog-msg { font-size: 13.5px; color: #67798c; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; word-break: break-word; }
+        .app-dialog-btns { display: flex; gap: 10px; }
+        .app-dialog-btn { flex: 1; border: none; border-radius: 10px; padding: 12px 10px; font-size: 14.5px; font-weight: 600; cursor: pointer; min-height: 46px; transition: transform .12s; }
+        .app-dialog-btn:active { transform: scale(.95); }
+        .app-dialog-btn.primary { background: #3b82f6; color: #fff; }
+        .app-dialog-btn.danger { background: #ef4444; color: #fff; }
+        .app-dialog-btn.secondary { background: #eef2f6; color: #334455; }
+    `;
+    document.head.appendChild(style);
+})();
+
+// ============================================================
 // 🔗 官方 API 调用（通过 Android 原生层）
 // ============================================================
 var _apiCallbackId = 0;
 var _apiCallbacks = {};
+var _tokenExpiredNotified = false;
 
 function callApi(path, method, body) {
     return new Promise(function(resolve, reject) {
@@ -35,11 +113,17 @@ function callApi(path, method, body) {
         _apiCallbacks[id] = resolve;
         window._apiCallback = function(cid, data) {
             if (_apiCallbacks[cid]) {
-                try {
-                    _apiCallbacks[cid](JSON.parse(data));
-                } catch(e) {
-                    _apiCallbacks[cid](data);
+                var parsed;
+                try { parsed = JSON.parse(data); } catch(e) { parsed = data; }
+
+                // 【新增】全局拦截 401：Token 过期
+                if (parsed && parsed.code === '401' && !_tokenExpiredNotified) {
+                    _tokenExpiredNotified = true;
+                    setTimeout(function() { _tokenExpiredNotified = false; }, 5000);
+                    handleTokenExpired();
                 }
+
+                _apiCallbacks[cid](parsed);
                 delete _apiCallbacks[cid];
             }
         };
@@ -48,6 +132,23 @@ function callApi(path, method, body) {
         } else {
             reject(new Error('AndroidBridge not available'));
         }
+    });
+}
+
+// 【新增】登录过期处理
+function handleTokenExpired() {
+    // 1. 停止所有循环
+    try {
+        if (window.AndroidBridge && window.AndroidBridge.stopAutoLoop) window.AndroidBridge.stopAutoLoop();
+        if (window.AndroidBridge && window.AndroidBridge.stopLockLoop) window.AndroidBridge.stopLockLoop();
+    } catch(e) {}
+
+    // 2. 清空本地 token
+    saveData('token', '');
+
+    // 3. 弹窗提示 + 跳转
+    appAlert('登录已过期，请重新登录', { title: '登录失效' }).then(function() {
+        navigateTo('config.html');
     });
 }
 
@@ -75,9 +176,6 @@ function vibrate(duration) {
 var LOG_STORAGE_KEY = 'lucky_log_entries';
 var LOG_MAX_ENTRIES = 300;
 
-/**
- * 把一条日志追加写入 localStorage
- */
 function saveLogEntryToStorage(html, cls) {
     try {
         var arr = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
@@ -89,9 +187,6 @@ function saveLogEntryToStorage(html, cls) {
     } catch (e) {}
 }
 
-/**
- * 从 localStorage 恢复历史日志到 DOM
- */
 function restoreLogFromStorage() {
     try {
         var logBox = document.getElementById('logBox');
@@ -109,18 +204,12 @@ function restoreLogFromStorage() {
     } catch (e) {}
 }
 
-/**
- * 清空日志（DOM + localStorage）
- */
 function clearLogStorage() {
     try {
         localStorage.removeItem(LOG_STORAGE_KEY);
     } catch (e) {}
 }
 
-/**
- * 主日志入口：写 DOM + 写 localStorage
- */
 function addLog(message, type) {
     var logBox = document.getElementById('logBox');
     if (!logBox) { console.log(message); return; }
@@ -141,10 +230,8 @@ function addLog(message, type) {
     logBox.appendChild(entry);
     logBox.scrollTop = logBox.scrollHeight;
 
-    // 写入持久化存储
     saveLogEntryToStorage(html, className);
 
-    // 限制 DOM 节点数，防止卡顿
     if (logBox.children.length > LOG_MAX_ENTRIES) {
         logBox.removeChild(logBox.firstChild);
     }
@@ -253,7 +340,7 @@ async function checkTokenValidity() {
         if (result.code === '000') {
             return { valid: true };
         } else if (result.code === '401') {
-            return { valid: false, reason: 'Token 已过期，请重新设置' };
+            return { valid: false, reason: 'Token 已过期，请重新登录' };
         } else {
             return { valid: false, reason: result.msg || 'Token 无效' };
         }
