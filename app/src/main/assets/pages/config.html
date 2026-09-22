@@ -70,10 +70,6 @@
             transition: transform .15s;
         }
         .stat-card:active { transform: scale(0.97); }
-        .stat-card .stat-icon {
-            font-size: 22px;
-            margin-bottom: 4px;
-        }
         .stat-card .stat-num {
             font-size: 22px;
             font-weight: 800;
@@ -143,7 +139,7 @@
         .user-bar .btn-logout:active { background: #fee2e2; }
 
         /* ============================================================ */
-        /* 登录区（未登录时显示，紧凑版） */
+        /* 登录区 */
         /* ============================================================ */
         .login-card {
             background: linear-gradient(135deg, #eff6ff, #f0f9ff);
@@ -263,9 +259,7 @@
             align-items: center;
             gap: 8px;
         }
-        .section-fold .fold-title .icon {
-            font-size: 16px;
-        }
+        .section-fold .fold-title .icon { font-size: 16px; }
         .section-fold .fold-title .badge {
             font-size: 11px;
             color: #3b82f6;
@@ -286,9 +280,7 @@
             transition: max-height .35s cubic-bezier(.22,.61,.36,1), padding .35s cubic-bezier(.22,.61,.36,1);
             padding: 0 16px;
         }
-        .section-fold .fold-body.open {
-            padding: 0 16px 16px;
-        }
+        .section-fold .fold-body.open { padding: 0 16px 16px; }
 
         /* ============================================================ */
         /* 表单 */
@@ -324,16 +316,24 @@
             flex: 1;
             min-width: 80px;
             min-height: 44px;
+            transition: opacity .2s, background .2s;
         }
         .actions .btn-save { background: #3b82f6; color: #fff; }
+        .actions .btn-save.saved { background: #22c55e; }
+        .actions .btn-save.failed { background: #ef4444; }
         .actions .btn-test { background: #22c55e; color: #fff; }
         .actions button:active { opacity: 0.85; }
         .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        /* 【新增】状态提示动画 */
         .status-msg { margin-top: 12px; padding: 9px 12px; border-radius: 8px; font-size: 12.5px; display: none; }
-        .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; }
-        .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; }
-        .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; }
+        .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; animation: statusFadeIn .3s ease; }
+        .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; animation: statusFadeIn .3s ease; }
+        .status-msg.info { display: block; background: #e3edf7; color: #1a5f7a; animation: statusFadeIn .3s ease; }
+        @keyframes statusFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-row button {
@@ -647,7 +647,7 @@
             </div>
 
             <div class="actions">
-                <button class="btn-save" onclick="saveConfig()">保存配置</button>
+                <button class="btn-save" id="btnSaveConfig" onclick="saveConfig()">保存配置</button>
                 <button class="btn-test" onclick="testConfig()">测试连接</button>
             </div>
             <div id="configStatus" class="status-msg"></div>
@@ -744,7 +744,7 @@
 <script src="../assets/common.js"></script>
 <script>
 // ============================================================
-// 折叠区块（丝滑版）
+// 折叠区块
 // ============================================================
 var _foldStates = {};
 
@@ -754,7 +754,6 @@ function toggleFold(foldId) {
     if (!body || !arrow) return;
 
     if (_foldStates[foldId]) {
-        // 收起：先固定当前高度，再收到 0
         body.style.maxHeight = body.scrollHeight + 'px';
         body.offsetHeight;
         body.style.maxHeight = '0px';
@@ -762,7 +761,6 @@ function toggleFold(foldId) {
         arrow.classList.remove('open');
         _foldStates[foldId] = false;
     } else {
-        // 展开：从 0 到实际高度
         body.style.maxHeight = body.scrollHeight + 'px';
         body.classList.add('open');
         arrow.classList.add('open');
@@ -784,7 +782,6 @@ function refreshDashboard() {
     var account = loadData('user_account', '');
     var avatar = loadData('user_avatar', '');
 
-    // 顶部问候语
     var greetingEl = document.getElementById('dashboardGreeting');
     var subEl = document.getElementById('dashboardSubGreeting');
 
@@ -796,7 +793,6 @@ function refreshDashboard() {
         subEl.textContent = '管理您的账号与钓场数据';
     }
 
-    // 用户信息条
     var userBar = document.getElementById('userBar');
     var loginCard = document.getElementById('loginCard');
 
@@ -822,12 +818,10 @@ function refreshDashboard() {
         document.getElementById('statStatus').style.color = '#ea580c';
     }
 
-    // 钓场统计
     var venues = loadVenuesFromLocal() || [];
     document.getElementById('statVenues').textContent = venues.length;
     document.getElementById('venueCount').textContent = venues.length + ' 个';
 
-    // 座位统计
     var seatMap = loadSeatMapFromLocal() || {};
     var totalSeats = 0;
     for (var k in seatMap) {
@@ -993,20 +987,54 @@ function setStatusMsg(msg, type) {
 }
 
 function saveConfig() {
+    var btn = document.getElementById('btnSaveConfig');
     var token = document.getElementById('tokenInput').value.trim();
     var uuid = document.getElementById('uuidInput').value.trim();
+
     if (!token || !uuid) {
-        setStatusMsg('Token 和 UUID 不能为空', 'error');
+        setStatusMsg('❌ Token 和 UUID 不能为空', 'error');
+        btn.classList.add('failed');
+        btn.textContent = '❌ 保存失败';
+        setTimeout(function() {
+            btn.classList.remove('failed');
+            btn.textContent = '保存配置';
+        }, 1500);
         return;
     }
+
     saveData('token', token);
     saveData('uuid', uuid);
+
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
-        setStatusMsg('配置已保存，请点击测试连接', 'success');
+
+        // 【新增】按钮变绿 + 文字变化
+        btn.classList.add('saved');
+        btn.textContent = '✅ 已保存';
+        setStatusMsg('✅ 配置已保存到本地，并已同步到运行环境', 'success');
         refreshDashboard();
+
+        // 1.5 秒后恢复
+        setTimeout(function() {
+            btn.classList.remove('saved');
+            btn.textContent = '保存配置';
+        }, 1500);
+
+        // 3 秒后清空状态提示
+        setTimeout(function() {
+            setStatusMsg('', '');
+        }, 3000);
     } else {
-        setStatusMsg('已保存到本地，但 AndroidBridge 不可用', 'info');
+        setStatusMsg('⚠️ 已保存到本地，但 AndroidBridge 不可用', 'info');
+        btn.classList.add('saved');
+        btn.textContent = '✅ 已保存';
+        setTimeout(function() {
+            btn.classList.remove('saved');
+            btn.textContent = '保存配置';
+        }, 1500);
+        setTimeout(function() {
+            setStatusMsg('', '');
+        }, 3000);
     }
 }
 
@@ -1014,14 +1042,14 @@ async function testConfig() {
     var token = document.getElementById('tokenInput').value.trim();
     var uuid = document.getElementById('uuidInput').value.trim();
     if (!token || !uuid) {
-        setStatusMsg('请先填写 Token 和 UUID', 'error');
+        setStatusMsg('❌ 请先填写 Token 和 UUID', 'error');
         return;
     }
     if (!window.AndroidBridge) {
-        setStatusMsg('AndroidBridge 未注入', 'error');
+        setStatusMsg('❌ AndroidBridge 未注入', 'error');
         return;
     }
-    setStatusMsg('测试中...', 'info');
+    setStatusMsg('⏳ 测试中...', 'info');
     saveData('token', token);
     saveData('uuid', uuid);
     if (window.AndroidBridge.setAuth) {
@@ -1030,12 +1058,12 @@ async function testConfig() {
     try {
         var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=20', 'GET');
         if (result.code === '000') {
-            setStatusMsg('测试成功，Token 和 UUID 有效', 'success');
+            setStatusMsg('✅ 测试成功，Token 和 UUID 有效', 'success');
         } else {
-            setStatusMsg('测试失败: ' + (result.msg || 'Token 无效'), 'error');
+            setStatusMsg('❌ 测试失败: ' + (result.msg || 'Token 无效'), 'error');
         }
     } catch(e) {
-        setStatusMsg('测试异常: ' + e.message, 'error');
+        setStatusMsg('❌ 测试异常: ' + e.message, 'error');
     }
 }
 
@@ -1155,13 +1183,30 @@ async function openOrderPicker() {
     }
 
     try {
-        var result = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=50', 'GET');
-        if (result.code !== '000') {
-            listEl.innerHTML = '<div class="empty">加载失败: ' + escapeHtml(result.msg || '未知错误') + '</div>';
+        var firstPage = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=1&limit=50', 'GET');
+        if (firstPage.code !== '000') {
+            listEl.innerHTML = '<div class="empty">加载失败: ' + escapeHtml(firstPage.msg || '未知错误') + '</div>';
             return;
         }
 
-        var orders = (result.data && result.data.list) || [];
+        var totalCount = (firstPage.data && firstPage.data.count) || 0;
+        var totalPages = Math.ceil(totalCount / 50);
+        if (totalPages === 0) totalPages = 1;
+
+        var orders = (firstPage.data && firstPage.data.list) || [];
+
+        for (var page = 2; page <= totalPages; page++) {
+            listEl.innerHTML = '<div class="loading"><div class="spinner"></div>加载中... ' + page + '/' + totalPages + '</div>';
+            try {
+                var pageResult = await callApi('/v2/userApi/order/getMyTicketOrderList?tab=10&page=' + page + '&limit=50', 'GET');
+                if (pageResult.code === '000' && pageResult.data && pageResult.data.list) {
+                    orders = orders.concat(pageResult.data.list);
+                }
+            } catch(e) {
+                console.warn('第 ' + page + ' 页加载失败', e);
+            }
+        }
+
         var seen = {};
         var uniqueOrders = [];
         orders.forEach(function(o) {
@@ -1581,7 +1626,6 @@ async function refreshSeatMap() {
     loadVenueList();
     refreshDashboard();
 
-    // 页面切回来时刷新
     window.addEventListener('pageshow', function() {
         refreshDashboard();
     });
