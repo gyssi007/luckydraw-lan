@@ -426,11 +426,10 @@
 
         .lock-card { background: #f0f7ff; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #d0e4ff; }
         .lock-card .lock-title { font-size: 14px; font-weight: 700; color: #0a2f44; margin-bottom: 8px; }
+        .lock-card.transposition { background: #fff7f0; border-color: #ffd9c0; }
+        .lock-card.transposition .lock-title { color: #c2410c; }
         .lock-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-        /* ============================================================ */
-        /* 钓场选择触发器 */
-        /* ============================================================ */
         .venue-picker-trigger {
             flex: 2;
             min-width: 140px;
@@ -448,11 +447,6 @@
         .venue-picker-trigger:active {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        .venue-picker-trigger .picker-icon {
-            font-size: 14px;
-            margin-right: 6px;
-            flex-shrink: 0;
         }
         .venue-picker-trigger .picker-text {
             flex: 1;
@@ -475,9 +469,6 @@
             margin-left: 4px;
         }
 
-        /* ============================================================ */
-        /* 顶部滑出钓场选择器 */
-        /* ============================================================ */
         .venue-sheet-overlay {
             display: none;
             position: fixed;
@@ -608,6 +599,22 @@
         .lock-row .btn-lock:active { transform: scale(0.94); }
         .lock-row .btn-lock:disabled { opacity: .5; cursor: not-allowed; transform: none; }
         .lock-row .btn-lock.loading { opacity: .7; cursor: wait; }
+        .lock-row .btn-transposition {
+            background: linear-gradient(135deg,#f97316,#ea580c);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all .2s;
+            outline: none !important;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+        .lock-row .btn-transposition:active { transform: scale(0.94); }
+        .lock-row .btn-transposition:disabled { opacity: .5; cursor: not-allowed; transform: none; }
         .lock-row .btn-stop-lock {
             background: #ef4444;
             color: #fff;
@@ -694,13 +701,25 @@
                 <div class="lock-title">一发入魂</div>
                 <div class="lock-row">
                     <div class="venue-picker-trigger" id="venueTrigger">
-                        
                         <span class="picker-text placeholder" id="venueTriggerText">全自动识别</span>
                         <span class="picker-arrow">▼</span>
                     </div>
                     <input class="seat-input" id="lockSeatNumber" placeholder="钓位号" inputmode="numeric" />
                     <button class="btn-lock" id="btnLock">🔒 锁定</button>
                     <button class="btn-stop-lock" id="btnStopLock">⏹ 停止</button>
+                </div>
+            </div>
+
+            <!-- 【新增】换号锁定 -->
+            <div class="lock-card transposition">
+                <div class="lock-title">🔄 换号锁定</div>
+                <div class="lock-row">
+                    <input class="seat-input" id="transpositionSeats" placeholder="目标号码 如 8 18 28" inputmode="numeric" />
+                    <button class="btn-transposition" id="btnTransLock">🔄 开始监听</button>
+                    <button class="btn-stop-lock" id="btnStopTransLock">⏹ 停止</button>
+                </div>
+                <div class="hint" style="margin-top:8px;color:#8899aa;font-size:12px;">
+                    开启后去官方小程序点「换号」，付款后工具会自动锁定目标座位
                 </div>
             </div>
 
@@ -797,14 +816,18 @@ var luckyElements = {
     venueTrigger: document.getElementById('venueTrigger'),
     venueTriggerText: document.getElementById('venueTriggerText'),
     venueSheetOverlay: document.getElementById('venueSheetOverlay'),
-    venueSheetList: document.getElementById('venueSheetList')
+    venueSheetList: document.getElementById('venueSheetList'),
+    // 【新增】换号锁定元素
+    transpositionSeats: document.getElementById('transpositionSeats'),
+    btnTransLock: document.getElementById('btnTransLock'),
+    btnStopTransLock: document.getElementById('btnStopTransLock')
 };
 
 var isAutoRunning = false;
 var isLocking = false;
+var isTranspositionLocking = false;
 var lockVenues = [];
 
-// 当前选中的钓场（'__AUTO__' 或钓场名）
 var SELECTED_VENUE = '__AUTO__';
 
 // ============================================================
@@ -827,10 +850,11 @@ function getLuckyConfig() {
 function updateLuckyStatus(status, attempt, seats, orderId) {
     var statusMap = {
         idle: '⏸ 空闲', running: '🔄 刷号中...', hit: '🎉 已命中！',
-        stopped: '⏹ 已停止', error: '❌ 出错', locking: '🔒 锁定中...'
+        stopped: '⏹ 已停止', error: '❌ 出错', locking: '🔒 锁定中...',
+        transposition: '🔄 换号监听中...'
     };
     luckyElements.statusDisplay.textContent = statusMap[status] || status;
-    luckyElements.statusDisplay.className = 'status-value ' + (status === 'hit' ? 'hit' : status === 'running' ? 'running' : status === 'stopped' ? 'stopped' : status === 'locking' ? 'locking' : '');
+    luckyElements.statusDisplay.className = 'status-value ' + (status === 'hit' ? 'hit' : status === 'running' ? 'running' : status === 'stopped' ? 'stopped' : (status === 'locking' || status === 'transposition') ? 'locking' : '');
     if (attempt !== undefined && attempt !== null) luckyElements.attemptDisplay.textContent = attempt;
     if (seats !== undefined && seats !== null) {
         luckyElements.seatsDisplay.textContent = seats.length ? '[' + seats.join(', ') + ']' : '-';
@@ -951,7 +975,7 @@ function loadLockVenues() {
 }
 
 // ============================================================
-// 钓场选择弹层（顶部滑出）
+// 钓场选择弹层
 // ============================================================
 function openVenueSheet() {
     luckyElements.venueSheetOverlay.classList.add('show');
@@ -1095,6 +1119,71 @@ async function lockSeat() {
 }
 
 // ============================================================
+// 【新增】🔄 换号锁定
+// ============================================================
+function startTranspositionLock() {
+    if (isTranspositionLocking) {
+        addLog('⚠️ 换号锁定已在运行中', 'warning');
+        return;
+    }
+
+    var seatInput = luckyElements.transpositionSeats.value.trim();
+    if (!seatInput) {
+        addLog('❌ 请输入目标号码', 'error');
+        return;
+    }
+
+    var seatNumbers = seatInput.split(/\s+/).map(Number).filter(function(n) { return !isNaN(n) && n > 0; });
+    if (seatNumbers.length === 0) {
+        addLog('❌ 请输入有效的目标号码', 'error');
+        return;
+    }
+
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (!token || !uuid) {
+        addLog('❌ 请先到"配置"页面设置 Token 和 UUID', 'error');
+        return;
+    }
+
+    if (window.AndroidBridge && window.AndroidBridge.setAuth) {
+        window.AndroidBridge.setAuth(token, uuid);
+    }
+
+    isTranspositionLocking = true;
+    var btn = luckyElements.btnTransLock;
+    btn.disabled = true;
+    btn.textContent = '⏳ 监听中...';
+    luckyElements.btnStopTransLock.style.display = 'block';
+    updateLuckyStatus('transposition', null, null, null);
+
+    addLog('🔄 开始监听换号订单: 目标=[' + seatNumbers.join(', ') + ']', 'system');
+    addLog('💡 请去官方小程序点「换号」并付款', 'warning');
+
+    if (window.AndroidBridge && window.AndroidBridge.startTranspositionLock) {
+        window.AndroidBridge.startTranspositionLock(token, uuid, JSON.stringify(seatNumbers));
+    } else {
+        addLog('❌ AndroidBridge 不可用', 'error');
+        stopTranspositionLock();
+    }
+}
+
+function stopTranspositionLock() {
+    isTranspositionLocking = false;
+    if (window.AndroidBridge && window.AndroidBridge.stopTranspositionLock) {
+        window.AndroidBridge.stopTranspositionLock();
+    }
+    var btn = luckyElements.btnTransLock;
+    btn.disabled = false;
+    btn.textContent = '🔄 开始监听';
+    luckyElements.btnStopTransLock.style.display = 'none';
+    if (luckyElements.statusDisplay.textContent !== '🎉 已命中！') {
+        addLog('🛑 换号锁定已停止', 'system');
+    }
+    updateLuckyStatus('idle', null, null, null);
+}
+
+// ============================================================
 // 🎲 单次摇号
 // ============================================================
 async function requestOnce() {
@@ -1201,9 +1290,6 @@ async function performAutoLock(orderId, hitSeat) {
     }
 }
 
-// ============================================================
-// 🔒 performLock（手动模式用）
-// ============================================================
 async function performLock(orderId, venueName, seatNumber, token, uuid) {
     try {
         var seatMap = loadSeatMapFromLocal();
@@ -1286,9 +1372,6 @@ function handleRequestResult(result) {
     updateLuckyStatus('idle', attempt, seats, orderId);
 }
 
-// ============================================================
-// 弹窗
-// ============================================================
 function showHitModal(seat, seats) {
     luckyElements.hitNumber.textContent = seat;
     luckyElements.hitDetail.textContent = '完整号码: [' + seats.join(', ') + ']';
@@ -1359,6 +1442,26 @@ window._onVenueGenerated = function(venueName, seatCount) {
     addLog('✅ 号码池已生成: ' + venueName + ' (' + seatCount + ' 个座位)', 'success');
 };
 
+// 【新增】换号锁定回调
+window._onTranspositionDetected = function(orderId) {
+    addLog('🎯 检测到换号订单: ' + orderId, 'system');
+};
+
+window._onTranspositionLocked = function(seatNumber, orderId, venueName) {
+    var msg = '🎉 换号锁定成功！座位: ' + seatNumber + '号';
+    if (venueName) msg += ' (' + venueName + ')';
+    addLog(msg, 'hit');
+    playHitSound();
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    updateLuckyStatus('idle', null, [seatNumber], orderId);
+    stopTranspositionLock();
+    loadLockVenues();
+};
+
+window._onTranspositionLockFailed = function(reason) {
+    addLog('❌ 换号锁定失败: ' + reason, 'error');
+};
+
 // ============================================================
 // 事件绑定
 // ============================================================
@@ -1373,6 +1476,10 @@ luckyElements.btnClearLog.addEventListener('click', function() {
     luckyElements.logBox.innerHTML = '';
     addLog('🗑️ 日志已清空', 'system');
 });
+
+// 【新增】换号锁定事件绑定
+luckyElements.btnTransLock.addEventListener('click', startTranspositionLock);
+luckyElements.btnStopTransLock.addEventListener('click', stopTranspositionLock);
 
 luckyElements.hitConfirm.addEventListener('click', function() {
     closeHitModal();
@@ -1397,6 +1504,9 @@ window.addEventListener('beforeunload', function() {
     }
     if (isLocking) {
         stopLockLoop();
+    }
+    if (isTranspositionLocking) {
+        stopTranspositionLock();
     }
 });
 
