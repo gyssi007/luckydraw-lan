@@ -325,7 +325,7 @@
         .actions button:active { opacity: 0.85; }
         .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* 【新增】状态提示动画 */
+        /* 状态提示 */
         .status-msg { margin-top: 12px; padding: 9px 12px; border-radius: 8px; font-size: 12.5px; display: none; }
         .status-msg.success { display: block; background: #e6f7ed; color: #1a7a44; animation: statusFadeIn .3s ease; }
         .status-msg.error { display: block; background: #fde8e8; color: #b33a3a; animation: statusFadeIn .3s ease; }
@@ -347,10 +347,13 @@
             cursor: pointer;
             min-height: 44px;
             color: #fff;
+            transition: background .2s, opacity .2s;
         }
         .btn-row .btn-auto-venues { background: #8b5cf6; }
         .btn-row .btn-refresh-pool { background: #f59e0b; }
         .btn-row .btn-export { background: #0ea5e9; }
+        .btn-row .btn-export.ok { background: #22c55e; }
+        .btn-row .btn-export.fail { background: #ef4444; }
         .btn-row .btn-import { background: #14b8a6; }
         .btn-row button:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-row button:active:not(:disabled) { opacity: 0.85; }
@@ -735,6 +738,9 @@
     </div>
 </div>
 
+<!-- 导入配置：浏览器回退用（AndroidBridge 不可用时才会用到） -->
+<input type="file" id="__fallbackImportFile" accept="application/json,.json" style="display:none;">
+
 <div class="bottom-nav">
     <a class="tab" href="lucky.html"><span class="tab-icon">🎯</span><span class="tab-label">幸运号码</span></a>
     <a class="tab" href="detective.html"><span class="tab-icon">🕵️</span><span class="tab-label">钓场侦探</span></a>
@@ -1007,20 +1013,14 @@ function saveConfig() {
 
     if (window.AndroidBridge && window.AndroidBridge.setAuth) {
         window.AndroidBridge.setAuth(token, uuid);
-
-        // 【新增】按钮变绿 + 文字变化
         btn.classList.add('saved');
         btn.textContent = '✅ 已保存';
         setStatusMsg('✅ 配置已保存到本地，并已同步到运行环境', 'success');
         refreshDashboard();
-
-        // 1.5 秒后恢复
         setTimeout(function() {
             btn.classList.remove('saved');
             btn.textContent = '保存配置';
         }, 1500);
-
-        // 3 秒后清空状态提示
         setTimeout(function() {
             setStatusMsg('', '');
         }, 3000);
@@ -1300,17 +1300,14 @@ document.getElementById('orderPickerOverlay').addEventListener('click', function
 });
 
 // ============================================================
-// 导出配置
+// 导出配置（已修复：自动展开折叠区 + 弹窗提示）
 // ============================================================
 async function exportConfig() {
+    // ⭐ 关键修复：自动展开「配置备份」折叠区，让提示可见
+    openFold('foldBackup');
+
     var btn = document.getElementById('btnExport');
     var statusEl = document.getElementById('backupStatus');
-
-    if (!window.AndroidBridge || !window.AndroidBridge.exportConfig) {
-        statusEl.className = 'status-msg error';
-        statusEl.textContent = 'AndroidBridge.exportConfig 未注入';
-        return;
-    }
 
     btn.disabled = true;
     btn.textContent = '导出中...';
@@ -1318,8 +1315,20 @@ async function exportConfig() {
     statusEl.textContent = '正在打包配置...';
 
     try {
-        var venuesJson = window.AndroidBridge.loadVenues();
-        var seatMapJson = window.AndroidBridge.loadSeatMap();
+        var venuesJson = '[]';
+        var seatMapJson = '{}';
+
+        if (window.AndroidBridge && window.AndroidBridge.loadVenues) {
+            venuesJson = window.AndroidBridge.loadVenues() || '[]';
+        } else {
+            venuesJson = loadData('venues_data', '[]') || '[]';
+        }
+
+        if (window.AndroidBridge && window.AndroidBridge.loadSeatMap) {
+            seatMapJson = window.AndroidBridge.loadSeatMap() || '{}';
+        } else {
+            seatMapJson = localStorage.getItem('seat_map_data') || '{}';
+        }
 
         var config = {
             _meta: {
@@ -1333,50 +1342,121 @@ async function exportConfig() {
         var filename = 'fishing-config-' + Date.now() + '.json';
         var content = JSON.stringify(config, null, 2);
 
-        var result = window.AndroidBridge.exportConfig(content, filename);
+        // 优先走 AndroidBridge
+        if (window.AndroidBridge && window.AndroidBridge.exportConfig) {
+            var result = window.AndroidBridge.exportConfig(content, filename);
 
-        if (result && result.indexOf('ERROR') === 0) {
-            statusEl.className = 'status-msg error';
-            statusEl.textContent = '导出失败: ' + result;
+            if (!result) {
+                statusEl.className = 'status-msg error';
+                statusEl.textContent = '导出失败：原生方法没有返回结果';
+                btn.classList.add('fail');
+                await appAlert('导出失败：原生方法没有返回结果', { title: '❌ 导出失败' });
+            } else if (String(result).indexOf('ERROR') === 0) {
+                statusEl.className = 'status-msg error';
+                statusEl.textContent = '导出失败: ' + result;
+                btn.classList.add('fail');
+                await appAlert('导出失败：\n' + result, { title: '❌ 导出失败' });
+            } else {
+                statusEl.className = 'status-msg success';
+                statusEl.textContent = '✅ 导出成功，文件已保存到: ' + result;
+                btn.classList.add('ok');
+                await appAlert('导出成功！\n文件已保存到：\n' + result, { title: '✅ 导出完成' });
+            }
         } else {
+            // 回退：浏览器 Blob 下载（浏览器调试用，APK 里通常无效）
+            var blob = new Blob([content], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+
             statusEl.className = 'status-msg success';
-            statusEl.textContent = '导出成功，文件已保存到: ' + result;
+            statusEl.textContent = '✅ 导出成功（浏览器下载）: ' + filename;
+            btn.classList.add('ok');
+            await appAlert('导出成功（浏览器下载）\n文件名：' + filename, { title: '✅ 导出完成' });
         }
     } catch(e) {
         statusEl.className = 'status-msg error';
         statusEl.textContent = '导出异常: ' + e.message;
+        btn.classList.add('fail');
+        await appAlert('导出异常：\n' + e.message, { title: '❌ 导出失败' });
     } finally {
         btn.disabled = false;
         btn.textContent = '导出配置';
+
+        // 3 秒后清除按钮颜色
+        setTimeout(function() {
+            btn.classList.remove('ok', 'fail');
+        }, 3000);
+
+        // 5 秒后清除状态提示
+        setTimeout(function() {
+            if (statusEl.textContent && (statusEl.textContent.indexOf('✅') === 0 || statusEl.textContent.indexOf('导出失败') === 0)) {
+                statusEl.className = 'status-msg';
+                statusEl.textContent = '';
+            }
+        }, 5000);
     }
 }
 
 // ============================================================
-// 导入配置
+// 导入配置（已修复：自动展开折叠区 + 弹窗提示 + 浏览器回退）
 // ============================================================
 var importPending = false;
 
 function importConfig() {
+    // ⭐ 关键修复：自动展开「配置备份」折叠区
+    openFold('foldBackup');
+
     var statusEl = document.getElementById('backupStatus');
-    if (!window.AndroidBridge || !window.AndroidBridge.pickFileForImport) {
-        statusEl.className = 'status-msg error';
-        statusEl.textContent = 'AndroidBridge.pickFileForImport 未注入';
+
+    if (window.AndroidBridge && window.AndroidBridge.pickFileForImport) {
+        importPending = true;
+        statusEl.className = 'status-msg info';
+        statusEl.textContent = '请选择要导入的配置文件...';
+        window.AndroidBridge.pickFileForImport();
         return;
     }
-    importPending = true;
-    statusEl.className = 'status-msg info';
-    statusEl.textContent = '请选择要导入的配置文件...';
-    window.AndroidBridge.pickFileForImport();
+
+    // 回退：浏览器文件选择
+    var fileInput = document.getElementById('__fallbackImportFile');
+    fileInput.value = '';
+    fileInput.onchange = function() {
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) {
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '未选择文件';
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            window._onImportFileSelected(ev.target.result);
+        };
+        reader.onerror = function() {
+            statusEl.className = 'status-msg error';
+            statusEl.textContent = '读取文件失败';
+        };
+        reader.readAsText(file);
+    };
+    fileInput.click();
 }
 
 window._onImportFileSelected = async function(content) {
+    openFold('foldBackup');
+
     var statusEl = document.getElementById('backupStatus');
-    if (!importPending) return;
+
+    if (window.AndroidBridge && window.AndroidBridge.pickFileForImport && !importPending) return;
     importPending = false;
 
     if (!content || content === '') {
         statusEl.className = 'status-msg error';
         statusEl.textContent = '未选择文件或文件内容为空';
+        await appAlert('未选择文件或文件内容为空', { title: '❌ 导入失败' });
         return;
     }
 
@@ -1385,6 +1465,7 @@ window._onImportFileSelected = async function(content) {
         if (!config.venues && !config.seatMap) {
             statusEl.className = 'status-msg error';
             statusEl.textContent = '文件格式不正确（缺少 venues 或 seatMap）';
+            await appAlert('文件格式不正确\n（缺少 venues 或 seatMap）', { title: '❌ 导入失败' });
             return;
         }
 
@@ -1397,21 +1478,38 @@ window._onImportFileSelected = async function(content) {
 
         if (config.venues) {
             var venuesJson = JSON.stringify(config.venues);
-            window.AndroidBridge.saveVenues(venuesJson);
+            if (window.AndroidBridge && window.AndroidBridge.saveVenues) {
+                window.AndroidBridge.saveVenues(venuesJson);
+            }
             saveData('venues_data', venuesJson);
         }
         if (config.seatMap) {
             var seatMapJson = JSON.stringify(config.seatMap);
-            window.AndroidBridge.saveSeatMap(seatMapJson);
+            if (window.AndroidBridge && window.AndroidBridge.saveSeatMap) {
+                window.AndroidBridge.saveSeatMap(seatMapJson);
+            }
+            localStorage.setItem('seat_map_data', seatMapJson);
         }
 
         loadVenueList();
 
         statusEl.className = 'status-msg success';
-        statusEl.textContent = '导入成功！钓场: ' + (config.venues ? config.venues.length : 0) + ' 个，号码池已覆盖';
+        statusEl.textContent = '✅ 导入成功！钓场: ' + (config.venues ? config.venues.length : 0) + ' 个，号码池已覆盖';
+        await appAlert(
+            '导入成功！\n钓场: ' + (config.venues ? config.venues.length : 0) + ' 个\n号码池已覆盖',
+            { title: '✅ 导入完成' }
+        );
+
+        setTimeout(function() {
+            if (statusEl.textContent && statusEl.textContent.indexOf('✅ 导入成功') === 0) {
+                statusEl.className = 'status-msg';
+                statusEl.textContent = '';
+            }
+        }, 5000);
     } catch(e) {
         statusEl.className = 'status-msg error';
         statusEl.textContent = '导入失败: ' + e.message;
+        await appAlert('导入失败：\n' + e.message, { title: '❌ 导入失败' });
     }
 };
 
@@ -1423,7 +1521,6 @@ async function autoGenerateVenues() {
     var statusEl = document.getElementById('poolStatus');
     var token = loadData('token', '');
     var uuid = loadData('uuid', '');
-
     if (!token || !uuid) {
         statusEl.className = 'status-msg error';
         statusEl.textContent = '请先登录或配置 Token 和 UUID';
@@ -1589,7 +1686,7 @@ async function refreshSeatMap() {
         if (window.AndroidBridge && window.AndroidBridge.saveSeatMap) {
             window.AndroidBridge.saveSeatMap(seatMapJson);
         }
-        saveData('seat_map_data', seatMapJson);
+        localStorage.setItem('seat_map_data', seatMapJson);
         statusEl.className = 'status-msg success';
         statusEl.textContent = '号码池已刷新: ' + totalSeats + ' 个座位, ' + totalVenues + ' 个钓场' + (failedVenues.length > 0 ? ', 跳过: ' + failedVenues.join('、') : '');
         refreshDashboard();
