@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private String lockTargetVenue = "";
     private String currentOrderId = "";
 
-    // 【新增】换号锁定相关变量
+    // 换号锁定相关变量
     private boolean isTranspositionLocking = false;
     private List<Integer> transpositionTargetSeats = new ArrayList<>();
 
@@ -281,7 +281,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 【新增】换号锁定 - 开始
         @JavascriptInterface
         public void startTranspositionLock(String t, String u, String seatsJson) {
             token = t;
@@ -291,7 +290,6 @@ public class MainActivity extends AppCompatActivity {
             startTranspositionLockInternal();
         }
 
-        // 【新增】换号锁定 - 停止
         @JavascriptInterface
         public void stopTranspositionLock() {
             isTranspositionLocking = false;
@@ -657,14 +655,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================================================
-    // 【新增】换号锁定轮询
+    // 换号锁定轮询
     // ------------------------------------------------------------
-    // 逻辑：
-    // 1. 轮询 getMyTicketOrderList
-    // 2. 遍历 list，找第一个 seat_changed_model != null 的订单
-    // 3. 检查 seat_changed_model.status == 30
-    // 4. 拿 seat_changed_model.order_id，调 confirmSeat
-    // 5. 成功则停止轮询
+    // 关键：用 transpositionSelectSeat 而不是 confirmSeat
+    // 前者会同时释放原座位
     // ============================================================
     private void startTranspositionLockInternal() {
         if (transpositionLockRunnable != null) {
@@ -693,12 +687,10 @@ public class MainActivity extends AppCompatActivity {
                                         if (changedOrderId == null || changedOrderId.isEmpty()) continue;
                                         if (changedStatus != 30) continue;
 
-                                        // 找到换号订单
                                         currentOrderId = changedOrderId;
                                         safeEvaluateJavascript("window._onTranspositionDetected("
                                                 + JSONObject.quote(changedOrderId) + ")");
 
-                                        // 拿钓场名
                                         String venueName = extractVenueName(o);
                                         if (venueName == null || venueName.isEmpty()) {
                                             if (isTranspositionLocking) {
@@ -707,13 +699,11 @@ public class MainActivity extends AppCompatActivity {
                                             return;
                                         }
 
-                                        // 从 seat_map.json 拿座位池
                                         String seatMapJson = readLocalJson("seat_map.json", "{}");
                                         JSONObject seatMap = new JSONObject(seatMapJson);
                                         JSONObject venueData = seatMap.optJSONObject(venueName);
 
                                         if (venueData == null) {
-                                            // 座位池不存在，拉取
                                             String seatListJson = callQuerySeatList(changedOrderId, token, uuid);
                                             JSONObject seatListResult = new JSONObject(seatListJson);
                                             if ("000".equals(seatListResult.optString("code"))) {
@@ -741,13 +731,13 @@ public class MainActivity extends AppCompatActivity {
                                             return;
                                         }
 
-                                        // 逐个目标号码尝试锁定
                                         for (int seatNum : transpositionTargetSeats) {
                                             if (!isTranspositionLocking) break;
                                             String seatId = venueData.optString(String.valueOf(seatNum));
                                             if (seatId == null || seatId.isEmpty()) continue;
 
-                                            String confirmResult = callConfirmSeat(changedOrderId, seatId, token, uuid);
+                                            // 【关键改动】用 transpositionSelectSeat
+                                            String confirmResult = callTranspositionSelectSeat(changedOrderId, seatId, token, uuid);
                                             JSONObject confirmJson = new JSONObject(confirmResult);
                                             if ("000".equals(confirmJson.optString("code"))) {
                                                 isTranspositionLocking = false;
@@ -765,7 +755,6 @@ public class MainActivity extends AppCompatActivity {
                                             }
                                         }
 
-                                        // 找到换号订单但没锁成功，继续轮询
                                         break;
                                     }
                                 }
@@ -851,6 +840,27 @@ public class MainActivity extends AppCompatActivity {
             String url = API_HOST + "/v2/userApi/ticketSeat/confirmSeat";
             JSONObject body = new JSONObject();
             body.put("order_id", orderId);
+            body.put("seat_id", seatId);
+            return httpPost(url, body.toString(), token, uuid);
+        } catch (Exception e) {
+            try {
+                JSONObject err = new JSONObject();
+                err.put("code", "500");
+                err.put("msg", e.getMessage());
+                return err.toString();
+            } catch (Exception ignored) {
+                return "{\"code\":\"500\"}";
+            }
+        }
+    }
+
+    // 【新增】换位选座接口（会同时释放原座位）
+    private String callTranspositionSelectSeat(String orderId, String seatId, String token, String uuid) {
+        try {
+            String url = API_HOST + "/v2/userApi/ticketSeat/transpositionSelectSeat";
+            JSONObject body = new JSONObject();
+            body.put("order_id", orderId);
+            body.put("is_lottery", 10);
             body.put("seat_id", seatId);
             return httpPost(url, body.toString(), token, uuid);
         } catch (Exception e) {
