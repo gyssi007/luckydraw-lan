@@ -387,14 +387,10 @@ function appAlert(message, opts) {
     });
 }
 
-// ============================================================
-// ⭐ 钓场座位上限配置（按钓场名称匹配）
-// key: 钓场名称   value: 只保留前 N 个座位（0 或不存在 = 不限制）
-// 用途：官方接口返回的座位数和实际不符时，前端截断显示
-// 以后想恢复：把这个钓场删掉，或把值改成实际数量
-// ============================================================
-var VENUE_SEAT_LIMIT_BY_NAME = {
-    '金海河冻钓暖棚': 50
+
+var VENUE_SEAT_LIMIT_BY_ORDER_ID = {
+    
+    '958279763949420544': 50,
 };
 
 var VENUES = [];
@@ -463,20 +459,11 @@ function loadVenuesFromLocal() {
 }
 
 // ============================================================
-// ⭐ 按钓场名称过滤座位（临时方案）
+// ⭐ 按 order_id 过滤座位
 // 官方返回 60 个，实际只有 50 个时，只保留前 N 个
 // ============================================================
 function filterSeatsByVenue(sortedSeats, orderId) {
-    // 根据 order_id 找到钓场名称
-    var vName = '';
-    for (var i = 0; i < VENUES.length; i++) {
-        if (String(VENUES[i].order_id) === String(orderId)) {
-            vName = VENUES[i].name || '';
-            break;
-        }
-    }
-    // 从配置表里查上限
-    var limit = VENUE_SEAT_LIMIT_BY_NAME[vName];
+    var limit = VENUE_SEAT_LIMIT_BY_ORDER_ID[String(orderId)];
     if (limit && limit > 0 && sortedSeats.length > limit) {
         return sortedSeats.slice(0, limit);
     }
@@ -716,7 +703,7 @@ function renderSeats2(seatList) {
     }
     var sorted = seatList.slice().sort(function(a,b) { return (parseInt(a.seat_number)||0) - (parseInt(b.seat_number)||0); });
 
-    // ⭐ 按钓场名称过滤（金海河冻钓暖棚只保留前 50 个）
+    // ⭐ 按 order_id 过滤
     sorted = filterSeatsByVenue(sorted, SELECTED_VENUE_ID);
 
     var html = '';
