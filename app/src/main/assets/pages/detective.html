@@ -33,7 +33,6 @@
         .venue-selector-modal .venue-item.active{background:#eef6ff}
         .venue-selector-modal .venue-empty{padding:30px 20px;text-align:center;color:#94a3b8;font-size:13px}
 
-        /* ===== 原生 App 风格弹窗 ===== */
         .app-dialog-mask{position:fixed;inset:0;background:rgba(8,15,25,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:30px;opacity:0;transition:opacity .2s ease}
         .app-dialog-mask.show{opacity:1}
         .app-dialog-card{background:#fff;border-radius:26px;width:100%;max-width:340px;padding:30px 24px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.35);transform:translateY(24px) scale(.92);opacity:0;transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s ease}
@@ -48,7 +47,6 @@
         .app-dialog-btn.danger{background:#ef4444;color:#fff}
         .app-dialog-btn.secondary{background:#eef2f6;color:#334455}
 
-        /* ===== 紧凑统计条 ===== */
         .stats-bar{
             display:flex;
             align-items:center;
@@ -95,7 +93,6 @@
         .venue-banner .info .value{font-weight:600;color:#0a2f44;font-size:13px}
         .venue-banner .update-time{color:#6b8ba0;font-size:11px;white-space:nowrap}
 
-        /* ===== 钓位网格 ===== */
         .seat-grid{
             display:grid;
             grid-template-columns:repeat(auto-fill,minmax(68px,1fr));
@@ -107,7 +104,6 @@
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
         }
 
-        /* ===== 钓位卡片 ===== */
         .seat-card{
             background: #fbfdff;
             border-radius: 12px;
@@ -140,6 +136,19 @@
             margin-top: 2px;
             color: #33475a;
             letter-spacing: -0.2px;
+        }
+
+        /* 【新增】剩余时间 */
+        .seat-card .remain-time{
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-top: 1px;
+            color: #f59e0b;
+            letter-spacing: -0.2px;
+        }
+        .seat-card .remain-time.warning{
+            color: #ef4444;
         }
 
         .seat-card.status-10{ border-color: #2b9c5c; background: #f4fbf7; }
@@ -175,7 +184,6 @@
         .bottom-nav .tab.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;background:#0a2f44;border-radius:0 0 3px 3px}
         .bottom-nav .tab:active{transform:scale(0.92)}
 
-        /* ===== 下拉刷新 ===== */
         .pull-refresh-indicator {
             position: fixed;
             top: 0;
@@ -220,7 +228,6 @@
             transform: rotate(180deg);
         }
 
-        /* ===== 弹层打开时锁定 body 滚动 ===== */
         body.no-scroll {
             position: fixed;
             width: 100%;
@@ -234,6 +241,7 @@
             .seat-card{min-height:66px;padding:5px 2px 4px;border-radius:10px}
             .seat-card .seat-icon{width:30px;height:30px}
             .seat-card .number{font-size:11px}
+            .seat-card .remain-time{font-size:9px}
             .stats-bar{padding:12px 4px;}
             .stats-bar .stat-item .num{font-size:20px;}
             .stats-bar .stat-item .lbl{font-size:10px;}
@@ -244,6 +252,7 @@
             .seat-card{min-height:86px;padding:8px 4px 6px}
             .seat-card .seat-icon{width:40px;height:40px}
             .seat-card .number{font-size:14px}
+            .seat-card .remain-time{font-size:11px}
             .stats-bar{padding:16px 10px;}
             .stats-bar .stat-item .num{font-size:28px;}
             .stats-bar .stat-item .lbl{font-size:12px;}
@@ -285,7 +294,6 @@
                 </div>
             </div>
 
-            <!-- 紧凑统计条 -->
             <div class="stats-bar">
                 <div class="stat-item total">
                     <div class="num" id="totalSeats">-</div>
@@ -387,9 +395,12 @@ function appAlert(message, opts) {
     });
 }
 
+// ============================================================
+// 【新增】服务器地址（改成你的服务器 IP）
+// ============================================================
+var REMAIN_SERVER_HOST = 'http://222.186.39.38:34567';
 
 var VENUE_SEAT_LIMIT_BY_ORDER_ID = {
-    
     '958279763949420544': 50,
 };
 
@@ -459,8 +470,30 @@ function loadVenuesFromLocal() {
 }
 
 // ============================================================
+// 【新增】从服务器拿剩余时间
+// 返回：{ seat_number: remain_minutes }
+// ============================================================
+async function fetchRemainTime(orderId) {
+    try {
+        var resp = await fetch(REMAIN_SERVER_HOST + '/seat-status?order_id=' + orderId);
+        var data = await resp.json();
+        if (data.code === '000' && data.data && data.data.seats) {
+            var map = {};
+            data.data.seats.forEach(function(s) {
+                if (s.remain_minutes !== null && s.remain_minutes !== undefined) {
+                    map[s.seat_number] = s.remain_minutes;
+                }
+            });
+            return map;
+        }
+    } catch(e) {
+        console.warn('获取剩余时间失败:', e.message);
+    }
+    return {};
+}
+
+// ============================================================
 // ⭐ 按 order_id 过滤座位
-// 官方返回 60 个，实际只有 50 个时，只保留前 N 个
 // ============================================================
 function filterSeatsByVenue(sortedSeats, orderId) {
     var limit = VENUE_SEAT_LIMIT_BY_ORDER_ID[String(orderId)];
@@ -611,7 +644,7 @@ async function loadVenues2() {
 }
 
 // ============================================================
-// 🎣 获取钓位数据（带防抖）
+// 🎣 获取钓位数据
 // ============================================================
 var _fetching = false;
 async function fetchVenueData() {
@@ -660,6 +693,7 @@ async function fetchVenueData() {
 
         seatGrid.innerHTML = '<div class="loading-mask"><div class="spinner"></div>加载中...</div>';
 
+        // 1. 调官方接口拿座位状态
         var result = await callApi('/v2/userApi/ticketSeat/querySeatList?order_id=' + orderId, 'GET');
 
         if (result.code !== '000') {
@@ -667,6 +701,15 @@ async function fetchVenueData() {
         }
 
         var seatList = result.data && result.data.seat_list ? result.data.seat_list : [];
+
+        // 【新增】2. 调服务器接口拿剩余时间
+        var remainMap = await fetchRemainTime(orderId);
+
+        // 【新增】3. 把剩余时间挂到座位上
+        seatList.forEach(function(s) {
+            s._remainMinutes = remainMap[s.seat_number];
+        });
+
         var venue = null;
         for (var k = 0; k < VENUES.length; k++) {
             if (VENUES[k].order_id === orderId) {
@@ -703,7 +746,6 @@ function renderSeats2(seatList) {
     }
     var sorted = seatList.slice().sort(function(a,b) { return (parseInt(a.seat_number)||0) - (parseInt(b.seat_number)||0); });
 
-    // ⭐ 按 order_id 过滤
     sorted = filterSeatsByVenue(sorted, SELECTED_VENUE_ID);
 
     var html = '';
@@ -713,9 +755,30 @@ function renderSeats2(seatList) {
         var seatNum = seat.seat_number || '?';
         var iconSrc = ICON_MAP[status] || '';
 
+        // 【新增】剩余时间显示
+        var remainHtml = '';
+        if (seat._remainMinutes !== undefined && seat._remainMinutes !== null) {
+            var m = seat._remainMinutes;
+            if (m > 0) {
+                var h = Math.floor(m / 60);
+                var mm = m % 60;
+                var text;
+                if (h > 0) {
+                    text = h + 'h' + (mm > 0 ? mm : '');
+                } else {
+                    text = mm + '分';
+                }
+                var warningCls = m < 30 ? ' warning' : '';
+                remainHtml = '<span class="remain-time' + warningCls + '">' + text + '</span>';
+            } else {
+                remainHtml = '<span class="remain-time warning">将结束</span>';
+            }
+        }
+
         html += '<div class="seat-card ' + statusInfo.css + '">' +
                     (iconSrc ? '<img class="seat-icon" src="' + iconSrc + '" alt="">' : '') +
                     '<span class="number">' + seatNum + '</span>' +
+                    remainHtml +
                 '</div>';
     });
     seatGrid.innerHTML = html;
@@ -724,7 +787,6 @@ function renderSeats2(seatList) {
 function updateDetectiveStats2(seatList) {
     if (!Array.isArray(seatList)) { resetDetectiveStats(); return; }
 
-    // ⭐ 先排序 + 过滤（保持和渲染一致）
     var sorted = seatList.slice().sort(function(a,b) {
         return (parseInt(a.seat_number)||0) - (parseInt(b.seat_number)||0);
     });
