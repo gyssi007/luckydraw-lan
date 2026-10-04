@@ -493,6 +493,44 @@ async function fetchRemainTime(orderId) {
 }
 
 // ============================================================
+// 【新增】同步监控列表到服务器
+// ============================================================
+async function syncWatchList() {
+    var token = loadData('token', '');
+    var uuid = loadData('uuid', '');
+    if (!token || !uuid) {
+        console.warn('[同步] 未登录，跳过');
+        return;
+    }
+
+    var venues = loadVenuesFromLocal() || [];
+    if (venues.length === 0) {
+        console.warn('[同步] 本地没有钓场，跳过');
+        return;
+    }
+
+    // 提取所有 order_id
+    var orderIds = venues.map(function(v) { return v.order_id; }).filter(function(id) { return !!id; });
+    if (orderIds.length === 0) return;
+
+    try {
+        var resp = await fetch(REMAIN_SERVER_HOST + '/sync-watch-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: token,
+                uuid: uuid,
+                order_ids: orderIds
+            })
+        });
+        var data = await resp.json();
+        console.log('[同步] 结果:', data);
+    } catch(e) {
+        console.warn('[同步] 失败:', e.message);
+    }
+}
+
+// ============================================================
 // ⭐ 按 order_id 过滤座位
 // ============================================================
 function filterSeatsByVenue(sortedSeats, orderId) {
@@ -637,6 +675,7 @@ async function loadVenues2() {
         }
         selectedVenueDisplay.textContent = selectedVenue ? selectedVenue.name : VENUES[0].name;
         selectedVenueDisplay.className = 'selected-name';
+        syncWatchList();   // 【新增】同步给服务器
         fetchVenueData();
     } else {
         selectedVenueDisplay.textContent = '请先到配置页添加钓场';
