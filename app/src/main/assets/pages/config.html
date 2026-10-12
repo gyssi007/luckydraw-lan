@@ -1847,7 +1847,11 @@ async function pushToServer() {
     loadVenueList();
     refreshDashboard();
 
+    // ⭐ 方案 B：pageshow 只在第一次刷新，之后切回来不再刷
+    var _configShownOnce = false;
     window.addEventListener('pageshow', function() {
+        if (_configShownOnce) return;
+        _configShownOnce = true;
         refreshDashboard();
     });
 })();
