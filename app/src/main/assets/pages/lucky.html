@@ -1511,7 +1511,7 @@ window.addEventListener('beforeunload', function() {
 });
 
 // ============================================================
-// 🚀 初始化
+// 🚀 初始化（【核心改动】Token 校验只做一次）
 // ============================================================
 (function initLuckyPage() {
     restoreLogFromStorage();
@@ -1531,9 +1531,25 @@ window.addEventListener('beforeunload', function() {
         return;
     }
 
+    // ⭐【核心】只在"会话内首次"校验 Token，之后切回来不校验
+    // 用 sessionStorage 记录"本次 App 生命周期内已校验过"
+    var CHECKED_FLAG = 'lucky_token_checked_v1';
+    var alreadyChecked = false;
+    try {
+        alreadyChecked = sessionStorage.getItem(CHECKED_FLAG) === '1';
+    } catch(e) {}
+
+    if (alreadyChecked) {
+        // 已经校验过，直接用，不再网络请求
+        addLog('✅ 已就绪（Token 本次会话已校验）', 'success');
+        return;
+    }
+
     addLog('✅ 系统就绪，正在检查 Token 有效性...', 'success');
 
     checkTokenValidity().then(function(res) {
+        try { sessionStorage.setItem(CHECKED_FLAG, '1'); } catch(e) {}
+
         if (res.valid) {
             if (res.networkError) {
                 addLog('⚠️ 网络异常，未能验证 Token，但可继续使用', 'warning');
